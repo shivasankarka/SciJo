@@ -1,0 +1,15 @@
+[workspace]
+authors = ["shivasankar <shivasankar.ka@gmail.com>"]
+channels = ["conda-forge", "https://conda.modular.com/max", "https://repo.prefix.dev/modular-community"]
+name = "SciJo"
+platforms = ["osx-arm64"]
+version = "0.1.0"
+
+[tasks]
+# format the package
+format = "pixi run mojo format ./"
+
+[dependencies]
+scipy = ">=1.16.0,<2"
+modular = ">=25.4.0,<26"
+numojo = ">=0.7.0,<0.8"
