@@ -22,7 +22,7 @@ References:
 """
 
 
-struct Result[dtype: DType]():
+struct DiffResult[dtype: DType](Writable):
     """Result structure for numerical differentiation operations.
 
     This structure encapsulates the results of derivative computations, including
@@ -59,7 +59,7 @@ struct Result[dtype: DType]():
         error: Scalar[dtype],
         nit: Int,
         nfev: Int,
-        x: Scalar[dtype] = 0.0,
+        x: Scalar[dtype],
     ):
         self.success = success
         self.df = df
@@ -70,42 +70,23 @@ struct Result[dtype: DType]():
 
     fn __str__(self) raises -> String:
         return String(
-            "DerivativeResult"
-            + "\n"
-            + "success={}"
-            + "\n"
-            + "df={}"
-            + "\n"
-            + "error={}"
-            + "\n"
-            + "nit={}"
-            + "\n"
-            + "nfev={}"
-            + "\n"
-            + "x={})"
+            "Result(success={}, df={}, error={:.2e}, nit={}, nfev={}, x={})"
         ).format(self.success, self.df, self.error, self.nit, self.nfev, self.x)
 
     fn write_to[W: Writer](self, mut writer: W):
         try:
             writer.write(
                 String(
-                    "\n"
-                    + "DerivativeResult:"
-                    + "\n"
-                    + "\t success = {}"
-                    + "\n"
-                    + "\t df = {}"
-                    + "\n"
-                    + "\t error = {}"
-                    + "\n"
-                    + "\t nit = {}"
-                    + "\n"
-                    + "\t nfev = {}"
-                    + "\n"
-                    + "\t x = {}"
-                    + "\n"
+                    "Numerical Differentiation Result\n"
+                    + "================================\n"
+                    + "Status      : {}\n"
+                    + "Derivative  : {}\n"
+                    + "Error Est.  : {}\n"
+                    + "Iterations  : {}\n"
+                    + "Func Evals  : {}\n"
+                    + "Point (x)   : {}\n"
                 ).format(
-                    self.success,
+                    "SUCCESS" if self.success else "FAILED",
                     self.df,
                     self.error,
                     self.nit,
@@ -115,7 +96,7 @@ struct Result[dtype: DType]():
             )
         except e:
             writer.write(
-                "Cannot convert DerivativeResult to string.\n" + String(e)
+                "Error displaying Result: " + String(e) + "\n"
             )
 
 
@@ -142,12 +123,6 @@ fn generate_central_finite_difference_table[
         Dict[Int, List[Scalar[dtype]]] containing coefficient arrays indexed by
         accuracy order. Available orders: 2, 4, 6, 8 with corresponding
         truncation errors O(h²), O(h⁴), O(h⁶), O(h⁸).
-
-    Example:
-        ```mojo
-        alias coeffs = generate_central_finite_difference_table[DType.float64]()
-        var order2 = coeffs[2]  # [-0.5, 0.0, 0.5] for 3-point stencil
-        ```
 
     Note:
         Higher-order methods require more function evaluations but provide
@@ -220,12 +195,6 @@ fn generate_forward_finite_difference_table[
         Dict[Int, List[Scalar[dtype]]] containing coefficient arrays indexed by
         accuracy order. Available orders: 1, 2, 3, 4, 5, 6 with corresponding
         truncation errors O(h), O(h²), O(h³), O(h⁴), O(h⁵), O(h⁶).
-
-    Example:
-        ```mojo
-        alias coeffs = generate_forward_finite_difference_table[DType.float64]()
-        var order1 = coeffs[1]  # [-1, 1] for simple 2-point forward difference
-        ```
 
     Note:
         Forward differences are generally less accurate than central differences
@@ -308,12 +277,6 @@ fn generate_backward_finite_difference_table[
         Dict[Int, List[Scalar[dtype]]] containing coefficient arrays indexed by
         accuracy order. Available orders: 1, 2, 3, 4, 5, 6 with corresponding
         truncation errors O(h), O(h²), O(h³), O(h⁴), O(h⁵), O(h⁶).
-
-    Example:
-        ```mojo
-        alias coeffs = generate_backward_finite_difference_table[DType.float64]()
-        var order2 = coeffs[2]  # [0.5, -2, 1.5] for 3-point backward difference
-        ```
 
     Note:
         Backward differences are derived from forward differences by reversing

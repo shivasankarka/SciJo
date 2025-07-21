@@ -7,8 +7,8 @@ Differentiate Module - Numerical Differentiation
 
 This module implements numerical differentiation using finite difference methods.
 It provides functions to compute first-order derivatives of scalar functions using
-central, forward, and backward finite difference schemes with adaptive step sizing
-and Richardson extrapolation for improved accuracy.
+central, forward, and backward finite difference schemes with adaptive step sizing 
+for improved accuracy.
 
 The implementation is designed to mimic SciPy's derivative function behavior while
 providing additional flexibility in choosing the finite difference method and
@@ -32,7 +32,7 @@ References:
 
 from .numojo.prelude import *
 from .utility import (
-    Result,
+    DiffResult,
     generate_central_finite_difference_table,
     generate_forward_finite_difference_table,
     generate_backward_finite_difference_table,
@@ -52,7 +52,7 @@ fn _derivative_central_difference[
     initial_step: Scalar[dtype] = 0.5,
     step_factor: Scalar[dtype] = 2.0,
     max_iter: Int = 10,
-) raises -> Result[dtype]:
+) raises -> DiffResult[dtype]:
     """Computes first derivative using central finite difference method.
 
     This function implements the central finite difference method for computing
@@ -80,7 +80,7 @@ fn _derivative_central_difference[
         max_iter: Maximum number of Richardson extrapolation iterations.
 
     Returns:
-        Result[dtype] containing the computed derivative, convergence information,
+        DiffResult[dtype] containing the computed derivative, convergence information,
         and diagnostic data including number of iterations and function evaluations.
 
     Raises:
@@ -161,23 +161,25 @@ fn _derivative_central_difference[
             var diff_change = abs(central_diff - prev_diff)
             var tolerance_threshold = atol + rtol * abs(central_diff)
             if diff_change < tolerance_threshold:
-                return Result[dtype](
+                return DiffResult[dtype](
                     success=True,
                     df=central_diff,
                     error=diff_change,
                     nit=i + 1,
                     nfev=(i + 1) * len(coefficients),
+                    x=x0
                 )
 
         prev_diff = central_diff
         step /= step_factor
 
-    return Result[dtype](
+    return DiffResult[dtype](
         success=False,
         df=central_diff,
         error=0.0,
         nit=max_iter,
         nfev=max_iter * len(coefficients),
+        x=x0
     )
 
 
@@ -195,7 +197,7 @@ fn _derivative_forward_difference[
     initial_step: Scalar[dtype] = 0.5,
     step_factor: Scalar[dtype] = 2.0,
     max_iter: Int = 10,
-) raises -> Result[dtype]:
+) raises -> DiffResult[dtype]:
     """Computes first derivative using forward finite difference method.
 
     This function implements the forward finite difference method for computing
@@ -223,7 +225,7 @@ fn _derivative_forward_difference[
         max_iter: Maximum number of Richardson extrapolation iterations.
 
     Returns:
-        Result[dtype] containing the computed derivative, convergence information,
+        DiffResult[dtype] containing the computed derivative, convergence information,
         and diagnostic data including number of iterations and function evaluations.
 
     Raises:
@@ -303,23 +305,25 @@ fn _derivative_forward_difference[
             var diff_change = abs(central_diff - prev_diff)
             var tolerance_threshold = atol + rtol * abs(central_diff)
             if diff_change < tolerance_threshold:
-                return Result[dtype](
+                return DiffResult[dtype](
                     success=True,
                     df=central_diff,
                     error=diff_change,
                     nit=i + 1,
                     nfev=(i + 1) * len(coefficients),
+                    x=x0
                 )
 
         prev_diff = central_diff
         step /= step_factor
 
-    return Result[dtype](
+    return DiffResult[dtype](
         success=False,
         df=central_diff,
         error=0.0,
         nit=max_iter,
         nfev=max_iter * len(coefficients),
+        x=x0
     )
 
 
@@ -337,7 +341,7 @@ fn _derivative_backward_difference[
     initial_step: Scalar[dtype] = 0.5,
     step_factor: Scalar[dtype] = 2.0,
     max_iter: Int = 10,
-) raises -> Result[dtype]:
+) raises -> DiffResult[dtype]:
     """Computes first derivative using backward finite difference method.
 
     This function implements the backward finite difference method for computing
@@ -365,7 +369,7 @@ fn _derivative_backward_difference[
         max_iter: Maximum number of Richardson extrapolation iterations.
 
     Returns:
-        Result[dtype] containing the computed derivative, convergence information,
+        DiffResult[dtype] containing the computed derivative, convergence information,
         and diagnostic data including number of iterations and function evaluations.
 
     Raises:
@@ -445,23 +449,25 @@ fn _derivative_backward_difference[
             var diff_change = abs(central_diff - prev_diff)
             var tolerance_threshold = atol + rtol * abs(central_diff)
             if diff_change < tolerance_threshold:
-                return Result[dtype](
+                return DiffResult[dtype](
                     success=True,
                     df=central_diff,
                     error=diff_change,
                     nit=i + 1,
                     nfev=(i + 1) * len(coefficients),
+                    x=x0
                 )
 
         prev_diff = central_diff
         step /= step_factor
 
-    return Result[dtype](
+    return DiffResult[dtype](
         success=False,
         df=central_diff,
         error=0.0,
         nit=max_iter,
         nfev=max_iter * len(coefficients),
+        x=x0
     )
 
 
@@ -481,7 +487,7 @@ fn derivative[
     initial_step: Scalar[dtype] = 0.5,
     step_factor: Scalar[dtype] = 2.0,
     max_iter: Int = 10,
-) raises -> Result[dtype]:
+) raises -> DiffResult[dtype]:
     """Computes the first derivative of a scalar function using finite differences.
 
     This function provides a unified interface for computing first-order derivatives
@@ -511,7 +517,7 @@ fn derivative[
         max_iter: Maximum number of Richardson extrapolation iterations.
 
     Returns:
-        Result[dtype] containing:
+        DiffResult[dtype] containing:
         - success: Whether the computation converged
         - df: The computed derivative value
         - error: Estimated error or final convergence criterion
@@ -529,13 +535,13 @@ fn derivative[
             return x * x  # f(x) = x²
         
         # Compute derivative f'(2) = 2*2 = 4
-        var result = derivative[DType.float64, square](
+        var DiffResult = derivative[DType.float64, square](
             x0=2.0,
             args=None,
             order=4,
             step_direction=0  # Use central differences
         )
-        # result.df should be approximately 4.0
+        # DiffResult.df should be approximately 4.0
         ```
 
     Note:
