@@ -1,15 +1,49 @@
 [workspace]
 authors = ["shivasankar <shivasankar.ka@gmail.com>"]
-channels = ["conda-forge", "https://conda.modular.com/max", "https://repo.prefix.dev/modular-community"]
-name = "SciJo"
-platforms = ["osx-arm64"]
+channels = [
+    "conda-forge",
+    "https://conda.modular.com/max",
+    "https://repo.prefix.dev/modular-community",
+    "https://prefix.dev/pixi-build-backends",
+]
+platforms = ["osx-arm64", "linux-64"]
+preview = ["pixi-build"]
+
+[package]
+name = "scijo"
 version = "0.1.0"
 
-[tasks]
-# format the package
-format = "pixi run mojo format ./"
+[package.build]
+backend = { name = "pixi-build-mojo", version = "0.1.*" }
+
+[package.build.config]
+env = { SCIJO_NUMOJO_SETUP = "1" }
+extra-input-globs = ["scripts/setup-numojo.sh"]
+
+[package.host-dependencies]
+mojo-compiler = "=25.5.0"
+
+[package.build-dependencies]
+mojo-compiler = "=25.5.0"
+
+[package.run-dependencies]
+mojo-compiler = "=25.5.0"
 
 [dependencies]
+git = ">=2.49.0,<3"
 scipy = ">=1.16.0,<2"
-modular = ">=25.4.0,<26"
-numojo = ">=0.7.0,<0.8"
+mojo = ">=25.5.0,<26"
+
+[tasks]
+setup-numojo = "bash scripts/setup-numojo.sh"
+
+# Main development workflow
+install = { cmd = "echo 'SciJo environment ready'", depends-on = ["setup-numojo"] }
+
+# Development tasks (depend on numojo setup)  
+format = "pixi run mojo format ./"
+test = { cmd = "pixi run mojo test -I . tests/", depends-on = ["setup-numojo"] }
+run = { cmd = "pixi run mojo run -I .", depends-on = ["setup-numojo"] }
+
+# Build without pixi build (since it conflicts with numojo dependency)
+build-local = { cmd = "mojo package scijo -o scijo.mojopkg", depends-on = ["setup-numojo"] }
