@@ -1,10 +1,9 @@
 [workspace]
 authors = ["shivasankar <shivasankar.ka@gmail.com>"]
 channels = [
-    "conda-forge",
     "https://conda.modular.com/max",
-    "https://repo.prefix.dev/modular-community",
-    "https://prefix.dev/pixi-build-backends",
+    "https://prefix.dev/conda-forge",
+    "https://prefix.dev/modular-community"
 ]
 platforms = ["osx-arm64", "linux-64"]
 preview = ["pixi-build"]
@@ -14,36 +13,32 @@ name = "scijo"
 version = "0.1.0"
 
 [package.build]
-backend = { name = "pixi-build-mojo", version = "0.1.*" }
+backend = { name = "pixi-build-mojo", version = "0.*"}
 
-[package.build.config]
-env = { SCIJO_NUMOJO_SETUP = "1" }
-extra-input-globs = ["scripts/setup-numojo.sh"]
+[package.build.config.pkg]
+name = "scijo"
 
 [package.host-dependencies]
-mojo-compiler = "=25.5.0"
+modular = ">=25.5.0,<26"
 
 [package.build-dependencies]
-mojo-compiler = "=25.5.0"
+modular = ">=25.5.0,<26"
+numojo = { git = "https://github.com/shivasankarka/NuMojo.git", branch = "prev0.8"}
+# numojo = { path = "/Users/shivasankar/Documents/Codes/NuMojo"}
 
 [package.run-dependencies]
-mojo-compiler = "=25.5.0"
+modular = ">=25.5.0,<26"
+numojo = { git = "https://github.com/shivasankarka/NuMojo.git", branch = "prev0.8"}
+# numojo = { path = "/Users/shivasankar/Documents/Codes/NuMojo"}
 
 [dependencies]
-git = ">=2.49.0,<3"
-scipy = ">=1.16.0,<2"
-mojo = ">=25.5.0,<26"
+# These deps are needed for local development, mojo test, language server, etc
+modular = ">=25.6.1,<26"
+numojo = { git = "https://github.com/shivasankarka/NuMojo.git", branch = "prev0.8"}
+# numojo = { path = "/Users/shivasankar/Documents/Codes/NuMojo"}
 
 [tasks]
-setup-numojo = "bash scripts/setup-numojo.sh"
-
-# Main development workflow
-install = { cmd = "echo 'SciJo environment ready'", depends-on = ["setup-numojo"] }
-
-# Development tasks (depend on numojo setup)  
-format = "pixi run mojo format ./"
-test = { cmd = "pixi run mojo test -I . tests/", depends-on = ["setup-numojo"] }
-run = { cmd = "pixi run mojo run -I .", depends-on = ["setup-numojo"] }
-
-# Build without pixi build (since it conflicts with numojo dependency)
-build-local = { cmd = "mojo package scijo -o scijo.mojopkg", depends-on = ["setup-numojo"] }
+format = "mojo format ./"
+test = "mojo test -I . tests/"
+build = "mojo build"
+package = "mojo package scijo"
