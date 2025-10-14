@@ -31,7 +31,7 @@ from .utility import (
 
 fn derivative[
     dtype: DType,
-    func: fn (x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
+    func: fn [dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
         dtype
     ],
     *,
@@ -172,7 +172,7 @@ fn derivative[
 
 fn _derivative_central_difference[
     dtype: DType,
-    func: fn (x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
+    func: fn [dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
         dtype
     ],
 ](
@@ -331,7 +331,7 @@ fn _derivative_central_difference[
 
 fn _derivative_forward_difference[
     dtype: DType,
-    func: fn (x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
+    func: fn [dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
         dtype
     ],
 ](
@@ -487,7 +487,7 @@ fn _derivative_forward_difference[
 
 fn _derivative_backward_difference[
     dtype: DType,
-    func: fn (x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
+    func: fn [dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
         dtype
     ],
 ](
