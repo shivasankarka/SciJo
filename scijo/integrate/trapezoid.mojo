@@ -14,11 +14,7 @@ fn trapezoid[
 ]:
     """
     Integrate along the given axis using the composite trapezoidal rule.
-
-    Integrates y(x) along each 1d slice on the given axis, computing ∫ y(x) dx.
-    Uses evenly spaced points with spacing dx.
-
-    This function matches the behavior of scipy.integrate.trapezoid for 1-D arrays.
+    Integrates y(x) along each 1d slice on the given axis, computing ∫ y(x) dx. Uses evenly spaced points with spacing dx.
 
     Parameters:
         dtype: The data type of the input arrays and the output scalar.
@@ -31,18 +27,16 @@ fn trapezoid[
               so this parameter is ignored.
 
     Returns:
-        Scalar[dtype]: Definite integral of y as approximated by the trapezoidal rule.
-                      Returns 0.0 for arrays with fewer than 2 elements.
+        Scalar[dtype]: Definite integral of y as approximated by the trapezoidal rule. Returns 0.0 for arrays with fewer than 2 elements.
 
     Raises:
         Error(ShapeError): If y is not 1-D.
         Error(ValueError): If y is empty.
 
     Examples:
-        >>> var y = nm.fromstring[DType.float64]("1 2 3")
+        >>> var y = nm.fromstring[DType.float64]("[1, 2, 3]")
         >>> var result = trapezoid[DType.float64](y)  # Returns 4.0
-
-        >>> var result = trapezoid[DType.float64](y, dx=2.0)  # Returns 8.0
+        >>> var result = trapezoid[DType.float64](y, dx=2.0)  # Returns 8.0.
     """
     constrained[
         dtype.is_floating_point(),
@@ -52,7 +46,6 @@ fn trapezoid[
         ),
     ]()
 
-    # Check if y is 1-D
     if y.ndim != 1:
         raise Error(
             ShapeError(
@@ -64,7 +57,6 @@ fn trapezoid[
             )
         )
 
-    # Handle empty array
     if y.size == 0:
         raise Error(
             ValueError(
@@ -74,11 +66,9 @@ fn trapezoid[
             )
         )
 
-    # Handle single point case - return 0.0 like SciPy
     if y.size == 1:
         return Scalar[dtype](0.0)
 
-    # Compute trapezoidal integration with evenly spaced points
     var integral: Scalar[dtype] = 0.0
     for i in range(y.size - 1):
         var y_i = y.item(i)
@@ -98,12 +88,7 @@ fn trapezoid[
     dtype
 ]:
     """
-    Integrate along the given axis using the composite trapezoidal rule.
-
-    Integrates y(x) along each 1d slice on the given axis, computing ∫ y(x) dx.
-    When x is specified, this integrates along the parametric curve.
-
-    This function matches the behavior of scipy.integrate.trapezoid for 1-D arrays.
+    Integrate along the given axis using the composite trapezoidal rule. Integrates y(x) along each 1d slice on the given axis, computing ∫ y(x) dx. When x is specified, this integrates along the parametric curve.
 
     Parameters:
         dtype: The data type of the input arrays and the output scalar.
@@ -112,21 +97,19 @@ fn trapezoid[
     Arguments:
         y: Input array to integrate. Must be 1-D for this implementation.
         x: Array of sample points corresponding to the y values.
-        axis: The axis along which to integrate. Currently only supports 1-D arrays,
-              so this parameter is ignored.
+        axis: The axis along which to integrate. Currently only supports 1-D arrays.
 
     Returns:
-        Scalar[dtype]: Definite integral of y as approximated by the trapezoidal rule.
-                      Returns 0.0 for arrays with fewer than 2 elements.
+        Scalar[dtype]: Definite integral of y as approximated by the trapezoidal rule. Returns 0.0 for arrays with fewer than 2 elements.
 
     Raises:
         Error(ShapeError): If y or x are not 1-D, or if their sizes differ.
         Error(ValueError): If y is empty.
 
     Examples:
-        >>> var y = nm.fromstring[DType.float64]("1 2 3")
-        >>> var x = nm.fromstring[DType.float64]("4 6 8")
-        >>> var result = trapezoid[DType.float64](y, x)  # Returns 8.0
+        >>> var y = nm.fromstring[DType.float64]("[1, 2, 3]")
+        >>> var x = nm.fromstring[DType.float64]("[4, 6, 8]")
+        >>> var result = trapezoid[DType.float64](y, x)  # Returns 8.0.
     """
     constrained[
         dtype.is_floating_point(),
@@ -136,7 +119,6 @@ fn trapezoid[
         ),
     ]()
 
-    # Check if y is 1-D
     if y.ndim != 1:
         raise Error(
             ShapeError(
@@ -148,7 +130,6 @@ fn trapezoid[
             )
         )
 
-    # Handle empty array
     if y.size == 0:
         raise Error(
             ValueError(
@@ -158,11 +139,9 @@ fn trapezoid[
             )
         )
 
-    # Handle single point case - return 0.0 like SciPy
     if y.size == 1:
         return Scalar[dtype](0.0)
 
-    # Validate x array
     if x.ndim != 1:
         raise Error(
             ShapeError(
@@ -187,7 +166,6 @@ fn trapezoid[
             )
         )
 
-    # Compute trapezoidal integration using provided x values
     var integral: Scalar[dtype] = 0.0
     for i in range(y.size - 1):
         var y_i = y.item(i)
