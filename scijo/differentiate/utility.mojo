@@ -1,13 +1,10 @@
 """
-SciJo - Scientific Computing Library for Mojo
-==============================================
-
 Differentiate Module - Utility Functions
 -----------------------------------------
 
 This module provides utility functions and data structures for numerical differentiation
-using finite difference methods. It implements central, forward, and backward finite 
-difference coefficient tables based on the formulas from Wikipedia's finite difference 
+using finite difference methods. It implements central, forward, and backward finite
+difference coefficient tables based on the formulas from Wikipedia's finite difference
 coefficient reference.
 
 Author: Shivasankar K.A
@@ -15,14 +12,14 @@ Version: 0.1.0
 Date: July 2025
 
 References:
-- Wikipedia: Finite difference coefficient 
+- Wikipedia: Finite difference coefficient
   https://en.wikipedia.org/wiki/Finite_difference_coefficient
 - Fornberg, B. (1988). Generation of Finite Difference Formulas on Arbitrarily
   Spaced Grids. Mathematics of Computation, 51(184), 699-706.
 """
 
 
-struct DiffResult[dtype: DType](Writable):
+struct DiffResult[dtype: DType](ImplicitlyCopyable, Writable):
     """Result structure for numerical differentiation operations.
 
     This structure encapsulates the results of derivative computations, including
@@ -77,14 +74,14 @@ struct DiffResult[dtype: DType](Writable):
         try:
             writer.write(
                 String(
-                    "Numerical Differentiation Result\n"
-                    + "================================\n"
+                    "\n================================\n"
                     + "Status      : {}\n"
                     + "Derivative  : {}\n"
                     + "Error Est.  : {}\n"
                     + "Iterations  : {}\n"
                     + "Func Evals  : {}\n"
                     + "Point (x)   : {}\n"
+                    + "================================\n"
                 ).format(
                     "SUCCESS" if self.success else "FAILED",
                     self.df,
@@ -95,9 +92,7 @@ struct DiffResult[dtype: DType](Writable):
                 )
             )
         except e:
-            writer.write(
-                "Error displaying Result: " + String(e) + "\n"
-            )
+            writer.write("Error displaying Result: " + String(e) + "\n")
 
 
 @parameter
@@ -169,7 +164,7 @@ fn generate_central_finite_difference_table[
         Scalar[dtype](-1.0 / 280.0),
     )
 
-    return coefficients
+    return coefficients^
 
 
 @parameter
@@ -251,7 +246,7 @@ fn generate_forward_finite_difference_table[
         Scalar[dtype](-1.0 / 6.0),
     )
 
-    return coefficients
+    return coefficients^
 
 
 @parameter
@@ -296,12 +291,7 @@ fn generate_backward_finite_difference_table[
     )
 
     # Order 3 backward difference: [-1/3, 3/2, -3, 11/6] at points [-3, -2, -1, 0] (reversed from forward with sign change)
-    var coeff3 = List[Scalar[dtype]]()
-    coeff3.append(Scalar[dtype](-1.0 / 3.0))
-    coeff3.append(Scalar[dtype](3.0 / 2.0))
-    coeff3.append(Scalar[dtype](-3.0))
-    coeff3.append(Scalar[dtype](11.0 / 6.0))
-    coefficients[3] = coeff3
+    coefficients[3] = List[Scalar[dtype]](Scalar[dtype](-1.0 / 3.0), Scalar[dtype](3.0 / 2.0), Scalar[dtype](-3.0), Scalar[dtype](11.0 / 6.0))
 
     # Order 4 backward difference: [1/4, -4/3, 3, -4, 25/12] at points [-4, -3, -2, -1, 0] (reversed from forward with sign change)
     coefficients[4] = List[Scalar[dtype]](
@@ -333,4 +323,4 @@ fn generate_backward_finite_difference_table[
         Scalar[dtype](49.0 / 20.0),
     )
 
-    return coefficients
+    return coefficients^
