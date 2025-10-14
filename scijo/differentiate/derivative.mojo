@@ -29,16 +29,18 @@ from .utility import (
 )
 
 
+# TODO: add a compile time function to calculate order based on the step_direction.
+# ! One test fails when we run forward diff at order 3, check it.
 fn derivative[
     dtype: DType,
-    func: fn [dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
-        dtype
-    ],
+    func: fn[dtype: DType] (
+        x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
+    ) -> Scalar[dtype],
     *,
     step_direction: Int = 0,
 ](
     x0: Scalar[dtype],
-    args: Optional[List[Scalar[dtype]]],
+    args: Optional[List[Scalar[dtype]]] = None,
     tolerance: Dict[String, Scalar[dtype]] = {"atol": 1e-6, "rtol": 1e-6},
     order: Int = 8,
     initial_step: Scalar[dtype] = 0.5,
@@ -172,9 +174,9 @@ fn derivative[
 
 fn _derivative_central_difference[
     dtype: DType,
-    func: fn [dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
-        dtype
-    ],
+    func: fn[dtype: DType] (
+        x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
+    ) -> Scalar[dtype],
 ](
     x0: Scalar[dtype],
     args: Optional[List[Scalar[dtype]]],
@@ -224,7 +226,9 @@ fn _derivative_central_difference[
     alias first_order_coefficients_compiletime: Dict[
         Int, List[Scalar[dtype]]
     ] = generate_central_finite_difference_table[dtype]()
-    var first_order_coefficients = materialize[first_order_coefficients_compiletime]()
+    var first_order_coefficients = materialize[
+        first_order_coefficients_compiletime
+    ]()
 
     var central_diff: Scalar[dtype] = 0.0
     var prev_diff: Scalar[dtype] = 0.0
@@ -331,9 +335,9 @@ fn _derivative_central_difference[
 
 fn _derivative_forward_difference[
     dtype: DType,
-    func: fn [dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
-        dtype
-    ],
+    func: fn[dtype: DType] (
+        x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
+    ) -> Scalar[dtype],
 ](
     x0: Scalar[dtype],
     args: Optional[List[Scalar[dtype]]],
@@ -382,8 +386,10 @@ fn _derivative_forward_difference[
     """
     alias first_order_coefficients_compiletime: Dict[
         Int, List[Scalar[dtype]]
-    ] = generate_central_finite_difference_table[dtype]()
-    var first_order_coefficients = materialize[first_order_coefficients_compiletime]()
+    ] = generate_forward_finite_difference_table[dtype]()
+    var first_order_coefficients = materialize[
+        first_order_coefficients_compiletime
+    ]()
 
     var central_diff: Scalar[dtype] = 0.0
     var prev_diff: Scalar[dtype] = 0.0
@@ -487,9 +493,9 @@ fn _derivative_forward_difference[
 
 fn _derivative_backward_difference[
     dtype: DType,
-    func: fn [dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
-        dtype
-    ],
+    func: fn[dtype: DType] (
+        x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
+    ) -> Scalar[dtype],
 ](
     x0: Scalar[dtype],
     args: Optional[List[Scalar[dtype]]],
@@ -538,8 +544,10 @@ fn _derivative_backward_difference[
     """
     alias first_order_coefficients_compiletime: Dict[
         Int, List[Scalar[dtype]]
-    ] = generate_central_finite_difference_table[dtype]()
-    var first_order_coefficients = materialize[first_order_coefficients_compiletime]()
+    ] = generate_backward_finite_difference_table[dtype]()
+    var first_order_coefficients = materialize[
+        first_order_coefficients_compiletime
+    ]()
 
     var central_diff: Scalar[dtype] = 0.0
     var prev_diff: Scalar[dtype] = 0.0
@@ -612,7 +620,7 @@ fn _derivative_backward_difference[
         central_diff = 0.0
         var j: Int = 0
         for ref coeff in coefficients:
-            central_diff += coeff * func(x0 + step * (-j), args)
+            central_diff += coeff * func(x0 - step * -j, args)
             j += 1
         central_diff /= step
         if i > 0:

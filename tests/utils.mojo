@@ -2,6 +2,7 @@ from python import Python, PythonObject
 from testing.testing import assert_true
 import numojo as nm
 
+
 fn check_is_close[
     dtype: DType
 ](

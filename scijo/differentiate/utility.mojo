@@ -291,7 +291,12 @@ fn generate_backward_finite_difference_table[
     )
 
     # Order 3 backward difference: [-1/3, 3/2, -3, 11/6] at points [-3, -2, -1, 0] (reversed from forward with sign change)
-    coefficients[3] = List[Scalar[dtype]](Scalar[dtype](-1.0 / 3.0), Scalar[dtype](3.0 / 2.0), Scalar[dtype](-3.0), Scalar[dtype](11.0 / 6.0))
+    coefficients[3] = List[Scalar[dtype]](
+        Scalar[dtype](-1.0 / 3.0),
+        Scalar[dtype](3.0 / 2.0),
+        Scalar[dtype](-3.0),
+        Scalar[dtype](11.0 / 6.0),
+    )
 
     # Order 4 backward difference: [1/4, -4/3, 3, -4, 25/12] at points [-4, -3, -2, -1, 0] (reversed from forward with sign change)
     coefficients[4] = List[Scalar[dtype]](
