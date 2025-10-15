@@ -11,6 +11,7 @@ from .utility import _binary_search, _validate_interpolation_input
 
 # ! In a lot of places, I am using pure pointer method to retrieve values from NDArray, not so safe. Also causes some problems especially with .item() method of NDArray.
 
+
 # TODO: Add extrapolation and fill_value handling to LinearInterpolator
 # ! Array needs to be sorted for binary search to work
 struct LinearInterpolator[dtype: DType = DType.float64](Copyable, Movable):
@@ -188,6 +189,7 @@ struct LinearInterpolator[dtype: DType = DType.float64](Copyable, Movable):
             result._buf.ptr[i] = y0 + slope * (x_val - x0)
 
         return result^
+
 
 # TODO: Add more interpolation methods like 'quadratic', 'cubic'.
 # TODO: Add both interpolate and extrapolate fill methods.

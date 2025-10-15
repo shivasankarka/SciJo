@@ -23,6 +23,7 @@ fn _binary_search[
 
     return right
 
+
 fn _validate_interpolation_input[
     dtype: DType
 ](x: NDArray[dtype], y: NDArray[dtype]) raises:
