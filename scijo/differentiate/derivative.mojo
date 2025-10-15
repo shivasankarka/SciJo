@@ -1,5 +1,5 @@
 """
-Differentiate Module - Numerical Differentiation
+Differentiation Module - Numerical Differentiation
 ------------------------------------------------
 This module implements numerical differentiation using finite difference methods.
 It provides functions to compute first-order derivatives of scalar functions using
