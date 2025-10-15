@@ -1,34 +1,28 @@
-alias error_messages: Dict[Int, String] = {
-    0: "Integration was successful",
-    1: "The maximum number of subdivisions has been achieved.\n  "
-        "If increasing the limit yields no improvement it is advised to "
-        "analyze \n  the integrand in order to determine the difficulties.  "
-        "If the position of a \n  local difficulty can be determined "
-        "(singularity, discontinuity) one will \n  probably gain from "
-        "splitting up the interval and calling the integrator \n  on the "
-        "subranges.  Perhaps a special-purpose integrator should be used.",
-    2: "The occurrence of roundoff error is detected, which prevents \n  "
-        "the requested tolerance from being achieved.  "
-        "The error may be \n  underestimated.",
-    3: "Extremely bad integrand behavior occurs at some points of the\n  "
-        "integration interval.",
-    4: "The algorithm does not converge.  Roundoff error is detected\n  "
-        "in the extrapolation table.  It is assumed that the requested "
-        "tolerance\n  cannot be achieved, and that the returned result "
-        "(if full_output = 1) is \n  the best which can be obtained.",
-    5: "The integral is probably divergent, or slowly convergent.",
-    6: "The input is invalid.",
-    7: "Abnormal termination of the routine. The estimates for result\n and error are less reliable.  It is assumed that the requested accuracy\n  has not been achieved.",
-    8: "Unknown Error",
-    80: "A Python error occurred possibly while calling the function."
-}
+from utils import StaticTuple
 
 fn get_quad_error_message(ier: Int) -> String:
-    """Get SciPy-style error message for QUADPACK error code using dictionary lookup."""
-    try:
-        return error_messages[ier]
-    except:
-        return "Unknown error code"
+    """
+    Get error message for QUADPACK integration error codes.
+
+    Arguments:
+        ier: Integration error code (0 = success, >0 = error type)
+    """
+    if ier == 0:
+        return String("The integral converged successfully.")
+    elif ier == 1:
+        return String("Maximum subdivisions reached. The integrand may have singularities or discontinuities. Try splitting the integration interval at problem points or using a specialized integrator.")
+    elif ier == 2:
+        return String("Roundoff error prevents achieving the requested tolerance. The error estimate may be inaccurate.")
+    elif ier == 3:
+        return String("The function has problematic behavior at some points in the integration interval.")
+    elif ier == 4:
+        return String("Algorithm failed to converge due to roundoff errors. The result may be the best possible approximation.")
+    elif ier == 5:
+        return String("The integral is likely divergent or converges very slowly.")
+    elif ier == 6:
+        return String("Invalid input parameters: tolerance values or limits are out of valid range.")
+    else:
+        return String("Unknown error code.")
 
 struct IntegralResult[dtype: DType](Copyable, Movable, Writable):
     """Result structure for numerical integration operations.
@@ -63,7 +57,7 @@ struct IntegralResult[dtype: DType](Copyable, Movable, Writable):
         integral: Scalar[dtype] = Scalar[dtype](0),
         abserr: Scalar[dtype] = Scalar[dtype](0),
         neval: Int = 0,
-        ier: Int = 0, 
+        ier: Int = 0,
         last: Int = 0,
     ):
         self.integral = integral
@@ -75,7 +69,7 @@ struct IntegralResult[dtype: DType](Copyable, Movable, Writable):
     fn success(self) -> Bool:
         """Check if integration was successful."""
         return self.ier == 0
-    
+
     fn message(self) -> String:
         """Get SciPy-style error message."""
         return get_quad_error_message(self.ier)
@@ -83,8 +77,16 @@ struct IntegralResult[dtype: DType](Copyable, Movable, Writable):
     fn __str__(self) raises -> String:
         var status = "SUCCESS" if self.success() else "ERROR"
         return String(
-            "QuadResult(status={}, message='{}', integral={}, abserr={:.2e}, neval={}, last={})"
-        ).format(status, self.message(), self.integral, self.abserr, self.neval, self.last)
+            "QuadResult(status={}, message='{}', integral={}, abserr={:.2e},"
+            " neval={}, last={})"
+        ).format(
+            status,
+            self.message(),
+            self.integral,
+            self.abserr,
+            self.neval,
+            self.last,
+        )
 
     fn write_to[W: Writer](self, mut writer: W):
         try:
@@ -112,9 +114,9 @@ struct IntegralResult[dtype: DType](Copyable, Movable, Writable):
             writer.write("Error displaying QuadResult: " + String(e) + "\n")
 
 
-# Define the nodes and weights for G10K21 rule (correct values from Advanpix)
+# Nodes and weights for G10K21 rule (from Advanpix)
 # Structure: 21 Kronrod points total, with 11 Gauss points embedded within
-alias kronrod_nodes = List[Float64](
+alias kronrod_nodes: StaticTuple[Float64, 11] = StaticTuple[Float64, 11](
     # All 21 Kronrod nodes in ascending order (symmetric about 0)
     0.0000000000000000000000000000000000,  # 0: center (Gauss)
     0.1488743389816312108848260011297200,  # 1: ± (Gauss)
@@ -129,7 +131,7 @@ alias kronrod_nodes = List[Float64](
     0.9956571630258080807355272806890028,  # 10: ± (Kronrod only)
 )
 
-alias kronrod_weights = List[Float64](
+alias kronrod_weights: StaticTuple[Float64, 11] = StaticTuple[Float64, 11](
     0.1494455540029169056649364683898212,  # 0: center
     0.1477391049013384913748415159720680,  # 1: ± (Gauss node)
     0.1427759385770600807970942731387171,  # 2: ± (Kronrod only)
@@ -143,12 +145,11 @@ alias kronrod_weights = List[Float64](
     0.0116946388673718742780643960621925,  # 10: ± (Kronrod only)
 )
 
-alias gauss_weights = List[Float64](
-    # Gauss-Legendre weights for 11-point rule (G10 + center)
-    0.2955242247147528701738929946513383,  # center
-    0.2692667193099963550912269215694694,  # ±1
-    0.2190863625159820439955349342281632,  # ±2
-    0.1494513491505805931457763396576973,  # ±3
-    0.0666713443086881375935688098933179,  # ±4
-    0.0666713443086881375935688098933179,  # ±5 - this is wrong, each should be different
+alias gauss_weights: StaticTuple[Float64, 5] = StaticTuple[Float64, 5](
+    # Gauss-Legendre weights for 10-point rule embedded in G10K21 (from official table n=10)
+    0.2955242247147529,  # ±0.1488743389816312
+    0.2692667193099963,  # ±0.4333953941292472
+    0.2190863625159820,  # ±0.6794095682990244
+    0.1494513491505806,  # ±0.8650633666889845
+    0.0666713443086881,  # ±0.9739065285171717
 )
