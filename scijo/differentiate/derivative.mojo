@@ -92,7 +92,7 @@ fn derivative[
     Example:
         ```mojo
         from scijo.differentiate.derivative import derivative
-        fn square(x: Scalar[DType.float64], args: Optional[List[Scalar[DType.float64]]]) -> Scalar[DType.float64]:
+        fn square[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
             return x * x  # f(x) = x²
 
         # Compute derivative f'(2) = 2*2 = 4
