@@ -1,380 +1,291 @@
 """
-Adaptive Quadrature Integration using Gauss-Kronrod Rules (QAGS Algorithm)
+Integration Module
+------------------------------------------------
 
-This module implements the QUADPACK QAGS algorithm used by SciPy's quad function.
-The algorithm uses adaptive subdivision with 21-point Gauss-Kronrod quadrature rules
-to accurately compute definite integrals.
-
-Key features:
-- 21-point Gauss-Kronrod quadrature for high accuracy
-- Adaptive subdivision for handling difficult integrands
-- Error estimation using difference between Gauss and Kronrod results
-- Similar interface and behavior to SciPy's integrate.quad
-- High-precision G10K21 coefficients from Advanpix (34 decimal places)
+This module implements the QUADPACK algorithms for numerical integration.
 
 References:
 - Piessens, R., de Doncker-Kapenga, E., Überhuber, C. W., & Kahaner, D. K. (1983).
   QUADPACK: A subroutine package for automatic integration. Springer-Verlag.
 - SciPy documentation: https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.quad.html
 - Advanpix G10K21 coefficients: https://www.advanpix.com/2011/11/07/gauss-kronrod-quadrature-nodes-weights/
+- Netlib QUADPACK: https://www.netlib.org/quadpack/
 """
 
 from math import sqrt
+from builtin.math import min, max
+from utils import StaticTuple
 
-from scijo.integrate.utility import (
+from .utility import (
     IntegralResult,
-    kronrod_nodes,
-    kronrod_weights,
-    gauss_weights,
+    machine_epsilon,
+    get_quad_error_message,
+    smallest_positive_dtype,
+    largest_positive_dtype,
+    x1_nodes,
+    w10_gauss_weights,
+    x2_nodes,
+    w21a_kronrod_weights,
+    w21b_kronrod_weights,
+    x3_nodes,
+    w43a_kronrod_weights,
+    w43b_kronrod_weights,
+    x4_nodes,
+    w87a_kronrod_weights,
+    w87b_kronrod_weights,
 )
 
-# QUAD function with adaptive Gauss-Kronrod integration        
 fn quad[
     dtype: DType,
-](
-    func: fn (
-        x: Scalar[dtype], args: Optional[List[Scalar[dtype]]] = None
+    func: fn[dtype: DType] (
+        x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
     ) -> Scalar[dtype],
+    *,
+    method: String = "qng",
+](
     a: Scalar[dtype],
     b: Scalar[dtype],
     args: Optional[List[Scalar[dtype]]],
     epsabs: Scalar[dtype] = 1.49e-8,
     epsrel: Scalar[dtype] = 1.49e-8,
-    limit: Int = 50,
+) raises -> IntegralResult[dtype]:
+    @parameter
+    if method == "qng":
+        return _qng[dtype, func](a, b, args, epsabs, epsrel)
+    else:
+        raise Error(
+            "Unsupported quad method: " + String(method) + ". Supported methods: 'qng'."
+        )
+
+
+fn _qng[
+    dtype: DType,
+    func: fn[dtype: DType] (
+        x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
+    ) -> Scalar[dtype],
+](
+    a: Scalar[dtype],
+    b: Scalar[dtype],
+    args: Optional[List[Scalar[dtype]]],
+    epsabs: Scalar[dtype] = 1.49e-8,
+    epsrel: Scalar[dtype] = 1.49e-8,
 ) -> IntegralResult[dtype]:
-    """`
-    Adaptive quadrature using Gauss-Kronrod rules (QAGS algorithm).
+    """
+    Non-adaptive Gauss-Kronrod-Patterson integration (QUADPACK QNG algorithm).
 
-    This is a Mojo implementation of the QUADPACK QAGS algorithm used by SciPy.
-    It uses adaptive subdivision with 21-point Gauss-Kronrod quadrature rules.
+    This algorithm attempts integration using progressively higher-order rules:
+    - 10-point Gauss rule (21-point Kronrod)
+    - 21-point Gauss-Kronrod rule (43-point Kronrod extension)
+    - 43-point Gauss-Kronrod rule (87-point Kronrod extension)
 
-    The algorithm works by:
-    1. Evaluating the integral using both 10-point Gauss and 21-point Kronrod rules
-    2. Using the difference as an error estimate
-    3. If the error is too large, subdividing the interval and repeating
-    4. Continuing until convergence or maximum subdivisions reached
+    Function evaluations are reused between rules for efficiency.
+
+    Parameters:
+        dtype: The data type for integration.
+        func: The integrand function to integrate.
 
     Args:
-        func: The integrand function to integrate.
         a: Lower integration limit.
         b: Upper integration limit.
         args: Additional arguments for integrand.
         epsabs: Absolute error tolerance.
         epsrel: Relative error tolerance.
-        limit: Maximum number of subintervals.
 
     Returns:
-        Tuple of (integral_value, error_estimate, status_message).
+        IntegralResult containing integral value, error estimate, and status information.
     """
+    constrained[
+        dtype.is_floating_point(), "DType must be a floating point type."
+    ]()
+
+    alias epsilon_mach: Scalar[dtype] = Scalar[dtype](machine_epsilon[dtype]())
+    alias under_flow: Scalar[dtype] = smallest_positive_dtype[dtype]
+
     if a == b:
         return IntegralResult(
             integral=Scalar[dtype](0),
             abserr=Scalar[dtype](0),
             neval=0,
             ier=0,
-            last=0,
         )
 
-    var sign = Scalar[dtype](1)
-    var lower = a
-    var upper = b
-    if a > b:
-        sign = Scalar[dtype](-1)
-        lower = b
-        upper = a
-
-    var initial_result = _gauss_kronrod_21[dtype](func, lower, upper, args)
-    var result_k = initial_result[0]
-    var result_g = initial_result[1]  # Gauss result
-    var neval = initial_result[2]
-
-    var error_est = abs(result_k - result_g)
-
-    var tolerance = max(epsabs, epsrel * abs(result_k))
-    if error_est <= tolerance:
-        return IntegralResult(
-            integral=sign * result_k,
-            abserr=error_est,
-            neval=neval,
-            ier=0,  # Success (QUADPACK convention: ier=0 means success)
-            last=0,
-        )
-
-    var current_result = result_k
-    var current_error = error_est
-    var subdivisions = 0
-
-    while current_error > tolerance and subdivisions < limit:
-        var mid = (lower + upper) / 2
-
-        var left_result = _gauss_kronrod_21[dtype](func, lower, mid, args)
-        var left_k = left_result[0]
-        var left_g = left_result[1]
-        var left_error = abs(left_k - left_g)
-        neval += left_result[2]
-
-        var right_result = _gauss_kronrod_21[dtype](func, mid, upper, args)
-        var right_k = right_result[0]
-        var right_g = right_result[1]
-        var right_error = abs(right_k - right_g)
-        neval += right_result[2]
-
-        current_result = left_k + right_k
-        current_error = left_error + right_error
-        tolerance = max(epsabs, epsrel * abs(current_result))
-
-        if left_error > right_error:
-            upper = mid
-        else:
-            lower = mid
-
-        subdivisions += 1
-
-    if current_error <= tolerance:
-        return IntegralResult(
-            integral=sign * current_result,
-            abserr=current_error,
-            neval=neval,
-            ier=0,  # Success (QUADPACK convention: ier=0 means success)
-            last=subdivisions,
-        )
-    else:  
-        try:
-            print(String("Maximum subdivisions {} reached in QUAD, returning current result").format(limit))
-        except e:
-            print("Error printing message:", e)
-        return IntegralResult(
-            integral=sign * current_result,
-            abserr=current_error,
-            neval=neval,
-            ier=1,  # Maximum subdivisions reached (failure)
-            last=subdivisions,
-        )
-
-# same quad function with compile time function
-fn quad[
-    dtype: DType,
-    integrand: fn (
-        x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) -> Scalar[dtype],
-](
-    a: Scalar[dtype],
-    b: Scalar[dtype],
-    args: Optional[List[Scalar[dtype]]],
-    epsabs: Scalar[dtype] = 1.49e-8,
-    epsrel: Scalar[dtype] = 1.49e-8,
-    limit: Int = 50,
-) -> IntegralResult[dtype]:
-    """
-    Adaptive quadrature using Gauss-Kronrod rules (QAGS algorithm).
-
-    This is a Mojo implementation of the QUADPACK QAGS algorithm used by SciPy.
-    It uses adaptive subdivision with 21-point Gauss-Kronrod quadrature rules.
-
-    The algorithm works by:
-    1. Evaluating the integral using both 10-point Gauss and 21-point Kronrod rules
-    2. Using the difference as an error estimate
-    3. If the error is too large, subdividing the interval and repeating
-    4. Continuing until convergence or maximum subdivisions reached
-
-    Args:
-        a: Lower integration limit.
-        b: Upper integration limit.
-        args: Additional arguments for integrand.
-        epsabs: Absolute error tolerance.
-        epsrel: Relative error tolerance.
-        limit: Maximum number of subintervals.
-    Returns:
-        Tuple of (integral_value, error_estimate, status_message).
-    """
-
-    if a == b:
-        return IntegralResult(
+    if epsabs <= 0 and epsrel < max(
+        Scalar[dtype](0.5e-14), Scalar[dtype](50.0) * epsilon_mach
+    ):
+        return IntegralResult[dtype](
             integral=Scalar[dtype](0),
             abserr=Scalar[dtype](0),
             neval=0,
-            ier=0,  
-            last=0,
+            ier=6,
         )
 
-    var sign = Scalar[dtype](1)
-    var lower = a
-    var upper = b
-    if a > b:
-        sign = Scalar[dtype](-1)
-        lower = b
-        upper = a
+    var half_length: Scalar[dtype] = Scalar[dtype](0.5) * (b - a)
+    var abs_half_length: Scalar[dtype] = abs(half_length)
+    var center: Scalar[dtype] = Scalar[dtype](0.5) * (b + a)
+    var f_center: Scalar[dtype] = func(center, args)
+    var neval: Int = 1
 
-    var initial_result = _gauss_kronrod_21[dtype, integrand](lower, upper, args)
-    var result_k = initial_result[0]
-    var result_g = initial_result[1]  
-    var neval = initial_result[2]
+    # 10-point Gauss / 21-point Kronrod Rule
+    var result_10: Scalar[dtype] = Scalar[dtype](0)
+    var result_21: Scalar[dtype] = (
+        Scalar[dtype](w21b_kronrod_weights[5]) * f_center
+    )
+    var result_abs: Scalar[dtype] = Scalar[dtype](
+        w21b_kronrod_weights[5]
+    ) * abs(f_center)
 
-    var error_est = abs(result_k - result_g)
+    var saved_fvalues: StaticTuple[Scalar[dtype], 21] = StaticTuple[
+        Scalar[dtype], 21
+    ](0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
-    var tolerance = max(epsabs, epsrel * abs(result_k))
-    if error_est <= tolerance:
-        return IntegralResult(
-            integral=sign * result_k,
-            abserr=error_est,
+    var fv1: StaticTuple[Scalar[dtype], 5] = StaticTuple[Scalar[dtype], 5](
+        0, 0, 0, 0, 0
+    )
+    var fv2: StaticTuple[Scalar[dtype], 5] = StaticTuple[Scalar[dtype], 5](
+        0, 0, 0, 0, 0
+    )
+    for k in range(5):
+        var abscissa: Scalar[dtype] = half_length * Scalar[dtype](x1_nodes[k])
+        var fval1: Scalar[dtype] = func(center + abscissa, args)
+        var fval2: Scalar[dtype] = func(center - abscissa, args)
+        var fval: Scalar[dtype] = fval1 + fval2
+        result_10 += Scalar[dtype](w10_gauss_weights[k]) * fval
+        result_21 += Scalar[dtype](w21a_kronrod_weights[k]) * fval
+        result_abs += Scalar[dtype](w21a_kronrod_weights[k]) * (
+            abs(fval1) + abs(fval2)
+        )
+        saved_fvalues[k] = fval
+        fv1[k] = fval1
+        fv2[k] = fval2
+    neval += 10
+
+    var index: Int = 5
+    var fv3: StaticTuple[Scalar[dtype], 5] = StaticTuple[Scalar[dtype], 5](
+        0, 0, 0, 0, 0
+    )
+    var fv4: StaticTuple[Scalar[dtype], 5] = StaticTuple[Scalar[dtype], 5](
+        0, 0, 0, 0, 0
+    )
+    for k in range(5):
+        var abscissa: Scalar[dtype] = half_length * Scalar[dtype](x2_nodes[k])
+        var fval1: Scalar[dtype] = func(center + abscissa, args)
+        var fval2: Scalar[dtype] = func(center - abscissa, args)
+        var fval: Scalar[dtype] = fval1 + fval2
+        result_21 += Scalar[dtype](w21b_kronrod_weights[k]) * fval
+        result_abs += Scalar[dtype](w21b_kronrod_weights[k]) * (
+            abs(fval1) + abs(fval2)
+        )
+        saved_fvalues[index] = fval
+        fv3[k] = fval1
+        fv4[k] = fval2
+        index += 1
+    neval += 10
+
+    var result: Scalar[dtype] = result_21 * half_length
+    result_abs = result_abs * abs_half_length
+    var result_mean: Scalar[dtype] = Scalar[dtype](0.5) * result_21
+    var result_asc: Scalar[dtype] = Scalar[dtype](
+        w21b_kronrod_weights[5]
+    ) * abs(f_center - result_mean)
+    for k in range(5):
+        result_asc += Scalar[dtype](w21a_kronrod_weights[k]) * (
+            abs(fv1[k] - result_mean) + abs(fv2[k] - result_mean)
+        )
+        result_asc += Scalar[dtype](w21b_kronrod_weights[k]) * (
+            abs(fv3[k] - result_mean) + abs(fv4[k] - result_mean)
+        )
+    result_asc = result_asc * abs_half_length
+
+    var abs_error: Scalar[dtype] = abs((result_21 - result_10) * half_length)
+    if result_asc != Scalar[dtype](0) and abs_error != Scalar[dtype](0):
+        abs_error = result_asc * min(
+            Scalar[dtype](1),
+            (Scalar[dtype](200) * abs_error / result_asc) ** Scalar[dtype](1.5),
+        )
+    if result_abs > under_flow / (Scalar[dtype](50) * epsilon_mach):
+        abs_error = max((epsilon_mach * Scalar[dtype](50)) * result_abs, abs_error)
+
+    if abs_error <= max(epsabs, epsrel * abs(result)):
+        return IntegralResult[dtype](
+            integral=result,
+            abserr=abs_error,
             neval=neval,
-            ier=0,  # Success (QUADPACK convention: ier=0 means success)
-            last=0,
+            ier=0,
         )
 
-    var current_result = result_k
-    var current_error = error_est
-    var subdivisions = 0
+    # 21-point GK / 43-point Kronrod Rule
+    var result_43: Scalar[dtype] = (
+        Scalar[dtype](w43b_kronrod_weights[11]) * f_center
+    )
 
-    # look up references for better adaptive algorithms. 
-    while current_error > tolerance and subdivisions < limit:
-        var mid = (lower + upper) / 2
+    for k in range(10):
+        result_43 += saved_fvalues[k] * Scalar[dtype](w43a_kronrod_weights[k])
 
-        var left_result = _gauss_kronrod_21[dtype, integrand](lower, mid, args)
-        var left_k = left_result[0]
-        var left_g = left_result[1]
-        var left_error = abs(left_k - left_g)
-        neval += left_result[2]
+    for k in range(11):
+        var abscissa: Scalar[dtype] = half_length * Scalar[dtype](x3_nodes[k])
+        var fval: Scalar[dtype] = func(center + abscissa, args) + func(
+            center - abscissa, args
+        )
+        result_43 += Scalar[dtype](w43b_kronrod_weights[k]) * fval
+        saved_fvalues[index] = fval
+        index += 1
+    neval += 22
 
-        var right_result = _gauss_kronrod_21[dtype, integrand](mid, upper, args)
-        var right_k = right_result[0]
-        var right_g = right_result[1]
-        var right_error = abs(right_k - right_g)
-        neval += right_result[2]
+    result = result_43 * half_length
+    abs_error = abs((result_43 - result_21) * half_length)
+    if result_asc != Scalar[dtype](0) and abs_error != Scalar[dtype](0):
+        abs_error = result_asc * min(
+            Scalar[dtype](1),
+            (Scalar[dtype](200) * abs_error / result_asc) ** Scalar[dtype](1.5),
+        )
+    if result_abs > under_flow / (Scalar[dtype](50) * epsilon_mach):
+        abs_error = max((epsilon_mach * Scalar[dtype](50)) * result_abs, abs_error)
 
-        current_result = left_k + right_k
-        current_error = left_error + right_error
-
-        tolerance = max(epsabs, epsrel * abs(current_result))
-
-        if left_error > right_error:
-            upper = mid
-        else:
-            lower = mid
-
-        subdivisions += 1
-
-    if current_error <= tolerance:
-        return IntegralResult(
-            integral=sign * current_result,
-            abserr=current_error,
+    if abs_error <= max(epsabs, epsrel * abs(result)):
+        return IntegralResult[dtype](
+            integral=result,
+            abserr=abs_error,
             neval=neval,
-            ier=0,  # Success (QUADPACK convention: ier=0 means success)
-            last=subdivisions,
+            ier=0,
         )
-    else:  # subdivisions >= limit
-        try:
-            print(String("Maximum subdivisions {} reached in QUAD, returning current result").format(limit))
-        except e:
-            print("Error printing message:", e)
-        return IntegralResult(
-            integral=sign * current_result,
-            abserr=current_error,
+
+    # 43-point GK / 87-point Kronrod Rule
+    var result_87: Scalar[dtype] = (
+        Scalar[dtype](w87b_kronrod_weights[22]) * f_center
+    )
+
+    for k in range(21):
+        result_87 += saved_fvalues[k] * Scalar[dtype](w87a_kronrod_weights[k])
+
+    for k in range(22):
+        var abscissa: Scalar[dtype] = half_length * Scalar[dtype](x4_nodes[k])
+        result_87 += Scalar[dtype](w87b_kronrod_weights[k]) * (
+            func(center + abscissa, args) + func(center - abscissa, args)
+        )
+    neval += 44
+
+    result = result_87 * half_length
+    abs_error = abs((result_87 - result_43) * half_length)
+    if result_asc != Scalar[dtype](0) and abs_error != Scalar[dtype](0):
+        abs_error = result_asc * min(
+            Scalar[dtype](1),
+            (Scalar[dtype](200) * abs_error / result_asc) ** Scalar[dtype](1.5),
+        )
+    if result_abs > under_flow / (Scalar[dtype](50) * epsilon_mach):
+        abs_error = max((epsilon_mach * Scalar[dtype](50)) * result_abs, abs_error)
+
+    if abs_error <= max(epsabs, epsrel * abs(result)):
+        return IntegralResult[dtype](
+            integral=result,
+            abserr=abs_error,
             neval=neval,
-            ier=1,  # Maximum subdivisions reached (failure)
-            last=subdivisions,
+            ier=0,
         )
 
-fn _gauss_kronrod_21[
-    dtype: DType,
-    func: fn (
-        x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) -> Scalar[dtype],
-](
-    a: Scalar[dtype], b: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-) -> Tuple[Scalar[dtype], Scalar[dtype], Int]:
-    """Compute integral using 21-point Gauss-Kronrod rule."""
-    var center = (a + b) / 2
-    var half_length = (b - a) / 2
-
-    # Center point evaluation (node 0 = 0.0)
-    var fc = func(center, args)
-    var result_kronrod = Scalar[dtype](kronrod_weights[0]) * fc
-    var result_gauss = Scalar[dtype](gauss_weights[0]) * fc
-    var neval = 1
-
-    # Process all pairs of symmetric points
-    # For G10K21: Gauss points are at indices 1,3,5,7,9 in the Kronrod sequence
-    var gauss_idx = 1
-
-    for i in range(1, 11):
-        # Transform node from [-1,1] to [a,b]: x_scaled = x * (b-a)/2 + (a+b)/2
-        var node = Scalar[dtype](kronrod_nodes[i])
-        var x1 = (
-            center - half_length * node
-        )  # Left point: (a+b)/2 - (b-a)/2 * node
-        var x2 = (
-            center + half_length * node
-        )  # Right point: (a+b)/2 + (b-a)/2 * node
-
-        var f1 = func(x1, args)
-        var f2 = func(x2, args)
-        var fsum = f1 + f2
-
-        # Add to Kronrod result (all points contribute)
-        result_kronrod += Scalar[dtype](kronrod_weights[i]) * fsum
-
-        # Add to Gauss result only for Gauss points (odd indices: 1,3,5,7,9)
-        if i % 2 == 1 and gauss_idx < 6:  # Guard against index overflow
-            result_gauss += Scalar[dtype](gauss_weights[gauss_idx]) * fsum
-            gauss_idx += 1
-
-        neval += 2
-
-    # Scale by interval length: w_scaled = w * (b-a)/2
-    result_kronrod *= half_length
-    result_gauss *= half_length
-
-    return (result_kronrod, result_gauss, neval)
-
-fn _gauss_kronrod_21[
-    dtype: DType,
-](
-    func: fn (
-        x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) -> Scalar[dtype],
-    a: Scalar[dtype], b: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-) -> Tuple[Scalar[dtype], Scalar[dtype], Int]:
-    """Compute integral using 21-point Gauss-Kronrod rule."""
-    var center = (a + b) / 2
-    var half_length = (b - a) / 2
-
-    # Center point evaluation (node 0 = 0.0)
-    var fc = func(center, args)
-    var result_kronrod = Scalar[dtype](kronrod_weights[0]) * fc
-    var result_gauss = Scalar[dtype](gauss_weights[0]) * fc
-    var neval = 1
-
-    # Process all pairs of symmetric points
-    # For G10K21: Gauss points are at indices 1,3,5,7,9 in the Kronrod sequence
-    var gauss_idx = 1
-
-    for i in range(1, 11):
-        # Transform node from [-1,1] to [a,b]: x_scaled = x * (b-a)/2 + (a+b)/2
-        var node = Scalar[dtype](kronrod_nodes[i])
-        var x1 = (
-            center - half_length * node
-        )  # Left point: (a+b)/2 - (b-a)/2 * node
-        var x2 = (
-            center + half_length * node
-        )  # Right point: (a+b)/2 + (b-a)/2 * node
-
-        var f1 = func(x1, args)
-        var f2 = func(x2, args)
-        var fsum = f1 + f2
-
-        # Add to Kronrod result (all points contribute)
-        result_kronrod += Scalar[dtype](kronrod_weights[i]) * fsum
-
-        # Add to Gauss result only for Gauss points (odd indices: 1,3,5,7,9)
-        if i % 2 == 1 and gauss_idx < 6:  # Guard against index overflow
-            result_gauss += Scalar[dtype](gauss_weights[gauss_idx]) * fsum
-            gauss_idx += 1
-
-        neval += 2
-
-    # Scale by interval length: w_scaled = w * (b-a)/2
-    result_kronrod *= half_length
-    result_gauss *= half_length
-
-    return (result_kronrod, result_gauss, neval)
+    # oops, no convergence
+    return IntegralResult[dtype](
+        integral=result,
+        abserr=abs_error,
+        neval=neval,
+        ier=1,
+    )
