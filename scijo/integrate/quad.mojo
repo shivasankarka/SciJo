@@ -35,6 +35,7 @@ from .utility import (
     w87b_kronrod_weights,
 )
 
+
 fn quad[
     dtype: DType,
     func: fn[dtype: DType] (
@@ -54,7 +55,9 @@ fn quad[
         return _qng[dtype, func](a, b, args, epsabs, epsrel)
     else:
         raise Error(
-            "Unsupported quad method: " + String(method) + ". Supported methods: 'qng'."
+            "Unsupported quad method: "
+            + String(method)
+            + ". Supported methods: 'qng'."
         )
 
 
@@ -203,7 +206,9 @@ fn _qng[
             (Scalar[dtype](200) * abs_error / result_asc) ** Scalar[dtype](1.5),
         )
     if result_abs > under_flow / (Scalar[dtype](50) * epsilon_mach):
-        abs_error = max((epsilon_mach * Scalar[dtype](50)) * result_abs, abs_error)
+        abs_error = max(
+            (epsilon_mach * Scalar[dtype](50)) * result_abs, abs_error
+        )
 
     if abs_error <= max(epsabs, epsrel * abs(result)):
         return IntegralResult[dtype](
@@ -239,7 +244,9 @@ fn _qng[
             (Scalar[dtype](200) * abs_error / result_asc) ** Scalar[dtype](1.5),
         )
     if result_abs > under_flow / (Scalar[dtype](50) * epsilon_mach):
-        abs_error = max((epsilon_mach * Scalar[dtype](50)) * result_abs, abs_error)
+        abs_error = max(
+            (epsilon_mach * Scalar[dtype](50)) * result_abs, abs_error
+        )
 
     if abs_error <= max(epsabs, epsrel * abs(result)):
         return IntegralResult[dtype](
@@ -272,7 +279,9 @@ fn _qng[
             (Scalar[dtype](200) * abs_error / result_asc) ** Scalar[dtype](1.5),
         )
     if result_abs > under_flow / (Scalar[dtype](50) * epsilon_mach):
-        abs_error = max((epsilon_mach * Scalar[dtype](50)) * result_abs, abs_error)
+        abs_error = max(
+            (epsilon_mach * Scalar[dtype](50)) * result_abs, abs_error
+        )
 
     if abs_error <= max(epsabs, epsrel * abs(result)):
         return IntegralResult[dtype](

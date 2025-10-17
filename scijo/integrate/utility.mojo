@@ -6,6 +6,7 @@ alias largest_positive_dtype[dtype: DType] = max_finite[dtype]()
 
 # TODO: Remove predefined messages in IntegralResult and add custom result according to the result.
 
+
 fn machine_epsilon[dtype: DType]() -> Float64:
     """Return the machine epsilon for the given floating-point dtype."""
     constrained[
@@ -19,6 +20,7 @@ fn machine_epsilon[dtype: DType]() -> Float64:
         ),
         "DType must be floating point.",
     ]()
+
     # TODO: Check if these values are correct lol
     @parameter
     if dtype == DType.float16:
