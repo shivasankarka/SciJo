@@ -19,15 +19,15 @@ backend = { name = "pixi-build-mojo", version = "0.*"}
 name = "scijo"
 
 [package.host-dependencies]
-mojo = ">=25.6.1,<26"
+modular = ">=25.6.1,<26"
 
 [package.build-dependencies]
-mojo = ">=25.6.1,<26"
+modular = ">=25.6.1,<26"
 numojo = { git = "https://github.com/shivasankarka/NuMojo.git", branch = "gpu_ndarray"}
 # numojo = { path = "/Users/shivasankar/Documents/Codes/NuMojo"}
 
 [package.run-dependencies]
-mojo = ">=25.6.1,<26"
+modular = ">=25.6.1,<26"
 numojo = { git = "https://github.com/shivasankarka/NuMojo.git", branch = "gpu_ndarray"}
 # numojo = { path = "/Users/shivasankar/Documents/Codes/NuMojo"}
 
