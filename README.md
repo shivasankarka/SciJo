@@ -39,9 +39,15 @@ SciJo is a scientific computing library written in pure Mojo that provides essen
 ### Method 1:
 1) Add to pixi.toml
 ```toml
+[workspace]
+preview = ["pixi-build"]
+
 [dependencies]
+modular = ">=25.6.1,<26"
 scijo = { git = "https://github.com/shivasankarka/SciJo.git", branch = "main"}
 ```
+Note that SciJo and NuMojo require the `modular` package. We will move to `mojo` only package in future if possible to reduce dependancy size.
+
 2) Install in pixi
 ```bash
 pixi install
