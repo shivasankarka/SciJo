@@ -97,7 +97,9 @@ fn test_fft_basic() raises:
     var np_arr1 = np.ones(4, dtype=np.complex64)
     var np_result1 = np.fft.fft(np_arr1)
 
-    compare_complex_arrays[nm.cf64](result1, np_result1, "FFT test: constant array")
+    compare_complex_arrays[nm.cf64](
+        result1, np_result1, "FFT test: constant array"
+    )
 
     # Test 2: Simple impulse [1, 0, 0, 0, 0, 0, 0, 0]
     var arr2 = ComplexNDArray[nm.cf64](NDArrayShape(8))
@@ -128,7 +130,9 @@ fn test_fft_sequential() raises:
     var np_arr = np.arange(4, dtype=np.complex64)
     var np_result = np.fft.fft(np_arr)
 
-    compare_complex_arrays[nm.cf64](result, np_result, "FFT test: sequential [0,1,2,3]")
+    compare_complex_arrays[nm.cf64](
+        result, np_result, "FFT test: sequential [0,1,2,3]"
+    )
 
 
 fn test_fft_complex_input() raises:
@@ -149,7 +153,9 @@ fn test_fft_complex_input() raises:
     np_arr.imag = imag
     var np_result = np.fft.fft(np_arr)
 
-    compare_complex_arrays[nm.cf64](result, np_result, "FFT test: complex input")
+    compare_complex_arrays[nm.cf64](
+        result, np_result, "FFT test: complex input"
+    )
 
 
 # make it larger later and test performance.
@@ -166,7 +172,9 @@ fn test_fft_larger_size() raises:
     var np_arr = np.arange(16, dtype=np.complex64) / 4
     var np_result = np.fft.fft(np_arr)
 
-    compare_complex_arrays[nm.cf64](result, np_result, "FFT test: 16 elements", atol=1e-5)
+    compare_complex_arrays[nm.cf64](
+        result, np_result, "FFT test: 16 elements", atol=1e-5
+    )
 
 
 fn test_ifft_basic() raises:
@@ -187,7 +195,9 @@ fn test_ifft_basic() raises:
     var np_fft = np.fft.fft(np_arr)
     var np_ifft = np.fft.ifft(np_fft)
 
-    compare_complex_arrays[nm.cf64](ifft_result, np_ifft, "IFFT test: roundtrip", atol=1e-5)
+    compare_complex_arrays[nm.cf64](
+        ifft_result, np_ifft, "IFFT test: roundtrip", atol=1e-5
+    )
 
 
 fn test_ifft_standalone() raises:
@@ -207,7 +217,9 @@ fn test_ifft_standalone() raises:
     np_arr.imag = imag
     var np_result = np.fft.ifft(np_arr)
 
-    compare_complex_arrays[nm.cf64](result, np_result, "IFFT test: frequency domain", atol=1e-5)
+    compare_complex_arrays[nm.cf64](
+        result, np_result, "IFFT test: frequency domain", atol=1e-5
+    )
 
 
 fn test_edge_cases() raises:
@@ -218,8 +230,12 @@ fn test_edge_cases() raises:
     arr1[nm.Item(0)] = ComplexSIMD[nm.cf64](5.0, 3.0)
     var result1 = fft[nm.cf64](arr1)
 
-    assert_almost_equal(Float64(result1._re[0]), 5.0, msg="Single element FFT real part")
-    assert_almost_equal(Float64(result1._im[0]), 3.0, msg="Single element FFT imag part")
+    assert_almost_equal(
+        Float64(result1._re[0]), 5.0, msg="Single element FFT real part"
+    )
+    assert_almost_equal(
+        Float64(result1._im[0]), 3.0, msg="Single element FFT imag part"
+    )
 
     var arr2 = ComplexNDArray[nm.cf64](NDArrayShape(2))
     arr2[nm.Item(0)] = ComplexSIMD[nm.cf64](1.0, 0.0)

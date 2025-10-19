@@ -8,6 +8,7 @@ from math import sin, cos
 from algorithm.functional import vectorize
 from sys import simd_width_of
 
+
 # Cooley-Tukey FFT algorithm
 fn fft[
     dtype: ComplexDType = ComplexDType.float64
@@ -73,7 +74,12 @@ fn fft[
     var result = ComplexNDArray[dtype](arr.shape)
 
     for k in range(half_size):
-        var angle = -2.0 * Constants.pi * Scalar[dtype._dtype](k) / Scalar[dtype._dtype](n)
+        var angle = (
+            -2.0
+            * Constants.pi
+            * Scalar[dtype._dtype](k)
+            / Scalar[dtype._dtype](n)
+        )
         var twiddle = ComplexSIMD[dtype](
             cos(angle).cast[dtype._dtype](), sin(angle).cast[dtype._dtype]()
         )
@@ -117,7 +123,12 @@ fn _ifft_unnormalized[
     var result = ComplexNDArray[dtype](arr.shape)
 
     for k in range(half_size):
-        var angle = 2.0 * Constants.pi * Scalar[dtype._dtype](k) / Scalar[dtype._dtype](n)
+        var angle = (
+            2.0
+            * Constants.pi
+            * Scalar[dtype._dtype](k)
+            / Scalar[dtype._dtype](n)
+        )
         var twiddle = ComplexSIMD[dtype](
             cos(angle).cast[dtype._dtype](), sin(angle).cast[dtype._dtype]()
         )
@@ -167,10 +178,7 @@ fn ifft[
     var inv_n = CScalar[dtype](1.0, 1.0) / CScalar[dtype](n, n)
     # result = result * inv_n # ! There's some mistakes in NuMojo mul overload.
     for i in range(n):
-        result.store[width=1](
-            i,
-            result.load[width=1](i) * inv_n
-        )
+        result.store[width=1](i, result.load[width=1](i) * inv_n)
     # TODO: Fix problem with vectorize skipping some elements
     # alias simd_width = simd_width_of[dtype._dtype]()
     # @parameter

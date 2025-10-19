@@ -13,6 +13,7 @@ fn check_is_close[
 ) raises:
     assert_true(scalar_1 - scalar_2 <= rtol, st)
 
+
 fn check[
     dtype: DType, //
 ](array: nm.NDArray[dtype], np_sol: PythonObject, st: String) raises:
