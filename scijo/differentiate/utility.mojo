@@ -1,13 +1,10 @@
 """
-SciJo - Scientific Computing Library for Mojo
-==============================================
-
 Differentiate Module - Utility Functions
 -----------------------------------------
 
 This module provides utility functions and data structures for numerical differentiation
-using finite difference methods. It implements central, forward, and backward finite 
-difference coefficient tables based on the formulas from Wikipedia's finite difference 
+using finite difference methods. It implements central, forward, and backward finite
+difference coefficient tables based on the formulas from Wikipedia's finite difference
 coefficient reference.
 
 Author: Shivasankar K.A
@@ -15,14 +12,14 @@ Version: 0.1.0
 Date: July 2025
 
 References:
-- Wikipedia: Finite difference coefficient 
+- Wikipedia: Finite difference coefficient
   https://en.wikipedia.org/wiki/Finite_difference_coefficient
 - Fornberg, B. (1988). Generation of Finite Difference Formulas on Arbitrarily
   Spaced Grids. Mathematics of Computation, 51(184), 699-706.
 """
 
 
-struct Result[dtype: DType]():
+struct DiffResult[dtype: DType](ImplicitlyCopyable, Writable):
     """Result structure for numerical differentiation operations.
 
     This structure encapsulates the results of derivative computations, including
@@ -59,7 +56,7 @@ struct Result[dtype: DType]():
         error: Scalar[dtype],
         nit: Int,
         nfev: Int,
-        x: Scalar[dtype] = 0.0,
+        x: Scalar[dtype],
     ):
         self.success = success
         self.df = df
@@ -70,42 +67,23 @@ struct Result[dtype: DType]():
 
     fn __str__(self) raises -> String:
         return String(
-            "DerivativeResult"
-            + "\n"
-            + "success={}"
-            + "\n"
-            + "df={}"
-            + "\n"
-            + "error={}"
-            + "\n"
-            + "nit={}"
-            + "\n"
-            + "nfev={}"
-            + "\n"
-            + "x={})"
+            "Result(success={}, df={}, error={:.2e}, nit={}, nfev={}, x={})"
         ).format(self.success, self.df, self.error, self.nit, self.nfev, self.x)
 
     fn write_to[W: Writer](self, mut writer: W):
         try:
             writer.write(
                 String(
-                    "\n"
-                    + "DerivativeResult:"
-                    + "\n"
-                    + "\t success = {}"
-                    + "\n"
-                    + "\t df = {}"
-                    + "\n"
-                    + "\t error = {}"
-                    + "\n"
-                    + "\t nit = {}"
-                    + "\n"
-                    + "\t nfev = {}"
-                    + "\n"
-                    + "\t x = {}"
-                    + "\n"
+                    "\n================================\n"
+                    + "Status      : {}\n"
+                    + "Derivative  : {}\n"
+                    + "Error Est.  : {}\n"
+                    + "Iterations  : {}\n"
+                    + "Func Evals  : {}\n"
+                    + "Point (x)   : {}\n"
+                    + "================================\n"
                 ).format(
-                    self.success,
+                    "SUCCESS" if self.success else "FAILED",
                     self.df,
                     self.error,
                     self.nit,
@@ -114,9 +92,7 @@ struct Result[dtype: DType]():
                 )
             )
         except e:
-            writer.write(
-                "Cannot convert DerivativeResult to string.\n" + String(e)
-            )
+            writer.write("Error displaying Result: " + String(e) + "\n")
 
 
 @parameter
@@ -142,12 +118,6 @@ fn generate_central_finite_difference_table[
         Dict[Int, List[Scalar[dtype]]] containing coefficient arrays indexed by
         accuracy order. Available orders: 2, 4, 6, 8 with corresponding
         truncation errors O(h²), O(h⁴), O(h⁶), O(h⁸).
-
-    Example:
-        ```mojo
-        alias coeffs = generate_central_finite_difference_table[DType.float64]()
-        var order2 = coeffs[2]  # [-0.5, 0.0, 0.5] for 3-point stencil
-        ```
 
     Note:
         Higher-order methods require more function evaluations but provide
@@ -194,7 +164,7 @@ fn generate_central_finite_difference_table[
         Scalar[dtype](-1.0 / 280.0),
     )
 
-    return coefficients
+    return coefficients^
 
 
 @parameter
@@ -220,12 +190,6 @@ fn generate_forward_finite_difference_table[
         Dict[Int, List[Scalar[dtype]]] containing coefficient arrays indexed by
         accuracy order. Available orders: 1, 2, 3, 4, 5, 6 with corresponding
         truncation errors O(h), O(h²), O(h³), O(h⁴), O(h⁵), O(h⁶).
-
-    Example:
-        ```mojo
-        alias coeffs = generate_forward_finite_difference_table[DType.float64]()
-        var order1 = coeffs[1]  # [-1, 1] for simple 2-point forward difference
-        ```
 
     Note:
         Forward differences are generally less accurate than central differences
@@ -282,7 +246,7 @@ fn generate_forward_finite_difference_table[
         Scalar[dtype](-1.0 / 6.0),
     )
 
-    return coefficients
+    return coefficients^
 
 
 @parameter
@@ -309,12 +273,6 @@ fn generate_backward_finite_difference_table[
         accuracy order. Available orders: 1, 2, 3, 4, 5, 6 with corresponding
         truncation errors O(h), O(h²), O(h³), O(h⁴), O(h⁵), O(h⁶).
 
-    Example:
-        ```mojo
-        alias coeffs = generate_backward_finite_difference_table[DType.float64]()
-        var order2 = coeffs[2]  # [0.5, -2, 1.5] for 3-point backward difference
-        ```
-
     Note:
         Backward differences are derived from forward differences by reversing
         the stencil and adjusting signs for odd derivatives. They provide the
@@ -333,12 +291,12 @@ fn generate_backward_finite_difference_table[
     )
 
     # Order 3 backward difference: [-1/3, 3/2, -3, 11/6] at points [-3, -2, -1, 0] (reversed from forward with sign change)
-    var coeff3 = List[Scalar[dtype]]()
-    coeff3.append(Scalar[dtype](-1.0 / 3.0))
-    coeff3.append(Scalar[dtype](3.0 / 2.0))
-    coeff3.append(Scalar[dtype](-3.0))
-    coeff3.append(Scalar[dtype](11.0 / 6.0))
-    coefficients[3] = coeff3
+    coefficients[3] = List[Scalar[dtype]](
+        Scalar[dtype](-1.0 / 3.0),
+        Scalar[dtype](3.0 / 2.0),
+        Scalar[dtype](-3.0),
+        Scalar[dtype](11.0 / 6.0),
+    )
 
     # Order 4 backward difference: [1/4, -4/3, 3, -4, 25/12] at points [-4, -3, -2, -1, 0] (reversed from forward with sign change)
     coefficients[4] = List[Scalar[dtype]](
@@ -370,4 +328,4 @@ fn generate_backward_finite_difference_table[
         Scalar[dtype](49.0 / 20.0),
     )
 
-    return coefficients
+    return coefficients^
