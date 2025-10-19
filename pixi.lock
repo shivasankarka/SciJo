@@ -163,7 +163,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/mypy_extensions-1.1.0-pyha770c72_0.conda
       - conda: https://prefix.dev/conda-forge/linux-64/ncurses-6.5-h2d0b736_3.conda
       - conda: https://prefix.dev/conda-forge/linux-64/nlohmann_json-3.12.0-h3f2d84a_0.conda
-      - conda: git+https://github.com/shivasankarka/numojo?branch=gpu_ndarray#5027ca3dd8c8269b564be835e3476bc9a24ab962
+      - conda: git+https://github.com/shivasankarka/numojo?branch=prev0.8#45f076c0d4ec3606953817338410f30eb81543da
         subdir: linux-64
       - conda: https://prefix.dev/conda-forge/linux-64/numpy-2.3.3-py313hf6604e3_0.conda
       - conda: https://prefix.dev/conda-forge/linux-64/openjpeg-2.5.3-h55fea9a_1.conda
@@ -407,7 +407,7 @@ environments:
       - conda: https://prefix.dev/conda-forge/noarch/mypy_extensions-1.1.0-pyha770c72_0.conda
       - conda: https://prefix.dev/conda-forge/osx-arm64/ncurses-6.5-h5e97a16_3.conda
       - conda: https://prefix.dev/conda-forge/osx-arm64/nlohmann_json-3.12.0-ha1acc90_0.conda
-      - conda: git+https://github.com/shivasankarka/numojo?branch=gpu_ndarray#5027ca3dd8c8269b564be835e3476bc9a24ab962
+      - conda: git+https://github.com/shivasankarka/numojo?branch=prev0.8#45f076c0d4ec3606953817338410f30eb81543da
         subdir: osx-arm64
       - conda: https://prefix.dev/conda-forge/osx-arm64/numpy-2.3.3-py313h9771d21_0.conda
       - conda: https://prefix.dev/conda-forge/osx-arm64/openjpeg-2.5.3-h889cd5d_1.conda
@@ -3760,21 +3760,21 @@ packages:
   license_family: MIT
   size: 136487
   timestamp: 1744445244122
-- conda: git+https://github.com/shivasankarka/numojo?branch=gpu_ndarray#5027ca3dd8c8269b564be835e3476bc9a24ab962
+- conda: git+https://github.com/shivasankarka/numojo?branch=prev0.8#45f076c0d4ec3606953817338410f30eb81543da
   name: numojo
   version: 0.7.0
   build: hbf21a9e_0
   subdir: linux-64
   depends:
-  - modular >=25.6.0,<26
+  - modular >=25.6.1,<26
   channel: null
-- conda: git+https://github.com/shivasankarka/numojo?branch=gpu_ndarray#5027ca3dd8c8269b564be835e3476bc9a24ab962
+- conda: git+https://github.com/shivasankarka/numojo?branch=prev0.8#45f076c0d4ec3606953817338410f30eb81543da
   name: numojo
   version: 0.7.0
   build: hbf21a9e_0
   subdir: osx-arm64
   depends:
-  - modular >=25.6.0,<26
+  - modular >=25.6.1,<26
   channel: null
 - conda: https://prefix.dev/conda-forge/linux-64/numpy-2.3.3-py313hf6604e3_0.conda
   sha256: 88d45c6dbedabbc8ebb19555bb3d04b5e2846ae8a7dfc2c0204b54f5f6efaef7
