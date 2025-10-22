@@ -10,7 +10,7 @@ preview = ["pixi-build"]
 
 [package]
 name = "scijo"
-version = "0.1.0"
+version = "0.2.0"
 
 [package.build]
 backend = { name = "pixi-build-mojo", version = "0.*"}
