@@ -19,7 +19,7 @@ References:
 - Wikipedia: Finite difference coefficient
 """
 
-from .numojo.prelude import *
+from numojo.prelude import *
 
 from .utility import (
     DiffResult,
@@ -620,7 +620,7 @@ fn _derivative_backward_difference[
         central_diff = 0.0
         var j: Int = 0
         for ref coeff in coefficients:
-            central_diff += coeff * func(x0 - step * -j, args)
+            central_diff += coeff * func(x0 + step * j, args)
             j += 1
         central_diff /= step
         if i > 0:

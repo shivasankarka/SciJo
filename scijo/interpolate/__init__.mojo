@@ -1,1 +1,1 @@
-from .interpolate import interp1d
+from .interpolate import interp1d, LinearInterpolator

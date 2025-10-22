@@ -234,7 +234,7 @@ fn interp1d[
             var y = x * x  # [0, 1, 4, 9, ..., 81]
 
             # Create interpolation function
-            var f = sj.interp1d(x, y)
+            var f = interp1d(x, y)
 
             # Interpolate single value
             var result = f(3.5)  # Should be approximately 12.25
@@ -246,7 +246,7 @@ fn interp1d[
             print("Interpolated values:", yi)
 
             # Create interpolator with bounds handling
-            var f_fill = sj.interp1d(x, y, bounds_error=False, fill_value=Scalar[sj.f64](-999.0))
+            var f_fill = interp1d(x, y, bounds_error=False, fill_value=Scalar[sj.f64](-999.0))
             var out_of_bounds = f_fill(15.0)  # Returns -999.0
             print("Out of bounds value:", out_of_bounds)
         ```
@@ -302,10 +302,10 @@ fn interp1d[
             var xi = nm.arange[sj.f64](0.5, 4.0, 0.5)  # [0.5, 1.5, 2.5, 3.5]
 
             # Interpolate with clamping at boundaries
-            var yi = sj.interp1d(xi, x, y, type="linear", fill_method="interpolate")
+            var yi = interp1d(xi, x, y, type="linear", fill_method="interpolate")
 
             # Interpolate with extrapolation beyond boundaries
-            var ye = sj.interp1d(xi, x, y, type="linear", fill_method="extrapolate")
+            var ye = interp1d(xi, x, y, type="linear", fill_method="extrapolate")
         ```
     """
     _validate_interpolation_input(x, y)
