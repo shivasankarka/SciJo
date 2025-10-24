@@ -1,3 +1,5 @@
+# TODO: check if we are using the right tolerance conditions in all methods.
+
 fn root_scalar[
     dtype: DType,
     f: fn[dtype: DType] (
@@ -38,17 +40,20 @@ fn root_scalar[
 
     @parameter
     if method == "newton" and fprime:
-            return _newton_raphson[dtype, f, fprime.value()](args, x0, xtol, rtol, maxiter)
+            return newton[dtype, f, fprime.value()](args, x0, xtol, rtol, maxiter)
     elif method == "bisect":
         if not bracket:
             raise Error("Bracket must be provided for bisection method.")
-        else:
-            return _bisect[dtype, f](args, bracket.value(), xtol, rtol, maxiter)
+        return bisect[dtype, f](args, bracket.value(), xtol, rtol, maxiter)
+    elif method == "secant":
+        if not (x0 and x1):
+            raise Error("Initial guesses x0 and x1 must be provided for secant method.")
+        return secant[dtype, f](args, x0.value(), x1.value(), xtol, rtol, maxiter)
     else:
         raise Error("Unsupported method: " + String(method))
 
 
-fn _newton_raphson[
+fn newton[
     dtype: DType,
     f: fn[dtype: DType] (
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
@@ -105,7 +110,7 @@ fn _newton_raphson[
     return xn
 
 
-fn _bisect[
+fn bisect[
     dtype: DType,
     f: fn[dtype: DType] (
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
@@ -134,13 +139,11 @@ fn _bisect[
     var fa = f(a, args)
     var fb = f(b, args)
 
-    # If either endpoint is already a root, return it
     if fa == 0:
         return a
     if fb == 0:
         return b
 
-    # Ensure the bracket actually brackets a root
     if fa * fb > 0:
         raise Error(
             "f(a) and f(b) must have opposite signs (bracket does not enclose a"
@@ -151,25 +154,74 @@ fn _bisect[
         var c = (a + b) / 2
         var fc = f(c, args)
 
-        # If exact root found
         if fc == 0:
             return c
 
-        # Termination based on interval size
         var tol_x = max(xtol, rtol * abs(c))
         var half_width = (b - a) / 2
         if half_width <= tol_x:
             return c
 
-        # Decide which subinterval contains the root
         if fa * fc < 0:
             # Root is in [a, c]
             b = c
-            # fb = fc
         else:
             # Root is in [c, b]
             a = c
-            # fa = fc
 
-    # Return midpoint if max iterations reached
     return (a + b) / 2
+
+fn secant[
+    dtype: DType,
+    f: fn[dtype: DType] (
+        x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
+    ) -> Scalar[dtype],
+](
+    args: Optional[List[Scalar[dtype]]],
+    x0: Scalar[dtype],
+    x1: Scalar[dtype],
+    xtol: Scalar[dtype] = 1e-8,
+    rtol: Scalar[dtype] = 1e-8,
+    maxiter: Int = 100,
+) -> Scalar[dtype]:
+    """
+    Secant method for finding a root.
+
+    Parameters:
+        dtype: Data type of the scalar function.
+        f: Function for which to find the root.
+
+    Args:
+        args: Optional additional arguments for the function.
+        x0: First initial guess.
+        x1: Second initial guess.
+        xtol: Absolute tolerance for convergence.
+        rtol: Relative tolerance for convergence.
+        maxiter: Maximum number of iterations.
+
+    Returns:
+        Approximation of the root of the function.
+    """
+    var a: Scalar[dtype] = x0
+    var b: Scalar[dtype] = x1
+
+    for _ in range(maxiter):
+        var f0 = f[dtype](a, args)
+        var f1 = f[dtype](b, args)
+
+        var xn = b - (f1 * (b - a)) / (f1 - f0)
+
+        var fxn = f[dtype](xn, args)
+        var tol_x = max(xtol, rtol * abs(xn))
+        var tol_f = max(xtol, rtol * abs(fxn))
+
+        if abs(fxn) <= tol_f:
+            return xn
+
+        if abs(xn - b) <= tol_x:
+            return xn
+
+        b = xn
+        a = x1
+
+    return x1
