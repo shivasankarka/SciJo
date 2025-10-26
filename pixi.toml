@@ -35,6 +35,7 @@ numojo = { git = "https://github.com/shivasankarka/NuMojo.git", branch = "prev0.
 # These deps are needed for local development, mojo test, language server, etc
 modular = ">=25.6.1,<26"
 numojo = { git = "https://github.com/shivasankarka/NuMojo.git", branch = "prev0.8"}
+python = ">=3.13.9,<3.14"
 
 [tasks]
 format = "mojo format ./"
