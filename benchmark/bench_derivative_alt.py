@@ -25,3 +25,4 @@ t1 = time.perf_counter()
 gc.enable()
 total = t1 - t0
 print("Avg time per call: ", total / N)
+# this result is to be compared with mojo's `benchmark.run[numeric_derivative_1point[ord2]]()` since we are differentiating at only one point.

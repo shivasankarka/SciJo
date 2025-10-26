@@ -41,3 +41,5 @@ if __name__ == "__main__":
             lambda x: numeric_derivative(x, order=ord), xs, repeat=repeat
         )
         print(f"  Numeric derivative (scipy), order={ord} : {numeric_time:.6f} s")
+
+    # this result is to be compared with mojo's `benchmark.run[numeric_derivative_npoints[ord2]]()` since we are differentiating at many points.
