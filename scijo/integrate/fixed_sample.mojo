@@ -296,3 +296,68 @@ fn simpson[
         integral += (y_n1 + y_n) * dx_last * 0.5
 
     return integral
+
+# TODO: fix the loop implementation.
+fn romb[dtype: DType](y: NDArray[dtype], dx: Scalar[dtype] = 1.0, axis: Int = -1) raises -> Scalar[dtype]:
+    """
+    Integrate along the given axis using Romberg integration. Integrates y(x) along each 1d slice on the given axis, computing ∫ y(x) dx. Uses evenly spaced points with spacing dx.
+
+    Parameters:
+        dtype: The data type of the input arrays and the output scalar.
+               Must be a floating-point type.
+
+    Args:
+        y: Input array to integrate. Must be 1-D for this implementation.
+        dx: The spacing between sample points. The default is 1.0.
+        axis: The axis along which to integrate. Currently only supports 1-D arrays,
+              so this parameter is ignored.
+
+    Returns:
+        Scalar[dtype]: Definite integral of y as approximated by Romberg integration.
+    """
+    var maxiter: Int = 10
+    if y.ndim != 1:
+        raise Error(
+            ShapeError(
+                message=String(
+                    "Expected y to be 1-D, received ndim={}."
+                ).format(y.ndim),
+                suggestion="Pass a 1-D NDArray for y (e.g. shape (N,)). Only 1-D arrays are supported currently.",
+                location="romb(y, dx=1.0)",
+            )
+        )
+
+    var step: Scalar[dtype] = dx
+    # var Rone: List[Scalar[dtype]] = List[Scalar[dtype]](capacity= maxiter)
+    # var Rtwo: List[Scalar[dtype]] = List[Scalar[dtype]](capacity= maxiter)
+    var Rone: NDArray[dtype] = nm.zeros[dtype](NDArrayShape(maxiter))
+    var Rtwo: NDArray[dtype] = nm.zeros[dtype](NDArrayShape(maxiter))
+
+    var R1: UnsafePointer[Scalar[dtype]] = Rone.unsafe_ptr()
+    var R2: UnsafePointer[Scalar[dtype]] = Rtwo.unsafe_ptr()
+
+    R1[0] = 0.5 * dx * (y.item(0) + y.item(y.size - 1))
+
+    for i in range(1, maxiter):
+        step /= 2.0
+        var c: Scalar[dtype] = 0
+        var ep: Int = 2 * (i - 1)
+        for j in range(1, ep + 1):
+            c += y.item(Int(2 * j - 1))
+        R2[0] = step * c + 0.5 * R1[0]
+
+        for j in range(1, i + 1):
+            var const: Scalar[dtype] = Scalar[dtype](4.0)**j
+            R2[j] = (const  * R2[j - 1] - R1[j - 1]) / (const - 1.0)
+
+        if i > 1 and abs(R1[i-1] - R2[i]) < Scalar[dtype](1e-6):
+            return R2[i]
+
+        var temp: UnsafePointer[Scalar[dtype]] = R1
+        R1 = R2
+        R2 = temp
+
+    print("Initial R1: ", Rone)
+    print("Initial R2: ", Rtwo)
+
+    return Rone.item(maxiter - 1)
