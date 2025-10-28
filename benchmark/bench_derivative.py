@@ -7,12 +7,16 @@ from scipy.differentiate import derivative
 coeffs = [i + 1 for i in range(10)]
 
 
-def poly_func(x):
-    return sum(c * x**i for i, c in enumerate(coeffs))
+# def poly_func(x):
+#     return sum(c * x**i for i, c in enumerate(coeffs))
+
+
+def sin_func(x):
+    return np.sin(x)
 
 
 def numeric_derivative(x, order=8):
-    return derivative(poly_func, x, order=order)
+    return derivative(sin_func, x, order=order)
 
 
 def benchmark(func, points, repeat=5):
@@ -29,11 +33,13 @@ def benchmark(func, points, repeat=5):
 if __name__ == "__main__":
     # print("At x0 = 1.0: ", numeric_derivative(1.0, order=4))
 
-    xs = np.linspace(-1.0, 1.0, 20)
+    # xs = np.linspace(-1.0, 1.0, 20)
+    xs = [1.0]
     orders = [8]  # only one for comparision.
     repeat = 10
 
-    _ = poly_func(1.0)
+    # _ = poly_func(1.0)
+    _ = sin_func(1.0)
     _ = numeric_derivative(1.0, order=6)
 
     for ord in orders:
