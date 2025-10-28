@@ -41,7 +41,7 @@ fn jacobian[
         except:
             print("Error in computing Jacobian column for j =", j)
 
-    parallelize[closure](n)
+    parallelize[closure](n, num_workers=n)
 
     # naive algorithm
     # for j in range(m):

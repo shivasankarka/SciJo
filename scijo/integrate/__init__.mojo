@@ -1,2 +1,2 @@
 from .quad import quad
-from .fixed_sample import trapezoid, simpson
+from .fixed_sample import trapezoid, simpson, romb
