@@ -1,3 +1,6 @@
+"""
+Module for computing the Jacobian matrix of a vector-valued function using finite differences.
+"""
 from numojo.routines.creation import zeros, full
 from numojo.core import NDArray, Shape
 
