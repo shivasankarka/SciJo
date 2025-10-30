@@ -10,7 +10,7 @@ preview = ["pixi-build"]
 
 [package]
 name = "scijo"
-version = "0.1.0"
+version = "0.2.0"
 
 [package.build]
 backend = { name = "pixi-build-mojo", version = "0.*"}
@@ -35,6 +35,7 @@ numojo = { git = "https://github.com/shivasankarka/NuMojo.git", branch = "prev0.
 # These deps are needed for local development, mojo test, language server, etc
 modular = ">=25.6.1,<26"
 numojo = { git = "https://github.com/shivasankarka/NuMojo.git", branch = "prev0.8"}
+python = ">=3.13.9,<3.14"
 
 [tasks]
 format = "mojo format ./"
