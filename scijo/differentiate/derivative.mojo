@@ -1,22 +1,20 @@
-"""
-Differentiation Module - Numerical Differentiation
-------------------------------------------------
-This module implements numerical differentiation using finite difference methods.
-It provides functions to compute first-order derivatives of scalar functions using
-central, forward, and backward finite difference schemes with adaptive step sizing
-for improved accuracy.
+# ===----------------------------------------------------------------------=== #
+# Scijo: Differentiate - Derivative
+# Distributed under the Apache 2.0 License with LLVM Exceptions.
+# See LICENSE and the LLVM License for more information.
+# https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo/blob/main/LICENSE
+# https://llvm.org/LICENSE.txt
+#  ===----------------------------------------------------------------------=== #
+"""Differentiate Module - Numerical Differentiation (scijo.differentiate.derivative)
 
-The implementation is designed to mimic SciPy's derivative function behavior.
-
-Author: Shivasankar K.A
-Version: 0.1.0
-Date: July 2025
+Numerical differentiation using finite difference methods. Provides functions to
+compute first-order derivatives of scalar functions using central, forward, and
+backward finite difference schemes with adaptive step sizing.
 
 References:
-- Fornberg, B. (1988). Generation of Finite Difference Formulas on Arbitrarily
-  Spaced Grids. Mathematics of Computation, 51(184), 699-706.
-- Scipy.derivative documentation
-- Wikipedia: Finite difference coefficient
+    - SciPy derivative documentation.
+    - Wikipedia: Finite difference coefficient
+      https://en.wikipedia.org/wiki/Finite_difference_coefficient
 """
 
 from numojo.prelude import *
@@ -29,11 +27,9 @@ from .utility import (
 )
 
 
-# TODO: add a compile time function to calculate order based on the step_direction.
-# ! One test fails when we run forward diff at order 3, check it.
 fn derivative[
     dtype: DType,
-    func: fn[dtype: DType] (
+    func: fn[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
     ) -> Scalar[dtype],
     *,
@@ -41,118 +37,78 @@ fn derivative[
 ](
     x0: Scalar[dtype],
     args: Optional[List[Scalar[dtype]]] = None,
-    tolerance: Dict[String, Scalar[dtype]] = {"atol": 1e-6, "rtol": 1e-6},
+    tolerances: Dict[String, Scalar[dtype]] = {"atol": 1e-6, "rtol": 1e-6},
+    max_iter: Int = 10,
     order: Int = 8,
     initial_step: Scalar[dtype] = 0.5,
     step_factor: Scalar[dtype] = 2.0,
-    max_iter: Int = 10,
-) raises -> DiffResult[dtype]:
+) raises -> DiffResult[dtype] where dtype.is_floating_point():
     """Computes the first derivative of a scalar function using finite differences.
 
-    This function provides a unified interface for computing first-order derivatives
-    using different finite difference methods. It automatically selects the appropriate
-    method based on the step_direction parameter and uses Richardson extrapolation
-    with adaptive step sizing for improved accuracy.
-
-    The implementation is designed to be compatible with SciPy's derivative function
-    while providing additional control over the finite difference method and
-    convergence parameters. It supports central, forward, and backward differences
-    with various accuracy orders.
+    Provides a unified interface for computing first-order derivatives using
+    central, forward, or backward finite difference methods with adaptive step
+    size reduction for improved accuracy.
 
     Parameters:
-        dtype: The datatype.
+        dtype: The floating-point data type.
         func: Function to differentiate with signature fn(x, args) -> Scalar[dtype].
-        step_direction: Direction of finite difference (central = 0, forward = 1, backward = -1) (keyword-only parameter).
+        step_direction: Direction of finite difference
+            (central=0, forward=1, backward=-1). Keyword-only.
 
     Args:
         x0: Point at which to evaluate the derivative.
         args: Optional arguments to pass to the function.
-        tolerance: Convergence tolerances with "atol" (absolute) and "rtol" (relative) keys.
-        order: Accuracy order for finite differences. Valid ranges depend on method.
-               Central differences support orders: 2, 4, 6, 8.
-               Forward/Backward differences support orders: 1, 2, 3, 4, 5, 6.
+        tolerances: Convergence tolerances with "atol" (absolute) and "rtol" (relative) keys.
+        max_iter: Maximum number of iterations.
+        order: Accuracy order for finite differences.
+            Central: {2, 4, 6, 8}. Forward/Backward: {1, 2, 3, 4, 5, 6}.
         initial_step: Initial step size for finite differences.
-        step_factor: Factor by which to reduce step size in each iteration (typically 2.0).
-        max_iter: Maximum number of Richardson extrapolation iterations.
+        step_factor: Factor by which to reduce step size in each iteration (must be > 1).
 
     Returns:
-        DiffResult[dtype] containing:
-        - success: Whether the computation converged
-        - df: The computed derivative value
-        - error: Estimated error or final convergence criterion
-        - nit: Number of iterations performed
-        - nfev: Total number of function evaluations
+        DiffResult[dtype] containing the derivative, convergence status,
+        estimated error, iteration count, and function evaluation count.
 
     Raises:
-        Error: If dtype is not a floating-point type.
-        Error: If step_direction is not 0, 1, or -1.
+        Error: If step_direction is not in {-1, 0, 1}.
         Error: If the specified order is not supported for the chosen method.
-
-
-    Example:
-        ```mojo
-        from scijo.differentiate.derivative import derivative
-        fn square[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
-            return x * x  # f(x) = x²
-
-        # Compute derivative f'(2) = 2*2 = 4
-        var DiffResult = derivative[DType.float64, square, step_direction=0](
-            x0=2.0,
-            args=None,
-            order=4,
-        )
-        # DiffResult.df should be approximately 4.0
-        ```
-
-    Note:
-        - step_direction=0: Central differences (default, highest accuracy)
-        - step_direction=1: Forward differences (for left boundaries)
-        - step_direction=-1: Backward differences (for right boundaries)
-
-        Central differences generally provide the best accuracy but require
-        function evaluations on both sides of x0. Use forward/backward
-        differences at domain boundaries or when directional constraints exist.
     """
-    constrained[
-        dtype.is_floating_point(),
-        msg="SciJo Derivative: Data type must be floating-point for numerical differentiation.\n  Floating-point types are required to handle fractional step sizes and avoid\n  precision loss during finite difference computations.\n",
-    ]()
 
     @parameter
     if step_direction == 0:
-        alias first_order_coefficients = generate_central_finite_difference_table[
+        comptime first_order_coefficients = generate_central_finite_difference_table[
             dtype
         ]()
         return _derivative_central_difference[dtype, func](
             x0,
             args,
-            tolerance,
-            order,
-            initial_step,
-            step_factor,
-            max_iter,
+            tolerances=tolerances,
+            order=order,
+            initial_step=initial_step,
+            step_factor=step_factor,
+            max_iter=max_iter,
         )
     elif step_direction == 1:
-        alias first_order_coefficients = generate_forward_finite_difference_table[
+        comptime first_order_coefficients = generate_forward_finite_difference_table[
             dtype
         ]()
         return _derivative_forward_difference[dtype, func](
             x0,
             args,
-            tolerance,
+            tolerances,
             order,
             initial_step,
             step_factor,
             max_iter,
         )
     elif step_direction == -1:
-        alias first_order_coefficients = generate_backward_finite_difference_table[
+        comptime first_order_coefficients = generate_backward_finite_difference_table[
             dtype
         ]()
         return _derivative_backward_difference[dtype, func](
             x0,
             args,
-            tolerance,
+            tolerances,
             order,
             initial_step,
             step_factor,
@@ -174,13 +130,13 @@ fn derivative[
 
 fn _derivative_central_difference[
     dtype: DType,
-    func: fn[dtype: DType] (
+    func: fn[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
     ) -> Scalar[dtype],
 ](
     x0: Scalar[dtype],
     args: Optional[List[Scalar[dtype]]],
-    tolerance: Dict[String, Scalar[dtype]] = {"atol": 1e-6, "rtol": 1e-6},
+    tolerances: Dict[String, Scalar[dtype]] = {"atol": 1e-6, "rtol": 1e-6},
     order: Int = 8,
     initial_step: Scalar[dtype] = 0.5,
     step_factor: Scalar[dtype] = 2.0,
@@ -188,69 +144,57 @@ fn _derivative_central_difference[
 ) raises -> DiffResult[dtype]:
     """Computes first derivative using central finite difference method.
 
-    This function implements the central finite difference method for computing
-    first-order derivatives. It uses symmetric stencils around the evaluation
-    point and employs Richardson extrapolation with adaptive step size reduction
-    to achieve high accuracy.
-
-    The central difference method provides the highest accuracy for smooth functions
-    when function evaluations are available on both sides of the evaluation point.
-    The algorithm iteratively refines the step size until convergence is achieved
-    within the specified tolerance.
+    Uses symmetric stencils around the evaluation point with adaptive step size
+    reduction until convergence within specified tolerances.
 
     Parameters:
-        dtype: The floating-point data type (e.g., DType.float32, DType.float64).
+        dtype: The floating-point data type.
         func: Function to differentiate with signature fn(x, args) -> Scalar[dtype].
 
     Args:
         x0: Point at which to evaluate the derivative.
         args: Optional arguments to pass to the function.
-        tolerance: Convergence tolerances with "atol" and "rtol" keys.
-        order: Accuracy order (2, 4, 6, or 8). Higher orders use more function evaluations.
+        tolerances: Convergence tolerances with "atol" and "rtol" keys.
+        order: Accuracy order (2, 4, 6, or 8).
         initial_step: Initial step size for finite differences.
         step_factor: Factor by which to reduce step size in each iteration.
-        max_iter: Maximum number of Richardson extrapolation iterations.
+        max_iter: Maximum number of iterations.
 
     Returns:
-        DiffResult[dtype] containing the computed derivative, convergence information,
-        and diagnostic data including number of iterations and function evaluations.
+        DiffResult[dtype] containing the derivative and convergence information.
 
     Raises:
-        Error: If the specified order is not supported (must be 2, 4, 6, or 8).
-
-    Note:
-        Central differences require function evaluations on both sides of x0.
-        For boundary points or when this is not possible, use forward or
-        backward differences instead.
+        Error: If the specified order is not in {2, 4, 6, 8}.
+        Error: If tolerances, step size, step factor, or max_iter are invalid.
     """
-    alias first_order_coefficients_compiletime: Dict[
+    comptime first_order_coefficients_compiletime: Dict[
         Int, List[Scalar[dtype]]
     ] = generate_central_finite_difference_table[dtype]()
     var first_order_coefficients = materialize[
         first_order_coefficients_compiletime
     ]()
 
-    var central_diff: Scalar[dtype] = 0.0
+    var diff_estimate: Scalar[dtype] = 0.0
     var prev_diff: Scalar[dtype] = 0.0
-    var atol: Scalar[dtype] = tolerance["atol"]
-    var rtol: Scalar[dtype] = tolerance["rtol"]
+    var atol: Scalar[dtype] = tolerances["atol"]
+    var rtol: Scalar[dtype] = tolerances["rtol"]
 
     if atol < 0:
         raise Error(
-            "SciJo Derivative (Central): Invalid absolute tolerance.\n"
+            "SciJo Derivative (Central): Invalid absolute tolerances.\n"
             "  Expected: atol ≥ 0\n"
             "  Got: atol = "
             + String(atol)
-            + "\n  Note: Absolute tolerance must be non-negative for"
+            + "\n  Note: Absolute tolerances must be non-negative for"
             " convergence testing."
         )
     if rtol < 0:
         raise Error(
-            "SciJo Derivative (Central): Invalid relative tolerance.\n"
+            "SciJo Derivative (Central): Invalid relative tolerances.\n"
             "  Expected: rtol ≥ 0\n"
             "  Got: rtol = "
             + String(rtol)
-            + "\n  Note: Relative tolerance must be non-negative for"
+            + "\n  Note: Relative tolerances must be non-negative for"
             " convergence testing."
         )
 
@@ -299,33 +243,33 @@ fn _derivative_central_difference[
     var step: Scalar[dtype] = initial_step
 
     for i in range(max_iter):
-        central_diff = 0.0
+        diff_estimate = 0.0
         var j: Int = 0
         for ref coeff in coefficients:
-            central_diff += coeff * func(
-                x0 + step * (j - len(coefficients) // 2), args
+            diff_estimate += coeff * func(
+                x0 + step * Scalar[dtype](j - len(coefficients) // 2), args
             )
             j += 1
-        central_diff /= step
+        diff_estimate /= step
         if i > 0:
-            var diff_change = abs(central_diff - prev_diff)
-            var tolerance_threshold = atol + rtol * abs(central_diff)
+            var diff_change = abs(diff_estimate - prev_diff)
+            var tolerance_threshold = atol + rtol * abs(diff_estimate)
             if diff_change < tolerance_threshold:
                 return DiffResult[dtype](
                     success=True,
-                    df=central_diff,
+                    df=diff_estimate,
                     error=diff_change,
                     nit=i + 1,
                     nfev=(i + 1) * len(coefficients),
                     x=x0,
                 )
 
-        prev_diff = central_diff
+        prev_diff = diff_estimate
         step /= step_factor
 
     return DiffResult[dtype](
         success=False,
-        df=central_diff,
+        df=diff_estimate,
         error=0.0,
         nit=max_iter,
         nfev=max_iter * len(coefficients),
@@ -335,13 +279,13 @@ fn _derivative_central_difference[
 
 fn _derivative_forward_difference[
     dtype: DType,
-    func: fn[dtype: DType] (
+    func: fn[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
     ) -> Scalar[dtype],
 ](
     x0: Scalar[dtype],
     args: Optional[List[Scalar[dtype]]],
-    tolerance: Dict[String, Scalar[dtype]] = {"atol": 1e-6, "rtol": 1e-6},
+    tolerances: Dict[String, Scalar[dtype]] = {"atol": 1e-6, "rtol": 1e-6},
     order: Int = 8,
     initial_step: Scalar[dtype] = 0.5,
     step_factor: Scalar[dtype] = 2.0,
@@ -349,69 +293,58 @@ fn _derivative_forward_difference[
 ) raises -> DiffResult[dtype]:
     """Computes first derivative using forward finite difference method.
 
-    This function implements the forward finite difference method for computing
-    first-order derivatives. It uses function evaluations only at the evaluation
-    point and points in the forward direction, making it suitable for boundary
-    conditions or when backward evaluations are not available.
-
-    The forward difference method is essential at the left boundary of domains
-    or when the function is undefined for x < x0. While generally less accurate
-    than central differences, higher-order forward differences can achieve
-    comparable accuracy with more function evaluations.
+    Uses one-sided stencils in the forward direction with adaptive step size
+    reduction. Suitable for left boundary conditions or when backward evaluations
+    are not available.
 
     Parameters:
-        dtype: The floating-point data type (e.g., DType.float32, DType.float64).
+        dtype: The floating-point data type.
         func: Function to differentiate with signature fn(x, args) -> Scalar[dtype].
 
     Args:
         x0: Point at which to evaluate the derivative.
         args: Optional arguments to pass to the function.
-        tolerance: Convergence tolerances with "atol" and "rtol" keys.
-        order: Accuracy order (1, 2, 3, 4, 5, or 6). Higher orders use more function evaluations.
+        tolerances: Convergence tolerances with "atol" and "rtol" keys.
+        order: Accuracy order (1, 2, 3, 4, 5, or 6).
         initial_step: Initial step size for finite differences.
         step_factor: Factor by which to reduce step size in each iteration.
-        max_iter: Maximum number of Richardson extrapolation iterations.
+        max_iter: Maximum number of iterations.
 
     Returns:
-        DiffResult[dtype] containing the computed derivative, convergence information,
-        and diagnostic data including number of iterations and function evaluations.
+        DiffResult[dtype] containing the derivative and convergence information.
 
     Raises:
-        Error: If the specified order is not supported (must be 1, 2, 3, 4, 5, or 6).
-
-    Note:
-        Forward differences only require function evaluations at x0 and x0+h, x0+2h, etc.
-        This makes them ideal for boundary value problems or when the function
-        domain has constraints.
+        Error: If the specified order is not in {1, 2, 3, 4, 5, 6}.
+        Error: If tolerances, step size, step factor, or max_iter are invalid.
     """
-    alias first_order_coefficients_compiletime: Dict[
+    comptime first_order_coefficients_compiletime: Dict[
         Int, List[Scalar[dtype]]
     ] = generate_forward_finite_difference_table[dtype]()
     var first_order_coefficients = materialize[
         first_order_coefficients_compiletime
     ]()
 
-    var central_diff: Scalar[dtype] = 0.0
+    var diff_estimate: Scalar[dtype] = 0.0
     var prev_diff: Scalar[dtype] = 0.0
-    var atol: Scalar[dtype] = tolerance["atol"]
-    var rtol: Scalar[dtype] = tolerance["rtol"]
+    var atol: Scalar[dtype] = tolerances["atol"]
+    var rtol: Scalar[dtype] = tolerances["rtol"]
 
     if atol < 0:
         raise Error(
-            "SciJo Derivative (Forward): Invalid absolute tolerance.\n"
+            "SciJo Derivative (Forward): Invalid absolute tolerances.\n"
             "  Expected: atol ≥ 0\n"
             "  Got: atol = "
             + String(atol)
-            + "\n  Note: Absolute tolerance must be non-negative for"
+            + "\n  Note: Absolute tolerances must be non-negative for"
             " convergence testing."
         )
     if rtol < 0:
         raise Error(
-            "SciJo Derivative (Forward): Invalid relative tolerance.\n"
+            "SciJo Derivative (Forward): Invalid relative tolerances.\n"
             "  Expected: rtol ≥ 0\n"
             "  Got: rtol = "
             + String(rtol)
-            + "\n  Note: Relative tolerance must be non-negative for"
+            + "\n  Note: Relative tolerances must be non-negative for"
             " convergence testing."
         )
 
@@ -459,31 +392,31 @@ fn _derivative_forward_difference[
     var step: Scalar[dtype] = initial_step
 
     for i in range(max_iter):
-        central_diff = 0.0
+        diff_estimate = 0.0
         var j: Int = 0
         for ref coeff in coefficients:
-            central_diff += coeff * func(x0 + step * (j), args)
+            diff_estimate += coeff * func(x0 + step * Scalar[dtype](j), args)
             j += 1
-        central_diff /= step
+        diff_estimate /= step
         if i > 0:
-            var diff_change = abs(central_diff - prev_diff)
-            var tolerance_threshold = atol + rtol * abs(central_diff)
+            var diff_change = abs(diff_estimate - prev_diff)
+            var tolerance_threshold = atol + rtol * abs(diff_estimate)
             if diff_change < tolerance_threshold:
                 return DiffResult[dtype](
                     success=True,
-                    df=central_diff,
+                    df=diff_estimate,
                     error=diff_change,
                     nit=i + 1,
                     nfev=(i + 1) * len(coefficients),
                     x=x0,
                 )
 
-        prev_diff = central_diff
+        prev_diff = diff_estimate
         step /= step_factor
 
     return DiffResult[dtype](
         success=False,
-        df=central_diff,
+        df=diff_estimate,
         error=0.0,
         nit=max_iter,
         nfev=max_iter * len(coefficients),
@@ -493,13 +426,13 @@ fn _derivative_forward_difference[
 
 fn _derivative_backward_difference[
     dtype: DType,
-    func: fn[dtype: DType] (
+    func: fn[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
     ) -> Scalar[dtype],
 ](
     x0: Scalar[dtype],
     args: Optional[List[Scalar[dtype]]],
-    tolerance: Dict[String, Scalar[dtype]] = {"atol": 1e-6, "rtol": 1e-6},
+    tolerances: Dict[String, Scalar[dtype]] = {"atol": 1e-6, "rtol": 1e-6},
     order: Int = 8,
     initial_step: Scalar[dtype] = 0.5,
     step_factor: Scalar[dtype] = 2.0,
@@ -507,69 +440,58 @@ fn _derivative_backward_difference[
 ) raises -> DiffResult[dtype]:
     """Computes first derivative using backward finite difference method.
 
-    This function implements the backward finite difference method for computing
-    first-order derivatives. It uses function evaluations only at the evaluation
-    point and points in the backward direction, making it suitable for boundary
-    conditions or when forward evaluations are not available.
-
-    The backward difference method is essential at the right boundary of domains
-    or when the function is undefined for x > x0. The coefficients are derived
-    from forward differences by reversing the stencil and adjusting signs
-    appropriately for first derivatives.
+    Uses one-sided stencils in the backward direction with adaptive step size
+    reduction. Suitable for right boundary conditions or when forward evaluations
+    are not available.
 
     Parameters:
-        dtype: The floating-point data type (e.g., DType.float32, DType.float64).
+        dtype: The floating-point data type.
         func: Function to differentiate with signature fn(x, args) -> Scalar[dtype].
 
     Args:
         x0: Point at which to evaluate the derivative.
         args: Optional arguments to pass to the function.
-        tolerance: Convergence tolerances with "atol" and "rtol" keys.
-        order: Accuracy order (1, 2, 3, 4, 5, or 6). Higher orders use more function evaluations.
+        tolerances: Convergence tolerances with "atol" and "rtol" keys.
+        order: Accuracy order (1, 2, 3, 4, 5, or 6).
         initial_step: Initial step size for finite differences.
         step_factor: Factor by which to reduce step size in each iteration.
-        max_iter: Maximum number of Richardson extrapolation iterations.
+        max_iter: Maximum number of iterations.
 
     Returns:
-        DiffResult[dtype] containing the computed derivative, convergence information,
-        and diagnostic data including number of iterations and function evaluations.
+        DiffResult[dtype] containing the derivative and convergence information.
 
     Raises:
-        Error: If the specified order is not supported (must be 1, 2, 3, 4, 5, or 6).
-
-    Note:
-        Backward differences only require function evaluations at x0 and x0-h, x0-2h, etc.
-        This makes them ideal for right boundary conditions or when the function
-        domain has forward constraints.
+        Error: If the specified order is not in {1, 2, 3, 4, 5, 6}.
+        Error: If tolerances, step size, step factor, or max_iter are invalid.
     """
-    alias first_order_coefficients_compiletime: Dict[
+    comptime first_order_coefficients_compiletime: Dict[
         Int, List[Scalar[dtype]]
     ] = generate_backward_finite_difference_table[dtype]()
     var first_order_coefficients = materialize[
         first_order_coefficients_compiletime
     ]()
 
-    var central_diff: Scalar[dtype] = 0.0
+    var diff_estimate: Scalar[dtype] = 0.0
     var prev_diff: Scalar[dtype] = 0.0
-    var atol: Scalar[dtype] = tolerance["atol"]
-    var rtol: Scalar[dtype] = tolerance["rtol"]
+    var atol: Scalar[dtype] = tolerances["atol"]
+    var rtol: Scalar[dtype] = tolerances["rtol"]
 
     if atol < 0:
         raise Error(
-            "SciJo Derivative (Backward): Invalid absolute tolerance.\n"
+            "SciJo Derivative (Backward): Invalid absolute tolerances.\n"
             "  Expected: atol ≥ 0\n"
             "  Got: atol = "
             + String(atol)
-            + "\n  Note: Absolute tolerance must be non-negative for"
+            + "\n  Note: Absolute tolerances must be non-negative for"
             " convergence testing."
         )
     if rtol < 0:
         raise Error(
-            "SciJo Derivative (Backward): Invalid relative tolerance.\n"
+            "SciJo Derivative (Backward): Invalid relative tolerances.\n"
             "  Expected: rtol ≥ 0\n"
             "  Got: rtol = "
             + String(rtol)
-            + "\n  Note: Relative tolerance must be non-negative for"
+            + "\n  Note: Relative tolerances must be non-negative for"
             " convergence testing."
         )
 
@@ -617,31 +539,31 @@ fn _derivative_backward_difference[
     var step: Scalar[dtype] = initial_step
 
     for i in range(max_iter):
-        central_diff = 0.0
-        var j: Int = 0
+        diff_estimate = 0.0
+        var j: Scalar[dtype] = 0
         for ref coeff in coefficients:
-            central_diff += coeff * func(x0 + step * j, args)
+            diff_estimate += coeff * func(x0 + step * j, args)
             j += 1
-        central_diff /= step
+        diff_estimate /= step
         if i > 0:
-            var diff_change = abs(central_diff - prev_diff)
-            var tolerance_threshold = atol + rtol * abs(central_diff)
+            var diff_change = abs(diff_estimate - prev_diff)
+            var tolerance_threshold = atol + rtol * abs(diff_estimate)
             if diff_change < tolerance_threshold:
                 return DiffResult[dtype](
                     success=True,
-                    df=central_diff,
+                    df=diff_estimate,
                     error=diff_change,
                     nit=i + 1,
                     nfev=(i + 1) * len(coefficients),
                     x=x0,
                 )
 
-        prev_diff = central_diff
+        prev_diff = diff_estimate
         step /= step_factor
 
     return DiffResult[dtype](
         success=False,
-        df=central_diff,
+        df=diff_estimate,
         error=0.0,
         nit=max_iter,
         nfev=max_iter * len(coefficients),
