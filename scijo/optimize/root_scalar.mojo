@@ -1,15 +1,32 @@
+# ===----------------------------------------------------------------------=== #
+# Scijo: Optimize - Root Scalar
+# Distributed under the Apache 2.0 License with LLVM Exceptions.
+# See LICENSE and the LLVM License for more information.
+# https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo/blob/main/LICENSE
+# https://llvm.org/LICENSE.txt
+#  ===----------------------------------------------------------------------=== #
+"""Optimize Module - Scalar Root-Finding (scijo.optimize.root_scalar)
+
+Scalar root-finding methods for nonlinear equations. Includes bracketing methods
+(bisection), derivative-based methods (Newton-Raphson), and derivative-free
+methods (secant).
+"""
+
 # TODO: check if we are using the right tolerance conditions in all methods.
+
 
 fn root_scalar[
     dtype: DType,
-    f: fn[dtype: DType] (
+    f: fn[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
     ) -> Scalar[dtype],
-    fprime: Optional[fn[
+    fprime: Optional[
+        fn[
             dtype: DType
-        ] (x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
+        ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
             dtype
-        ]] = None,
+        ]
+    ] = None,
     method: String = "bisect",
 ](
     args: Optional[List[Scalar[dtype]]] = None,
@@ -21,44 +38,55 @@ fn root_scalar[
     maxiter: Int = 100,
     # options: SolverOptions
 ) raises -> Scalar[dtype]:
-    """
-    Find a root of a scalar function.
+    """Finds a root of a scalar function using the specified method.
 
-    Parameters
-    - f: function f(x, args) that returns a scalar of dtype.
-    - fprime: derivative function f'(x, args). Required for Newton method.
-    - method: "newton" or "bisect".
-    - args: optional additional arguments forwarded to f and fprime.
-    - x0: initial guess for Newton's method (required if method == "newton").
-    - bracket: (a, b) tuple with a and b such that f(a) and f(b) have opposite signs for bisection.
-    - xtol, rtol: absolute and relative tolerances for termination.
-    - maxiter: maximum number of iterations.
+    Parameters:
+        dtype: The floating-point data type.
+        f: Function f(x, args) -> Scalar[dtype] for which to find a root.
+        fprime: Derivative function f'(x, args). Required for Newton's method.
+        method: Root-finding algorithm: "bisect", "newton", or "secant".
 
-    Raises
-    - Error if required inputs for the chosen method are missing or invalid.
+    Args:
+        args: Optional arguments forwarded to f and fprime.
+        x0: Initial guess. Required for Newton and secant methods.
+        x1: Second initial guess. Required for secant method.
+        bracket: (a, b) tuple where f(a) and f(b) have opposite signs. Required for bisection.
+        xtol: Absolute tolerance for convergence.
+        rtol: Relative tolerance for convergence.
+        maxiter: Maximum number of iterations.
+
+    Returns:
+        The approximate root as a Scalar[dtype].
+
+    Raises:
+        Error: If required inputs for the chosen method are missing or invalid.
     """
 
     @parameter
     if method == "newton" and fprime:
-            return newton[dtype, f, fprime.value()](args, x0, xtol, rtol, maxiter)
+        return newton[dtype, f, fprime.value()](args, x0, xtol, rtol, maxiter)
     elif method == "bisect":
         if not bracket:
             raise Error("Bracket must be provided for bisection method.")
         return bisect[dtype, f](args, bracket.value(), xtol, rtol, maxiter)
     elif method == "secant":
         if not (x0 and x1):
-            raise Error("Initial guesses x0 and x1 must be provided for secant method.")
-        return secant[dtype, f](args, x0.value(), x1.value(), xtol, rtol, maxiter)
+            raise Error(
+                "Initial guesses x0 and x1 must be provided for secant method."
+            )
+        return secant[dtype, f](
+            args, x0.value(), x1.value(), xtol, rtol, maxiter
+        )
     else:
         raise Error("Unsupported method: " + String(method))
 
 
 fn newton[
     dtype: DType,
-    f: fn[dtype: DType] (
+    f: fn[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
     ) -> Scalar[dtype],
-    fprime: fn[dtype: DType] (
+    fprime: fn[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
     ) -> Scalar[dtype],
     method: String = "newton",
@@ -69,15 +97,29 @@ fn newton[
     rtol: Scalar[dtype] = 1e-8,
     maxiter: Int = 100,
 ) raises -> Scalar[dtype]:
-    """
-    Newton-Raphson method for finding a root.
+    """Finds a root using the Newton-Raphson method.
 
-    Terminates when either:
-    - the change in x is below max(xtol, rtol * |x|), or
-    - |f(x)| is below max(xtol, rtol * |x|),
-    or when maxiter is reached.
+    Terminates when the step size or function value falls below
+    max(xtol, rtol * |x|), or when maxiter is reached.
 
-    Raises Error if initial guess x0 is not provided or derivative is zero.
+    Parameters:
+        dtype: The floating-point data type.
+        f: Function for which to find a root.
+        fprime: Derivative of f.
+        method: Method name (unused, for signature compatibility).
+
+    Args:
+        args: Optional arguments forwarded to f and fprime.
+        x0: Initial guess. Required.
+        xtol: Absolute tolerance for convergence.
+        rtol: Relative tolerance for convergence.
+        maxiter: Maximum number of iterations.
+
+    Returns:
+        The approximate root as a Scalar[dtype].
+
+    Raises:
+        Error: If x0 is not provided or the derivative is zero at any step.
     """
     var xn: Scalar[dtype]
     if x0:
@@ -112,7 +154,7 @@ fn newton[
 
 fn bisect[
     dtype: DType,
-    f: fn[dtype: DType] (
+    f: fn[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
     ) -> Scalar[dtype],
 ](
@@ -122,16 +164,28 @@ fn bisect[
     rtol: Scalar[dtype] = 1e-8,
     maxiter: Int = 100,
 ) raises -> Scalar[dtype]:
-    """
-    Bisection method for finding a root in a bracket [a, b].
+    """Finds a root using the bisection method over a bracket [a, b].
 
-    Requirements:
-    - f(a) and f(b) must have opposite signs (f(a) * f(b) < 0),
-      otherwise there is no guarantee of a root in the interval.
+    Requires f(a) and f(b) to have opposite signs. Terminates when the
+    interval half-width falls below max(xtol, rtol * |c|), f(c) == 0,
+    or maxiter is reached.
 
-    Terminates when:
-    - the interval half-width (b - a) / 2 is below max(xtol, rtol * |c|), or
-    - f(c) == 0, or when maxiter is reached.
+    Parameters:
+        dtype: The floating-point data type.
+        f: Function for which to find a root.
+
+    Args:
+        args: Optional arguments forwarded to f.
+        bracket: (a, b) tuple where f(a) and f(b) have opposite signs.
+        xtol: Absolute tolerance for convergence.
+        rtol: Relative tolerance for convergence.
+        maxiter: Maximum number of iterations.
+
+    Returns:
+        The approximate root as a Scalar[dtype].
+
+    Raises:
+        Error: If f(a) and f(b) do not have opposite signs.
     """
     var a: Scalar[dtype] = bracket[0]
     var b: Scalar[dtype] = bracket[1]
@@ -171,9 +225,10 @@ fn bisect[
 
     return (a + b) / 2
 
+
 fn secant[
     dtype: DType,
-    f: fn[dtype: DType] (
+    f: fn[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
     ) -> Scalar[dtype],
 ](
@@ -184,15 +239,17 @@ fn secant[
     rtol: Scalar[dtype] = 1e-8,
     maxiter: Int = 100,
 ) -> Scalar[dtype]:
-    """
-    Secant method for finding a root.
+    """Finds a root using the secant method.
+
+    A derivative-free method that approximates the derivative using finite
+    differences between the two most recent iterates.
 
     Parameters:
-        dtype: Data type of the scalar function.
-        f: Function for which to find the root.
+        dtype: The floating-point data type.
+        f: Function for which to find a root.
 
     Args:
-        args: Optional additional arguments for the function.
+        args: Optional arguments forwarded to f.
         x0: First initial guess.
         x1: Second initial guess.
         xtol: Absolute tolerance for convergence.
@@ -200,7 +257,7 @@ fn secant[
         maxiter: Maximum number of iterations.
 
     Returns:
-        Approximation of the root of the function.
+        The approximate root as a Scalar[dtype].
     """
     var a: Scalar[dtype] = x0
     var b: Scalar[dtype] = x1
