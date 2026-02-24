@@ -1,5 +1,7 @@
 from scijo.differentiate.derivative import derivative
+
 from testing import assert_almost_equal, assert_equal, assert_true, assert_false
+from testing import TestSuite
 import math
 
 
@@ -7,7 +9,7 @@ fn constant_function[
     dtype: DType
 ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
     """
-    F(x) = 5, f'(x) = 0
+    F(x) = 5, f'(x) = 0.
     """
     return 5.0
 
@@ -16,7 +18,7 @@ fn linear_function[
     dtype: DType
 ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
     """
-    F(x) = 3x + 2, f'(x) = 3
+    F(x) = 3x + 2, f'(x) = 3.
     """
     return 3.0 * x + 2.0
 
@@ -25,7 +27,7 @@ fn quadratic_function[
     dtype: DType
 ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
     """
-    F(x) = 2x^2 + 3x + 1, f'(x) = 4x + 3
+    F(x) = 2x^2 + 3x + 1, f'(x) = 4x + 3.
     """
     return 2.0 * x * x + 3.0 * x + 1.0
 
@@ -34,34 +36,34 @@ fn cubic_function[
     dtype: DType
 ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
     """
-    F(x) = x^3 - 2x^2 + x - 5, f'(x) = 3x^2 - 4x + 1
+    F(x) = x^3 - 2x^2 + x - 5, f'(x) = 3x^2 - 4x + 1.
     """
     return x * x * x - 2.0 * x * x + x - 5.0
 
 
 fn sin_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype] where dtype.is_floating_point():
     """
-    F(x) = sin(x), f'(x) = cos(x)
+    F(x) = sin(x), f'(x) = cos(x).
     """
     return math.sin(x)
 
 
 fn cos_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype] where dtype.is_floating_point():
     """
-    F(x) = cos(x), f'(x) = -sin(x)
+    F(x) = cos(x), f'(x) = -sin(x).
     """
     return math.cos(x)
 
 
 fn exp_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype] where dtype.is_floating_point():
     """
-    F(x) = e^x, f'(x) = e^x
+    F(x) = e^x, f'(x) = e^x.
     """
     return math.exp(x)
 
@@ -70,7 +72,7 @@ fn parameterized_function[
     dtype: DType
 ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
     """
-    F(x) = a*x^2 + b*x + c, f'(x) = 2*a*x + b
+    F(x) = a*x^2 + b*x + c, f'(x) = 2*a*x + b.
     """
     var a = args.value()[0]
     var b = args.value()[1]
@@ -127,7 +129,7 @@ fn test_cubic_derivatives() raises:
     """Test derivative of cubic function."""
 
     # Test cubic function: F(x) = x^3 - 2x^2 + x - 5, f'(x) = 3x^2 - 4x + 1
-    var test_points = List[Float64](0.0, 1.0, -1.0, 2.5)
+    var test_points: List[Float64] = [0.0, 1.0, -1.0, 2.5]
 
     for i in range(len(test_points)):
         var x = test_points[i]
@@ -199,7 +201,7 @@ fn test_parameterized_function() raises:
 
     # Test F(x) = a*x^2 + b*x + c with a=2, b=5, c=3
     # f'(x) = 2*a*x + b = 4*x + 5
-    var args = List[Scalar[DType.float64]](2.0, 5.0, 3.0)
+    var args: List[Scalar[DType.float64]] = [2.0, 5.0, 3.0]
     var x_param = 1.5
     var expected_param = 4.0 * x_param + 5.0  # = 11.0
     var result_param = derivative[
@@ -239,7 +241,6 @@ fn test_different_step_directions() raises:
     var result_forward = derivative[
         DType.float64, quadratic_function, step_direction=1
     ](x0=x_test, args=None, order=6, max_iter=50)
-    print(result_forward)
     assert_true(result_forward.success, "Forward difference should converge")
     assert_almost_equal(
         result_forward.df,
@@ -267,7 +268,7 @@ fn test_different_orders() raises:
     var x_test = 0.5
     var expected = 4.0 * x_test + 3.0
 
-    var orders = List[Int](2, 4, 6, 8)
+    var orders: List[Int] = [2, 4, 6, 8]
 
     for i in range(len(orders)):
         var order = orders[i]
@@ -295,7 +296,7 @@ fn test_tolerance_settings() raises:
 
     var result_strict = derivative[
         DType.float64, quadratic_function, step_direction=0
-    ](x0=x_test, args=None, tolerance=strict_tolerance)
+    ](x0=x_test, args=None, tolerances=strict_tolerance)
     assert_almost_equal(
         result_strict.df,
         expected,
@@ -309,7 +310,7 @@ fn test_tolerance_settings() raises:
 
     var result_loose = derivative[
         DType.float64, quadratic_function, step_direction=0
-    ](x0=x_test, args=None, tolerance=loose_tolerance)
+    ](x0=x_test, args=None, tolerances=loose_tolerance)
     assert_almost_equal(
         result_loose.df,
         expected,
@@ -353,7 +354,7 @@ fn test_step_size_parameters() raises:
     var x_test = 1.0
     var expected = 4.0 * x_test + 3.0  # = 7.0
 
-    var step_sizes = List[Float64](0.1, 0.5, 1.0)
+    var step_sizes: List[Float64] = [0.1, 0.5, 1.0]
 
     for i in range(len(step_sizes)):
         var step = step_sizes[i]
@@ -368,7 +369,7 @@ fn test_step_size_parameters() raises:
             msg="Result should be consistent across step sizes",
         )
 
-    var factors = List[Float64](1.5, 2.0, 3.0)
+    var factors: List[Float64] = [1.5, 2.0, 3.0]
 
     for i in range(len(factors)):
         var factor = factors[i]
@@ -382,3 +383,6 @@ fn test_step_size_parameters() raises:
             atol=1e-5,
             msg="Result should be consistent across step factors",
         )
+
+def main():
+    TestSuite.discover_tests[__functions_in_module()]().run()
