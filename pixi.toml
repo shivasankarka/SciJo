@@ -37,6 +37,6 @@ python = ">=3.14.3,<3.15"
 
 [tasks]
 format = "mojo format ./scijo && mojo format ./tests && mojo format ./benchmark"
-test = "mojo test -I . tests/"
+tests = "pixi run package && bash tests/test_all.sh"
 build = "mojo build"
-package = "mojo package scijo"
+package = "mojo package scijo && cp scijo.mojopkg tests/"
