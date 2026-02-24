@@ -6,25 +6,29 @@ The format is based on "Keep a Changelog" and follows Semantic Versioning.
 
 ## [Unreleased] - v0.2
 ### Added
-- Add `simpson` integration method to the `integration` module. (commit: 34644a6)
-- Add `bisect` (bisection) method to `root_scalar`, with improved docstrings and usage examples. (commit: 62d1bd6)
-- Add `secant` method to `root_scalar` for derivative-free root finding. (commit: fbe74ab)
-- Introduce `RootResults` (a result object for root-finding routines) to standardize return values and make results easier to inspect. (commit: d2fafb9)
-- Add a basic `root_scalar` optimizer implementing the Newton method to provide a simple optimization entry-point. (commit: 51c3dfe)
+- `simpson` integration method in the `integrate` module. (commit: 34644a6)
+- `bisect` (bisection) method for `root_scalar`. (commit: 62d1bd6)
+- `secant` method for derivative-free root finding. (commit: fbe74ab)
+- `RootResults` result struct for root-finding routines. (commit: d2fafb9)
+- `root_scalar` entry-point with Newton's method. (commit: 51c3dfe)
+- `optimize.__init__` now re-exports all public symbols (`root_scalar`, `newton`, `bisect`, `secant`).
+- Developer guide (`docs/developer_guide.md`) covering file headers, docstrings, naming, testing, and contribution conventions.
 
 ### Changed
-- `root_scalar` now accepts additional optional arguments to configure methods and tolerances; this makes the API more flexible while keeping sensible defaults. (commit: 52dc2a2)
-- Bumped package version reference to v0.2. (commit: 2600da2)
-- Improved docstrings and examples for root-finding routines (notably `bisect`) to clarify behavior and return types.
+- `root_scalar` accepts additional optional arguments for method selection and tolerances. (commit: 52dc2a2)
+- Bumped package version to v0.2. (commit: 2600da2)
+- Standardized license header block across all files in `differentiate`, `fft`, `integrate`, `interpolate`, and `optimize` submodules.
+- Added module-level docstrings to all `__init__.mojo` and implementation files.
+- Rewrote all function and struct docstrings to follow the Mojo docstring style guide (consistent `Parameters:`, `Args:`, `Returns:`, `Raises:` sections).
+- Added per-field docstrings to all result structs (`DiffResult`, `IntegralResult`, `RootResults`).
+- Standardized `Args:` label everywhere (replaced `Arguments:` in `integrate.fixed_sample`).
+- Standardized parameter descriptions (e.g., `"The floating-point data type."` across all modules).
+- Renamed misleading `central_diff` variable to `diff_estimate` in forward/backward derivative functions.
 
 ### Fixed
-- Documentation and docstring fixes associated with the new root-finding methods (included alongside method additions).
-
-### Deprecated
-- No deprecations in this release.
+- Fixed `Scalar[Self.dtype]` typo in `generate_backward_finite_difference_table` return docstring (standalone function, not a method).
 
 ### Removed
-- No removals in this release.
 
 ### Security
 - No security-related changes in this release.
