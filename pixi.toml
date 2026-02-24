@@ -1,9 +1,10 @@
 [workspace]
 authors = ["shivasankar <shivasankar.ka@gmail.com>"]
 channels = [
+    "https://conda.modular.com/max-nightly/",
+    "conda-forge",
     "https://conda.modular.com/max",
-    "https://prefix.dev/conda-forge",
-    "https://prefix.dev/modular-community"
+    "https://repo.prefix.dev/modular-community",
 ]
 platforms = ["osx-arm64", "linux-64"]
 preview = ["pixi-build"]
@@ -19,26 +20,23 @@ backend = { name = "pixi-build-mojo", version = "0.*"}
 name = "scijo"
 
 [package.host-dependencies]
-modular = ">=25.7.0,<26"
+modular = ">=26.2.0.dev2026021805,<27"
 
 [package.build-dependencies]
-modular = ">=25.7.0,<26"
-numojo = { git = "https://github.com/shivasankarka/NuMojo.git", branch = "docs"}
-# numojo = { path = "/Users/shivasankar/Documents/Codes/NuMojo"}
+modular = ">=26.2.0.dev2026021805,<27"
+numojo = { git = "https://github.com/shivasankarka/NuMojo.git", branch = "refcounting"}
 
 [package.run-dependencies]
-modular = ">=25.7.0,<26"
-numojo = { git = "https://github.com/shivasankarka/NuMojo.git", branch = "docs"}
-# numojo = { path = "/Users/shivasankar/Documents/Codes/NuMojo"}
+modular = ">=26.2.0.dev2026021805,<27"
+numojo = { git = "https://github.com/shivasankarka/NuMojo.git", branch = "refcounting"}
 
 [dependencies]
-# These deps are needed for local development, mojo test, language server, etc
-modular = ">=25.7.0,<26"
-numojo = { git = "https://github.com/shivasankarka/NuMojo.git", branch = "docs"}
-python = ">=3.14.0,<3.15"
+modular = ">=26.2.0.dev2026021805,<27"
+numojo = { git = "https://github.com/shivasankarka/NuMojo.git", branch = "refcounting"}
+python = ">=3.14.3,<3.15"
 
 [tasks]
-format = "mojo format ./"
+format = "mojo format ./scijo && mojo format ./tests && mojo format ./benchmark"
 test = "mojo test -I . tests/"
 build = "mojo build"
 package = "mojo package scijo"
