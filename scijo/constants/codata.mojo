@@ -36,12 +36,15 @@ struct PhysicalConstant[dtype: DType = DType.float64](
 ):
     """Physical constant data containing value, unit, and uncertainty."""
 
-    var value: Scalar[dtype]
+    var value: Scalar[Self.dtype]
     var unit: String
-    var uncertainty: Scalar[dtype]
+    var uncertainty: Scalar[Self.dtype]
 
     fn __init__(
-        out self, value: Scalar[dtype], unit: String, uncertainty: Scalar[dtype]
+        out self,
+        value: Scalar[Self.dtype],
+        unit: String,
+        uncertainty: Scalar[Self.dtype],
     ):
         self.value = value
         self.unit = unit
@@ -69,7 +72,7 @@ struct PhysicalConstant[dtype: DType = DType.float64](
             print("Error writing to writer: ", e)
 
 
-alias physical_constants: Dict[String, PhysicalConstant[f64]] = {
+comptime physical_constants: Dict[String, PhysicalConstant[f64]] = {
     "speed_of_light_in_vacuum": PhysicalConstant[f64](
         299792458.0, "m s^-1", 0.0
     ),
