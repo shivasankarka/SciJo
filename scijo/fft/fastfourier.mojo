@@ -1,23 +1,35 @@
-from numojo.core.complex import ComplexNDArray, ComplexSIMD, ComplexDType
+# ===----------------------------------------------------------------------=== #
+# Scijo: FFT - Fast Fourier Transform
+# Distributed under the Apache 2.0 License with LLVM Exceptions.
+# See LICENSE and the LLVM License for more information.
+# https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo/blob/main/LICENSE
+# https://llvm.org/LICENSE.txt
+#  ===----------------------------------------------------------------------=== #
+"""FFT Module - Fast Fourier Transform (scijo.fft.fastfourier)
+
+Forward and inverse Fast Fourier Transform using the Cooley-Tukey radix-2
+decimation-in-time algorithm for 1-D complex arrays with power-of-2 lengths.
+"""
+
+from numojo.core.complex import ComplexNDArray, ComplexSIMD
+from numojo.core.dtype import ComplexDType
 from numojo.core.ndarray import NDArray
-from numojo.core.ndshape import NDArrayShape
+from numojo.core.layout import NDArrayShape
 from numojo.routines.constants import Constants
-from numojo.core.item import Item
+from numojo.core.indexing import Item
 
 from math import sin, cos
-from algorithm.functional import vectorize
-from sys import simd_width_of
 
 
-# Cooley-Tukey FFT algorithm
 fn fft[
     dtype: ComplexDType = ComplexDType.float64
-](arr: ComplexNDArray[dtype]) raises -> ComplexNDArray[dtype]:
+](arr: ComplexNDArray[dtype]) raises -> ComplexNDArray[
+    dtype
+] where dtype.dtype.is_floating_point():
     """Computes the Fast Fourier Transform using the Cooley-Tukey algorithm.
 
-    The FFT decomposes the DFT computation by recursively breaking down the
-    transform of size N into two transforms of size N/2, making it significantly
-    faster than the naive O(N²) DFT computation for large arrays.
+    Decomposes the DFT computation by recursively breaking down the transform
+    of size N into two transforms of size N/2, achieving O(N log N) complexity.
 
     Parameters:
         dtype: The data type of the complex elements (ComplexDType).
@@ -27,25 +39,12 @@ fn fft[
              that is a power of 2.
 
     Returns:
-        ComplexNDArray containing the Fast Fourier Transform of the input array.
-        The output has the same shape and dtype as the input.
+        ComplexNDArray containing the FFT of the input array with the same
+        shape and dtype.
 
     Raises:
         Error: If the input array is not 1-dimensional.
         Error: If the array length is not a power of 2.
-
-    Example:
-        ```mojo
-        import scijo as sj
-        import numojo as nm
-        var input = nm.routines.creation.ones[nm.cf32](nm.Shape(8))
-        var transformed = sj.fft.fft[nm.cf32](input)
-        ```
-
-    Note:
-        This implementation currently only supports 1D arrays with power-of-2 lengths.
-        For general-purpose FFT computations, consider using more sophisticated
-        algorithms that handle arbitrary sizes.
     """
     if arr.ndim != 1:
         raise Error("FFT currently only supports 1D arrays")
@@ -77,11 +76,11 @@ fn fft[
         var angle = (
             -2.0
             * Constants.pi
-            * Scalar[dtype._dtype](k)
-            / Scalar[dtype._dtype](n)
+            * Scalar[dtype.dtype](k)
+            / Scalar[dtype.dtype](n)
         )
         var twiddle = ComplexSIMD[dtype](
-            cos(angle).cast[dtype._dtype](), sin(angle).cast[dtype._dtype]()
+            cos(angle).cast[dtype.dtype](), sin(angle).cast[dtype.dtype]()
         )
 
         var twiddle_odd = twiddle * odd_fft[Item(k)]
@@ -94,8 +93,29 @@ fn fft[
 
 fn _ifft_unnormalized[
     dtype: ComplexDType = ComplexDType.float64
-](arr: ComplexNDArray[dtype]) raises -> ComplexNDArray[dtype]:
-    """Internal unnormalized inverse FFT helper function."""
+](arr: ComplexNDArray[dtype]) raises -> ComplexNDArray[
+    dtype
+] where dtype.dtype.is_floating_point():
+    """Computes the unnormalized inverse FFT using the Cooley-Tukey algorithm.
+
+    This is an internal helper that performs the inverse butterfly operations
+    (with positive twiddle exponent) without the 1/N normalization factor.
+    The caller is responsible for applying normalization.
+
+    Parameters:
+        dtype: The data type of the complex elements (ComplexDType).
+
+    Args:
+        arr: Input complex array to transform. Must be 1-dimensional with length
+             that is a power of 2.
+
+    Returns:
+        ComplexNDArray containing the unnormalized inverse FFT of the input array.
+
+    Raises:
+        Error: If the input array is not 1-dimensional.
+        Error: If the array length is not a power of 2.
+    """
     if arr.ndim != 1:
         raise Error("FFT currently only supports 1D arrays")
 
@@ -126,11 +146,11 @@ fn _ifft_unnormalized[
         var angle = (
             2.0
             * Constants.pi
-            * Scalar[dtype._dtype](k)
-            / Scalar[dtype._dtype](n)
+            * Scalar[dtype.dtype](k)
+            / Scalar[dtype.dtype](n)
         )
         var twiddle = ComplexSIMD[dtype](
-            cos(angle).cast[dtype._dtype](), sin(angle).cast[dtype._dtype]()
+            cos(angle).cast[dtype.dtype](), sin(angle).cast[dtype.dtype]()
         )
 
         var twiddle_odd = twiddle * odd_ifft[Item(k)]
@@ -143,8 +163,13 @@ fn _ifft_unnormalized[
 
 fn ifft[
     dtype: ComplexDType = ComplexDType.float64
-](arr: ComplexNDArray[dtype]) raises -> ComplexNDArray[dtype]:
+](arr: ComplexNDArray[dtype]) raises -> ComplexNDArray[
+    dtype
+] where dtype.dtype.is_floating_point():
     """Computes the Inverse Fast Fourier Transform using the Cooley-Tukey algorithm.
+
+    Recovers the original signal from its frequency-domain representation by
+    computing the unnormalized inverse FFT and applying 1/N normalization.
 
     Parameters:
         dtype: The data type of the complex elements (ComplexDType).
@@ -154,38 +179,19 @@ fn ifft[
              that is a power of 2.
 
     Returns:
-        ComplexNDArray containing the Inverse Fast Fourier Transform of the input array.
-        The output has the same shape and dtype as the input.
+        ComplexNDArray containing the IFFT of the input array with the same
+        shape and dtype.
 
     Raises:
         Error: If the input array is not 1-dimensional.
         Error: If the array length is not a power of 2.
-
-    Example:
-        ```mojo
-        from numojo.prelude import *
-        from scijo.fft import ifft
-        var input = nm.zeros[nm.cf32](nm.Shape(8))
-        var transformed = ifft(input)
-        ```
-
-    Note:
-        This implementation currently only supports 1D arrays with power-of-2 lengths.
     """
     var n: Int = arr.shape[0]
     var result = _ifft_unnormalized[dtype](arr)
 
-    var inv_n = CScalar[dtype](1.0, 1.0) / CScalar[dtype](n, n)
-    # result = result * inv_n # ! There's some mistakes in NuMojo mul overload.
+    var inv_n = CScalar[dtype](1.0, 1.0) / CScalar[dtype](
+        Scalar[dtype.dtype](n), Scalar[dtype.dtype](n)
+    )
     for i in range(n):
         result.store[width=1](i, result.load[width=1](i) * inv_n)
-    # TODO: Fix problem with vectorize skipping some elements
-    # alias simd_width = simd_width_of[dtype._dtype]()
-    # @parameter
-    # fn closure[width: Int](i: Int):
-    #     try:
-    #         result.store[width=width](i, result.load[width=width](i) * inv_n)
-    #     except:
-    #         pass
-    # vectorize[closure, simd_width](n)
     return result^

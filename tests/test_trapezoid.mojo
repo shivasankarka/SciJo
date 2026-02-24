@@ -1,8 +1,9 @@
-from scijo.integrate.trapezoid import trapezoid
+from scijo.integrate.fixed_sample import trapezoid
 import scijo as sj
 import numojo as nm
-from python import Python
+from python import Python, PythonObject
 from testing import assert_almost_equal, assert_equal
+from testing import TestSuite
 
 
 fn test_basic_trapezoid() raises:
@@ -128,43 +129,43 @@ fn test_scipy_compatibility() raises:
 
         var y1 = nm.fromstring[sj.f64]("[1, 2, 3]")
         var result1 = trapezoid[sj.f64](y1)
-        var py_y1 = python.array([1, 2, 3])
+        var py_y1 = Python.list(1, 2, 3)
         var py_result1 = scipy_integrate.trapezoid(py_y1)
         assert_almost_equal(
             result1,
-            Float64(py_result1),
+            Float64(py=py_result1),
             msg="Should match SciPy result for [1,2,3]",
         )
 
         var y2 = nm.fromstring[sj.f64]("[1, 2, 3]")
         var x2 = nm.fromstring[sj.f64]("[4, 6, 8]")
         var result2 = trapezoid[sj.f64](y2, x2)
-        var py_y2 = python.array([1, 2, 3])
-        var py_x2 = python.array([4, 6, 8])
+        var py_y2 = python.list(1, 2, 3)
+        var py_x2 = python.list(4, 6, 8)
         var py_result2 = scipy_integrate.trapezoid(py_y2, py_x2)
         assert_almost_equal(
             result2,
-            Float64(py_result2),
+            Float64(py=py_result2),
             msg="Should match SciPy result for custom x",
         )
 
         var y3 = nm.fromstring[sj.f64]("[1, 2, 3]")
         var result3 = trapezoid[sj.f64](y3, dx=2.0)
-        var py_y3 = python.array([1, 2, 3])
-        var py_result3 = scipy_integrate.trapezoid(py_y3, dx=2.0)
+        var py_y3 = python.array(1, 2, 3)
+        var py_result3 = scipy_integrate.trapezoid(py_y3, dx=PythonObject(2.0))
         assert_almost_equal(
             result3,
-            Float64(py_result3),
+            Float64(py=py_result3),
             msg="Should match SciPy result for dx=2",
         )
 
         var y_single = nm.fromstring[sj.f64]("[5]")
         var result_single = trapezoid[sj.f64](y_single)
-        var py_y_single = python.array([5])
+        var py_y_single = python.list(5)
         var py_result_single = scipy_integrate.trapezoid(py_y_single)
         assert_almost_equal(
             result_single,
-            Float64(py_result_single),
+            Float64(py=py_result_single),
             msg="Should match SciPy result for single point",
         )
 
@@ -185,3 +186,6 @@ fn test_error_conditions() raises:
         )
     except:
         pass
+
+def main():
+    TestSuite.discover_tests[__functions_in_module()]().run()

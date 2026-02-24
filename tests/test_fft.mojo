@@ -3,9 +3,11 @@ import scijo as sj
 import numojo as nm
 from python import Python, PythonObject
 from testing import assert_almost_equal, assert_equal, assert_true
-from numojo.core.complex import ComplexNDArray, ComplexSIMD, CScalar
+from testing import TestSuite
+from numojo.core.complex import ComplexNDArray, ComplexSIMD
+from numojo.core import CScalar
 from numojo.core.ndarray import NDArray
-from numojo.core.ndshape import NDArrayShape
+from numojo.core.layout import NDArrayShape
 
 
 fn compare_complex_arrays[
@@ -21,7 +23,7 @@ fn compare_complex_arrays[
 
     for i in range(arr.shape[0]):
         var mojo_real = Float64(arr._re[i])
-        var numpy_real = Float64(np_result.real[i])
+        var numpy_real = Float64(py=np_result.real[i])
         var real_diff = abs(mojo_real - numpy_real)
         if real_diff > atol:
             raise Error(
@@ -38,7 +40,7 @@ fn compare_complex_arrays[
 
     for i in range(arr.shape[0]):
         var mojo_imag = Float64(arr._im[i])
-        var numpy_imag = Float64(np_result.imag[i])
+        var numpy_imag = Float64(py=np_result.imag[i])
         var imag_diff = abs(mojo_imag - numpy_imag)
         if imag_diff > atol:
             raise Error(
@@ -66,7 +68,7 @@ fn compare_real_arrays[
     """Compare real arrays element by element with NumPy results."""
     for i in range(arr.shape[0]):
         var mojo_val = Float64(arr[i])
-        var numpy_val = Float64(np_result[i])
+        var numpy_val = Float64(py=np_result[i])
         var diff = abs(mojo_val - numpy_val)
         if diff > atol:
             raise Error(
@@ -147,8 +149,8 @@ fn test_fft_complex_input() raises:
 
     var result = fft[nm.cf64](arr)
 
-    var real = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float64)
-    var imag = np.array([0.0, 1.0, 2.0, 3.0], dtype=np.float64)
+    var real = np.array(Python.tuple(1.0, 2.0, 3.0, 4.0), dtype=np.float64)
+    var imag = np.array(Python.tuple(0.0, 1.0, 2.0, 3.0), dtype=np.float64)
     var np_arr = np.array(real, dtype=np.complex64)
     np_arr.imag = imag
     var np_result = np.fft.fft(np_arr)
@@ -163,14 +165,14 @@ fn test_fft_larger_size() raises:
     """Test FFT with larger size (16 elements)."""
     var np = Python.import_module("numpy")
 
-    var arr = ComplexNDArray[nm.cf64](NDArrayShape(16))
+    var arr = nm.zeros[nm.cf64](nm.Shape(16))
     for i in range(16):
-        arr[nm.Item(i)] = ComplexSIMD[nm.cf64](Float64(i / 4), 0.0)
-
-    var result = fft[nm.cf64](arr)
+        arr.store(i, val=CScalar[nm.cf64](Float64(i) / 4.0, 0.0))
 
     var np_arr = np.arange(16, dtype=np.complex64) / 4
     var np_result = np.fft.fft(np_arr)
+
+    var result = fft[nm.cf64](arr)
 
     compare_complex_arrays[nm.cf64](
         result, np_result, "FFT test: 16 elements", atol=1e-5
@@ -211,8 +213,8 @@ fn test_ifft_standalone() raises:
     arr[nm.Item(3)] = ComplexSIMD[nm.cf64](-2.0, -2.0)
     var result = ifft[nm.cf64](arr)
 
-    var real = np.array([10.0, -2.0, -2.0, -2.0], dtype=np.float64)
-    var imag = np.array([0.0, 2.0, 0.0, -2.0], dtype=np.float64)
+    var real = np.array(Python.tuple(10.0, -2.0, -2.0, -2.0), dtype=np.float64)
+    var imag = np.array(Python.tuple(0.0, 2.0, 0.0, -2.0), dtype=np.float64)
     var np_arr = np.array(real, dtype=np.complex64)
     np_arr.imag = imag
     var np_result = np.fft.ifft(np_arr)
@@ -242,12 +244,10 @@ fn test_edge_cases() raises:
     arr2[nm.Item(1)] = ComplexSIMD[nm.cf64](2.0, 0.0)
     var result2 = fft[nm.cf64](arr2)
 
-    var np_arr2 = np.array([1.0, 2.0], dtype=np.complex64)
+    var np_arr2 = np.array(Python.tuple(1.0, 2.0), dtype=np.complex64)
     var np_result2 = np.fft.fft(np_arr2)
 
     compare_complex_arrays[nm.cf64](result2, np_result2, "FFT test: 2 elements")
-
-    print("Edge cases - PASSED")
 
 
 fn test_error_conditions() raises:
@@ -260,6 +260,8 @@ fn test_error_conditions() raises:
 
     try:
         var _ = fft[nm.cf64](arr_bad)
-        print("ERROR: Should have raised error for non-power-of-2 size")
     except:
         print("Non-power-of-2 error handling - PASSED")
+
+def main():
+    TestSuite.discover_tests[__functions_in_module()]().run()

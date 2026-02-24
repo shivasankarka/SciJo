@@ -1,15 +1,22 @@
-"""
-Integration Module
-------------------------------------------------
+# ===----------------------------------------------------------------------=== #
+# Scijo: Integrate - Quad
+# Distributed under the Apache 2.0 License with LLVM Exceptions.
+# See LICENSE and the LLVM License for more information.
+# https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo/blob/main/LICENSE
+# https://llvm.org/LICENSE.txt
+#  ===----------------------------------------------------------------------=== #
+"""Integrate Module - Adaptive Quadrature (scijo.integrate.quad)
 
-This module implements the QUADPACK algorithms for numerical integration.
+General-purpose numerical integration using adaptive quadrature methods based on
+the QUADPACK library. Currently implements the non-adaptive Gauss-Kronrod-Patterson
+(QNG) algorithm.
 
 References:
-- Piessens, R., de Doncker-Kapenga, E., Überhuber, C. W., & Kahaner, D. K. (1983).
-  QUADPACK: A subroutine package for automatic integration. Springer-Verlag.
-- SciPy documentation: https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.quad.html
-- Advanpix G10K21 coefficients: https://www.advanpix.com/2011/11/07/gauss-kronrod-quadrature-nodes-weights/
-- Netlib QUADPACK: https://www.netlib.org/quadpack/
+    - SciPy quad documentation:
+      https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.quad.html
+    - Netlib QUADPACK: https://www.netlib.org/quadpack/
+    - Advanpix G10K21 coefficients:
+      https://www.advanpix.com/2011/11/07/gauss-kronrod-quadrature-nodes-weights/
 """
 
 from math import sqrt
@@ -38,7 +45,7 @@ from .utility import (
 
 fn quad[
     dtype: DType,
-    func: fn[dtype: DType] (
+    func: fn[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
     ) -> Scalar[dtype],
     *,
@@ -50,6 +57,31 @@ fn quad[
     epsabs: Scalar[dtype] = 1.49e-8,
     epsrel: Scalar[dtype] = 1.49e-8,
 ) raises -> IntegralResult[dtype]:
+    """Computes the definite integral of a scalar function over [a, b].
+
+    Dispatches to the appropriate quadrature algorithm based on the `method`
+    parameter.
+
+    Parameters:
+        dtype: The floating-point data type.
+        func: Integrand function with signature fn(x, args) -> Scalar[dtype].
+        method: Quadrature algorithm to use. Currently supported: "qng". Keyword-only.
+
+    Args:
+        a: Lower integration limit.
+        b: Upper integration limit.
+        args: Optional arguments to pass to the integrand.
+        epsabs: Absolute error tolerance.
+        epsrel: Relative error tolerance.
+
+    Returns:
+        IntegralResult[dtype] containing the integral value, absolute error
+        estimate, function evaluation count, and status code.
+
+    Raises:
+        Error: If the specified method is not supported.
+    """
+
     @parameter
     if method == "qng":
         return _qng[dtype, func](a, b, args, epsabs, epsrel)
@@ -63,7 +95,7 @@ fn quad[
 
 fn _qng[
     dtype: DType,
-    func: fn[dtype: DType] (
+    func: fn[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
     ) -> Scalar[dtype],
 ](
@@ -73,36 +105,39 @@ fn _qng[
     epsabs: Scalar[dtype] = 1.49e-8,
     epsrel: Scalar[dtype] = 1.49e-8,
 ) -> IntegralResult[dtype]:
-    """
-    Non-adaptive Gauss-Kronrod-Patterson integration (QUADPACK QNG algorithm).
+    """Non-adaptive Gauss-Kronrod-Patterson integration (QUADPACK QNG).
 
-    This algorithm attempts integration using progressively higher-order rules:
-    - 10-point Gauss rule (21-point Kronrod)
-    - 21-point Gauss-Kronrod rule (43-point Kronrod extension)
-    - 43-point Gauss-Kronrod rule (87-point Kronrod extension)
+    Attempts integration using progressively higher-order rules until the
+    requested tolerance is met:
+        1. 10-point Gauss / 21-point Kronrod
+        2. 21-point GK / 43-point Kronrod extension
+        3. 43-point GK / 87-point Kronrod extension
 
-    Function evaluations are reused between rules for efficiency.
+    Function evaluations are reused between successive rules for efficiency.
 
     Parameters:
-        dtype: The data type for integration.
-        func: The integrand function to integrate.
+        dtype: The floating-point data type.
+        func: Integrand function with signature fn(x, args) -> Scalar[dtype].
 
     Args:
         a: Lower integration limit.
         b: Upper integration limit.
-        args: Additional arguments for integrand.
+        args: Optional arguments to pass to the integrand.
         epsabs: Absolute error tolerance.
         epsrel: Relative error tolerance.
 
     Returns:
-        IntegralResult containing integral value, error estimate, and status information.
+        IntegralResult[dtype] containing the integral value, error estimate,
+        function evaluation count, and status code (ier).
     """
     constrained[
         dtype.is_floating_point(), "DType must be a floating point type."
     ]()
 
-    alias epsilon_mach: Scalar[dtype] = Scalar[dtype](machine_epsilon[dtype]())
-    alias under_flow: Scalar[dtype] = smallest_positive_dtype[dtype]
+    comptime epsilon_mach: Scalar[dtype] = Scalar[dtype](
+        machine_epsilon[dtype]()
+    )
+    comptime under_flow: Scalar[dtype] = smallest_positive_dtype[dtype]
 
     if a == b:
         return IntegralResult(
@@ -291,7 +326,6 @@ fn _qng[
             ier=0,
         )
 
-    # oops, no convergence
     return IntegralResult[dtype](
         integral=result,
         abserr=abs_error,

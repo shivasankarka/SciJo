@@ -1,5 +1,18 @@
+# ===----------------------------------------------------------------------=== #
+# Scijo: Integrate - Fixed Sample
+# Distributed under the Apache 2.0 License with LLVM Exceptions.
+# See LICENSE and the LLVM License for more information.
+# https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo/blob/main/LICENSE
+# https://llvm.org/LICENSE.txt
+#  ===----------------------------------------------------------------------=== #
+"""Integrate Module - Fixed Sample Methods (scijo.integrate.fixed_sample)
+
+Integration methods for discrete, evenly or unevenly spaced sample data.
+Includes the composite trapezoidal rule, Simpson's rule, and Romberg integration.
+"""
+
 from numojo.core.ndarray import NDArray, NDArrayShape
-from numojo.core.error import *
+from numojo.core.error import NumojoError
 import numojo as nm
 
 
@@ -11,57 +24,48 @@ fn trapezoid[
     axis: Int = -1,
 ) raises -> Scalar[
     dtype
-]:
-    """
-    Integrate along the given axis using the composite trapezoidal rule.
-    Integrates y(x) along each 1d slice on the given axis, computing ∫ y(x) dx. Uses evenly spaced points with spacing dx.
+] where dtype.is_floating_point():
+    """Integrates along the given axis using the composite trapezoidal rule.
+
+    Computes ∫ y(x) dx using evenly spaced points with spacing `dx`.
 
     Parameters:
-        dtype: The data type of the input arrays and the output scalar.
-               Must be a floating-point type.
+        dtype: The floating-point data type.
 
-    Arguments:
-        y: Input array to integrate. Must be 1-D for this implementation.
-        dx: The spacing between sample points. The default is 1.0.
-        axis: The axis along which to integrate. Currently only supports 1-D arrays,
-              so this parameter is ignored.
+    Args:
+        y: Input array to integrate. Must be 1-D.
+        dx: The spacing between sample points. Defaults to 1.0.
+        axis: The axis along which to integrate. Currently only 1-D is supported.
 
     Returns:
-        Scalar[dtype]: Definite integral of y as approximated by the trapezoidal rule. Returns 0.0 for arrays with fewer than 2 elements.
+        Definite integral approximated by the trapezoidal rule.
+        Returns 0.0 for arrays with fewer than 2 elements.
 
     Raises:
-        Error(ShapeError): If y is not 1-D.
-        Error(ValueError): If y is empty.
-
-    Examples:
-        >>> var y = nm.fromstring[DType.float64]("[1, 2, 3]")
-        >>> var result = trapezoid[DType.float64](y)  # Returns 4.0
-        >>> var result = trapezoid[DType.float64](y, dx=2.0)  # Returns 8.0.
+        Error: If y is not 1-D.
+        Error: If y is empty.
     """
-    constrained[
-        dtype.is_floating_point(),
-        (
-            "trapezoid[dtype: DType](y, dx, axis): dtype must be a"
-            " floating-point type."
-        ),
-    ]()
 
     if y.ndim != 1:
         raise Error(
-            ShapeError(
+            NumojoError(
+                category="shape",
                 message=String(
-                    "Expected y to be 1-D, received ndim={}."
+                    "Expected y to be 1-D, received ndim={}. Pass a 1-D NDArray"
+                    " for y (e.g. shape (N,))."
                 ).format(y.ndim),
-                suggestion="Pass a 1-D NDArray for y (e.g. shape (N,)).",
                 location="trapezoid(y, dx=1.0)",
             )
         )
 
     if y.size == 0:
         raise Error(
-            ValueError(
-                message="Cannot integrate over an empty array.",
-                suggestion="Provide a non-empty array for y.",
+            NumojoError(
+                category="value",
+                message=(
+                    "Cannot integrate over an empty array. Provide a non-empty"
+                    " array for y."
+                ),
                 location="trapezoid(y, dx=1.0)",
             )
         )
@@ -86,55 +90,47 @@ fn trapezoid[
     axis: Int = -1,
 ) raises -> Scalar[
     dtype
-]:
-    """
-    Integrate along the given axis using the composite trapezoidal rule. Integrates y(x) along each 1d slice on the given axis, computing ∫ y(x) dx. When x is specified, this integrates along the parametric curve.
+] where dtype.is_floating_point():
+    """Integrates along the given axis using the composite trapezoidal rule.
+
+    Computes ∫ y(x) dx along the parametric curve defined by `x` and `y`.
 
     Parameters:
-        dtype: The data type of the input arrays and the output scalar.
-               Must be a floating-point type.
+        dtype: The floating-point data type.
 
-    Arguments:
-        y: Input array to integrate. Must be 1-D for this implementation.
+    Args:
+        y: Input array to integrate. Must be 1-D.
         x: Array of sample points corresponding to the y values.
-        axis: The axis along which to integrate. Currently only supports 1-D arrays.
+        axis: The axis along which to integrate. Currently only 1-D is supported.
 
     Returns:
-        Scalar[dtype]: Definite integral of y as approximated by the trapezoidal rule. Returns 0.0 for arrays with fewer than 2 elements.
+        Definite integral approximated by the trapezoidal rule.
+        Returns 0.0 for arrays with fewer than 2 elements.
 
     Raises:
-        Error(ShapeError): If y or x are not 1-D, or if their sizes differ.
-        Error(ValueError): If y is empty.
-
-    Examples:
-        >>> var y = nm.fromstring[DType.float64]("[1, 2, 3]")
-        >>> var x = nm.fromstring[DType.float64]("[4, 6, 8]")
-        >>> var result = trapezoid[DType.float64](y, x)  # Returns 8.0.
+        Error: If y or x are not 1-D, or if their sizes differ.
+        Error: If y is empty.
     """
-    constrained[
-        dtype.is_floating_point(),
-        (
-            "trapezoid[dtype: DType](y, x, axis): dtype must be a"
-            " floating-point type."
-        ),
-    ]()
-
     if y.ndim != 1:
         raise Error(
-            ShapeError(
+            NumojoError(
+                category="shape",
                 message=String(
-                    "Expected y to be 1-D, received ndim={}."
+                    "Expected y to be 1-D, received ndim={}. Pass a 1-D NDArray"
+                    " for y (e.g. shape (N,))."
                 ).format(y.ndim),
-                suggestion="Pass a 1-D NDArray for y (e.g. shape (N,)).",
                 location="trapezoid(y, x)",
             )
         )
 
     if y.size == 0:
         raise Error(
-            ValueError(
-                message="Cannot integrate over an empty array.",
-                suggestion="Provide a non-empty array for y.",
+            NumojoError(
+                category="value",
+                message=(
+                    "Cannot integrate over an empty array. Provide a non-empty"
+                    " array for y."
+                ),
                 location="trapezoid(y, x)",
             )
         )
@@ -144,24 +140,26 @@ fn trapezoid[
 
     if x.ndim != 1:
         raise Error(
-            ShapeError(
+            NumojoError(
+                category="shape",
                 message=String(
-                    "Expected x to be 1-D, received ndim={}."
+                    "Expected x to be 1-D, received ndim={}. Provide a 1-D"
+                    " NDArray for x."
                 ).format(x.ndim),
-                suggestion="Provide a 1-D NDArray for x.",
                 location="trapezoid(y, x)",
             )
         )
 
     if y.size != x.size:
         raise Error(
-            ShapeError(
+            NumojoError(
+                category="shape",
                 message=(
-                    String("Size mismatch: y.size={} != x.size={}.").format(
-                        y.size, x.size
-                    )
+                    String(
+                        "Size mismatch: y.size={} != x.size={}. Ensure x and y"
+                        " have identical lengths."
+                    ).format(y.size, x.size)
                 ),
-                suggestion="Ensure x and y have identical lengths.",
                 location="trapezoid(y, x)",
             )
         )
@@ -177,48 +175,58 @@ fn trapezoid[
 
     return integral
 
+
 fn simpson[
     dtype: DType
 ](
     y: NDArray[dtype],
     dx: Scalar[dtype] = 1.0,
     axis: Int = -1,
-) raises -> Scalar[dtype]:
-    """
-    Integrate along the given axis using Simpson's rule. Integrates y(x) along each
-    1d slice on the given axis. Uses evenly spaced points with spacing dx.
+) raises -> Scalar[
+    dtype
+]:
+    """Integrates along the given axis using Simpson's rule.
+
+    Computes ∫ y(x) dx using evenly spaced points with spacing `dx`.
 
     Parameters:
-        dtype: The data type of the input arrays and the output scalar.
-               Must be a floating-point type.
+        dtype: The floating-point data type.
 
     Args:
-        y: Input array to integrate. Must be 1-D for this implementation.
-        dx: The spacing between sample points. The default is 1.0.
-        axis: The axis along which to integrate. Currently only supports 1-D arrays,
-              so this parameter is ignored.
+        y: Input array to integrate. Must be 1-D.
+        dx: The spacing between sample points. Defaults to 1.0.
+        axis: The axis along which to integrate. Currently only 1-D is supported.
 
     Returns:
-        Scalar[dtype]: Definite integral of y as approximated by Simpson's rule.
+        Definite integral approximated by Simpson's rule.
+
+    Raises:
+        Error: If y is not 1-D.
     """
     if y.ndim != 1:
         raise Error(
-            ShapeError(
+            NumojoError(
+                category="shape",
                 message=String(
-                    "Expected y to be 1-D, received ndim={}."
+                    "Expected y to be 1-D, received ndim={}. Pass a 1-D NDArray"
+                    " for y (e.g. shape (N,)). Only 1-D arrays are supported"
+                    " currently."
                 ).format(y.ndim),
-                suggestion="Pass a 1-D NDArray for y (e.g. shape (N,)). Only 1-D arrays are supported currently.",
                 location="simpson(y, dx=1.0)",
             )
         )
     var integral: Scalar[dtype] = 0.0
-    alias multiplier: Scalar[dtype] = 1.0 / 6.0
+    comptime multiplier: Scalar[dtype] = 1.0 / 6.0
     for i in range(0, y.size - 1, 2):
-        integral +=  multiplier * dx * 2 * (
-            y.item(i) + 4.0 * y.item(i + 1) + y.item(i + 2)
+        integral += (
+            multiplier
+            * dx
+            * 2
+            * (y.item(i) + 4.0 * y.item(i + 1) + y.item(i + 2))
         )
 
     return integral
+
 
 fn simpson[
     dtype: DType
@@ -226,66 +234,77 @@ fn simpson[
     y: NDArray[dtype],
     x: NDArray[dtype],
     axis: Int = -1,
-) raises -> Scalar[dtype]:
-    """
-    Integrate along the given axis using Simpson's rule. Integrates y(x) along each
-    1d slice on the given axis. When x is specified, this integrates along the
-    parametric curve.
+) raises -> Scalar[
+    dtype
+]:
+    """Integrates along the given axis using Simpson's rule.
+
+    Computes ∫ y(x) dx along the parametric curve defined by `x` and `y`.
+    For arrays with an even number of points, the last panel falls back to
+    the trapezoidal rule.
 
     Parameters:
-        dtype: The data type of the input arrays and the output scalar.
-               Must be a floating-point type.
+        dtype: The floating-point data type.
 
     Args:
-        y: Input array to integrate. Must be 1-D for this implementation.
+        y: Input array to integrate. Must be 1-D.
         x: Array of sample points corresponding to the y values.
-        axis: The axis along which to integrate. Currently only supports 1-D arrays.
+        axis: The axis along which to integrate. Currently only 1-D is supported.
 
     Returns:
-        Scalar[dtype]: Definite integral of y as approximated by Simpson's rule.
+        Definite integral approximated by Simpson's rule.
+
+    Raises:
+        Error: If y or x are not 1-D, or if their sizes differ.
     """
     if y.ndim != 1:
         raise Error(
-            ShapeError(
+            NumojoError(
+                category="shape",
                 message=String(
-                    "Expected y to be 1-D, received ndim={}."
+                    "Expected y to be 1-D, received ndim={}. Pass a 1-D NDArray"
+                    " for y (e.g. shape (N,)). Only 1-D arrays are supported"
+                    " currently."
                 ).format(y.ndim),
-                suggestion="Pass a 1-D NDArray for y (e.g. shape (N,)). Only 1-D arrays are supported currently.",
                 location="simpson(y, x)",
             )
         )
 
     if x.ndim != 1:
         raise Error(
-            ShapeError(
+            NumojoError(
+                category="shape",
                 message=String(
-                    "Expected x to be 1-D, received ndim={}."
+                    "Expected x to be 1-D, received ndim={}. Provide a 1-D"
+                    " NDArray for x."
                 ).format(x.ndim),
-                suggestion="Provide a 1-D NDArray for x.",
                 location="simpson(y, x)",
             )
         )
 
     if y.size != x.size:
         raise Error(
-            ShapeError(
+            NumojoError(
+                category="shape",
                 message=(
-                    String("Size mismatch: y.size={} != x.size={}.").format(
-                        y.size, x.size
-                    )
+                    String(
+                        "Size mismatch: y.size={} != x.size={}. Ensure x and y"
+                        " have identical lengths."
+                    ).format(y.size, x.size)
                 ),
-                suggestion="Ensure x and y have identical lengths.",
                 location="simpson(y, x)",
             )
         )
 
     var integral: Scalar[dtype] = 0.0
-    alias multiplier: Scalar[dtype] = 1.0 / 6.0
+    comptime multiplier: Scalar[dtype] = 1.0 / 6.0
     for i in range(1, y.size - 1, 2):
         var dx_segment = x.item(i + 1) - x.item(i - 1)
-        integral += multiplier * dx_segment * (
-            y.item(i - 1) + 4.0 * y.item(i) + y.item(i + 1)
-            )
+        integral += (
+            multiplier
+            * dx_segment
+            * (y.item(i - 1) + 4.0 * y.item(i) + y.item(i + 1))
+        )
 
     if y.size % 2 == 0:
         var y_n1 = y.item(y.size - 2)
@@ -297,44 +316,52 @@ fn simpson[
 
     return integral
 
+
 # TODO: fix the loop implementation.
-fn romb[dtype: DType](y: NDArray[dtype], dx: Scalar[dtype] = 1.0, axis: Int = -1) raises -> Scalar[dtype]:
-    """
-    Integrate along the given axis using Romberg integration. Integrates y(x) along each 1d slice on the given axis, computing ∫ y(x) dx. Uses evenly spaced points with spacing dx.
+fn romb[
+    dtype: DType
+](y: NDArray[dtype], dx: Scalar[dtype] = 1.0, axis: Int = -1) raises -> Scalar[
+    dtype
+]:
+    """Integrates along the given axis using Romberg integration.
+
+    Computes ∫ y(x) dx using evenly spaced points with spacing `dx` and
+    Richardson extrapolation for accelerated convergence.
 
     Parameters:
-        dtype: The data type of the input arrays and the output scalar.
-               Must be a floating-point type.
+        dtype: The floating-point data type.
 
     Args:
-        y: Input array to integrate. Must be 1-D for this implementation.
-        dx: The spacing between sample points. The default is 1.0.
-        axis: The axis along which to integrate. Currently only supports 1-D arrays,
-              so this parameter is ignored.
+        y: Input array to integrate. Must be 1-D.
+        dx: The spacing between sample points. Defaults to 1.0.
+        axis: The axis along which to integrate. Currently only 1-D is supported.
 
     Returns:
-        Scalar[dtype]: Definite integral of y as approximated by Romberg integration.
+        Definite integral approximated by Romberg integration.
+
+    Raises:
+        Error: If y is not 1-D.
     """
     var maxiter: Int = 10
     if y.ndim != 1:
         raise Error(
-            ShapeError(
+            NumojoError(
+                category="shape",
                 message=String(
-                    "Expected y to be 1-D, received ndim={}."
+                    "Expected y to be 1-D, received ndim={}. Pass a 1-D NDArray"
+                    " for y (e.g. shape (N,)). Only 1-D arrays are supported"
+                    " currently."
                 ).format(y.ndim),
-                suggestion="Pass a 1-D NDArray for y (e.g. shape (N,)). Only 1-D arrays are supported currently.",
                 location="romb(y, dx=1.0)",
             )
         )
 
     var step: Scalar[dtype] = dx
-    # var Rone: List[Scalar[dtype]] = List[Scalar[dtype]](capacity= maxiter)
-    # var Rtwo: List[Scalar[dtype]] = List[Scalar[dtype]](capacity= maxiter)
     var Rone: NDArray[dtype] = nm.zeros[dtype](NDArrayShape(maxiter))
     var Rtwo: NDArray[dtype] = nm.zeros[dtype](NDArrayShape(maxiter))
 
-    var R1: UnsafePointer[Scalar[dtype]] = Rone.unsafe_ptr()
-    var R2: UnsafePointer[Scalar[dtype]] = Rtwo.unsafe_ptr()
+    var R1 = Rone.unsafe_ptr()
+    var R2 = Rtwo.unsafe_ptr()
 
     R1[0] = 0.5 * dx * (y.item(0) + y.item(y.size - 1))
 
@@ -347,17 +374,14 @@ fn romb[dtype: DType](y: NDArray[dtype], dx: Scalar[dtype] = 1.0, axis: Int = -1
         R2[0] = step * c + 0.5 * R1[0]
 
         for j in range(1, i + 1):
-            var const: Scalar[dtype] = Scalar[dtype](4.0)**j
-            R2[j] = (const  * R2[j - 1] - R1[j - 1]) / (const - 1.0)
+            var const: Scalar[dtype] = Scalar[dtype](4.0) ** j
+            R2[j] = (const * R2[j - 1] - R1[j - 1]) / (const - 1.0)
 
-        if i > 1 and abs(R1[i-1] - R2[i]) < Scalar[dtype](1e-6):
+        if i > 1 and abs(R1[i - 1] - R2[i]) < Scalar[dtype](1e-6):
             return R2[i]
 
-        var temp: UnsafePointer[Scalar[dtype]] = R1
+        var temp = R1
         R1 = R2
         R2 = temp
-
-    print("Initial R1: ", Rone)
-    print("Initial R2: ", Rtwo)
 
     return Rone.item(maxiter - 1)
