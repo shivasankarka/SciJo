@@ -44,12 +44,25 @@ fn jacobian[
         tolerances: Tolerance dictionary with "abs" and "rel" keys (reserved for future use).
         maxiter: Maximum iterations (reserved for future use).
 
+    Raises:
+        Error: If function evaluation fails for any perturbation.
+
     Returns:
         NDArray[dtype] of shape (m, n) representing the Jacobian matrix,
         where m is the output dimension and n is the input dimension.
 
-    Raises:
-        Error: If function evaluation fails for any perturbation.
+    Examples:
+        ```mojo
+        import numojo as nm
+        from scijo.differentiate import jacobian
+        from scijo.prelude import *
+
+        fn f[dtype: DType](x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]) raises -> NDArray[dtype]:
+            return x * x
+
+        var x = nm.array[f64]([1.0, 2.0])
+        var J = jacobian[f64, f](x)
+        ```
     """
     var n: Int = len(x)
     var f0: NDArray[dtype] = f(x, args)

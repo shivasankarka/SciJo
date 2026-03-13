@@ -19,6 +19,7 @@ import numojo as nm
 # Trapezoid
 # ===----------------------------------------------------------------------=== #
 
+
 fn trapezoid[
     dtype: DType
 ](

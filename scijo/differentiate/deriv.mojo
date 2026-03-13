@@ -17,7 +17,6 @@ References:
       https://en.wikipedia.org/wiki/Finite_difference_coefficient
 """
 
-from numojo.prelude import *
 
 from .utility import (
     DiffResult,
@@ -25,6 +24,11 @@ from .utility import (
     generate_forward_finite_difference_table,
     generate_backward_finite_difference_table,
 )
+
+
+# ===----------------------------------------------------------------------=== #
+# Derivative
+# ===----------------------------------------------------------------------=== #
 
 
 fn derivative[
@@ -72,6 +76,17 @@ fn derivative[
     Raises:
         Error: If step_direction is not in {-1, 0, 1}.
         Error: If the specified order is not supported for the chosen method.
+
+    Examples:
+        ```mojo
+        from scijo.differentiate import derivative
+        from scijo.prelude import *
+
+        fn f[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+            return x * x
+
+        var res = derivative[f64, f](1.0)
+        ```
     """
 
     @parameter
@@ -126,6 +141,11 @@ fn derivative[
             " uses f(x+h))\n    • step_direction = -1: Backward differences"
             " (for right boundaries, uses f(x-h))"
         )
+
+
+# ===----------------------------------------------------------------------=== #
+# Internal methods
+# ===----------------------------------------------------------------------=== #
 
 
 fn _derivative_central_difference[
