@@ -13,7 +13,7 @@ Examples
     ```mojo
     from scijo.optimize import minimize_scalar
 
-    fn objective[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+    def objective[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
         return (x - 2) * (x - 2) + 1
 
     var result = minimize_scalar[Float64, objective, method="Brent"](
@@ -45,7 +45,7 @@ struct OptimizeResult[dtype: DType](ImplicitlyCopyable, Writable):
     var nit: Int
     var nfev: Int
 
-    fn __init__(
+    def __init__(
         out self,
         x: Scalar[Self.dtype],
         fun: Scalar[Self.dtype],
@@ -63,13 +63,13 @@ struct OptimizeResult[dtype: DType](ImplicitlyCopyable, Writable):
         self.nit = nit
         self.nfev = nfev
 
-    fn __str__(self) raises -> String:
-        return (
+    def __str__(self) raises -> String:
+        return String(
             t"Result(success={self.success}, x={self.x}, fun={self.fun},"
             t" status={self.status}, nit={self.nit}, nfev={self.nfev})"
         )
 
-    fn write_to[W: Writer](self, mut writer: W):
+    def write_to[W: Writer](self, mut writer: W):
         """Writes the array to a writer.
 
         Args:
@@ -87,9 +87,9 @@ struct OptimizeResult[dtype: DType](ImplicitlyCopyable, Writable):
 # ===----------------------------------------------------------------------=== #
 
 
-fn _brent_minimize[
+def _brent_minimize[
     dtype: DType,
-    f: fn[dtype: DType](
+    f: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
     ) -> Scalar[dtype],
 ](
@@ -229,9 +229,9 @@ fn _brent_minimize[
     )
 
 
-fn _golden_minimize[
+def _golden_minimize[
     dtype: DType,
-    f: fn[dtype: DType](
+    f: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
     ) -> Scalar[dtype],
 ](
@@ -299,9 +299,9 @@ fn _golden_minimize[
     )
 
 
-fn _bounded_minimize[
+def _bounded_minimize[
     dtype: DType,
-    f: fn[dtype: DType](
+    f: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
     ) -> Scalar[dtype],
 ](
@@ -416,9 +416,9 @@ fn _bounded_minimize[
     )
 
 
-fn minimize_scalar[
+def minimize_scalar[
     dtype: DType,
-    f: fn[dtype: DType](
+    f: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
     ) -> Scalar[dtype],
     *,
@@ -452,7 +452,7 @@ fn minimize_scalar[
         from scijo.prelude import *
         from scijo.optimize import minimize_scalar
 
-        fn objective[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+        def objective[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
             return (x - 2) * (x - 2) + 1
 
         var result = minimize_scalar[Float64, objective, method="Brent"](
