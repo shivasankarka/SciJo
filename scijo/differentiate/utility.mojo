@@ -1,21 +1,20 @@
 # ===----------------------------------------------------------------------=== #
-# Scijo: Differentiate - Utility
-# Distributed under the Apache 2.0 License with LLVM Exceptions.
-# See LICENSE and the LLVM License for more information.
-# https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo/blob/main/LICENSE
-# https://llvm.org/LICENSE.txt
-#  ===----------------------------------------------------------------------=== #
-"""Differentiate Module - Utility Functions (scijo.differentiate.utility)
+# SciJo: Differentiate module for Mojo
+# Distributed under the Apache 2.0 License.
+# ===----------------------------------------------------------------------=== #
+"""Differentiation Utility Functions (`scijo.differentiate.utility`)
+===================================================================
 
 Utility functions and data structures for numerical differentiation using finite
 difference methods. Implements central, forward, and backward finite difference
 coefficient tables.
 
-References:
-    - Wikipedia: Finite difference coefficient
-      https://en.wikipedia.org/wiki/Finite_difference_coefficient
-    - Fornberg, B. (1988). Generation of Finite Difference Formulas on
-      Arbitrarily Spaced Grids. Mathematics of Computation, 51(184), 699-706.
+References
+----------
+- Wikipedia: Finite difference coefficient
+  https://en.wikipedia.org/wiki/Finite_difference_coefficient
+- Fornberg, B. (1988). Generation of Finite Difference Formulas on
+  Arbitrarily Spaced Grids. Mathematics of Computation, 51(184), 699-706.
 """
 
 # ===----------------------------------------------------------------------=== #

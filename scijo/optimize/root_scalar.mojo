@@ -1,15 +1,24 @@
 # ===----------------------------------------------------------------------=== #
-# Scijo: Optimize - Root Scalar
-# Distributed under the Apache 2.0 License with LLVM Exceptions.
-# See LICENSE and the LLVM License for more information.
-# https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo/blob/main/LICENSE
-# https://llvm.org/LICENSE.txt
-#  ===----------------------------------------------------------------------=== #
-"""Optimize Module - Scalar Root-Finding (scijo.optimize.root_scalar)
+# SciJo: Optimize module for Mojo
+# Distributed under the Apache 2.0 License.
+# ===----------------------------------------------------------------------=== #
+"""Scalar Root-Finding (`scijo.optimize.root_scalar`)
+=====================================================
 
 Scalar root-finding methods for nonlinear equations. Includes bracketing methods
 (bisection), derivative-based methods (Newton-Raphson), and derivative-free
 methods (secant).
+
+Examples
+--------
+    ```mojo
+    from scijo.optimize import root_scalar
+
+    fn f[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+        return x * x - 2
+
+    var root = root_scalar[f64, f](bracket=(1.0, 2.0), method="bisect")
+    ```
 """
 
 # TODO: check if we are using the right tolerance conditions in all methods.
@@ -211,8 +220,7 @@ fn bisect[
 
     if fa * fb > 0:
         raise Error(
-            "Scijo [newton]: f(a) and f(b) must have opposite signs (bracket does not enclose a"
-            " root)."
+            "SciJo [bisect]: f(a) and f(b) must have opposite signs (bracket does not enclose a root)."
         )
 
     for _ in range(maxiter):
@@ -281,7 +289,7 @@ fn secant[
 
         var denom = f1 - f0
         if denom == 0:
-            raise Error("Scijo [newton]: Secant method encountered zero slope (f1 - f0 == 0).")
+            raise Error("SciJo [secant]: Secant method encountered zero slope (f1 - f0 == 0).")
 
         var xn = b - (f1 * (b - a)) / denom
 

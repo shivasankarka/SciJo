@@ -1,11 +1,27 @@
 # ===----------------------------------------------------------------------=== #
-# Scijo: Optimize - Minimize Scalar
-# Distributed under the Apache 2.0 License with LLVM Exceptions.
-# See LICENSE and the LLVM License for more information.
-# https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo/blob/main/LICENSE
-# https://llvm.org/LICENSE.txt
-#  ===----------------------------------------------------------------------=== #
-"""Optimize Module - Minimize scalar (scijo.optimize.min_scalar)
+# SciJo: Optimize module for Mojo
+# Distributed under the Apache 2.0 License.
+# ===----------------------------------------------------------------------=== #
+"""Scalar Minimization (`scijo.optimize.min_scalar`)
+====================================================
+
+Provides scalar minimization algorithms including Brent's method, golden
+section search, and bounded minimization.
+
+Examples
+--------
+    ```mojo
+    from scijo.optimize import minimize_scalar
+
+    fn objective[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+        return (x - 2) * (x - 2) + 1
+
+    var result = minimize_scalar[Float64, objective, method="Brent"](
+        Bracket=(0.0, 4.0),
+        tol=1e-8,
+        maxiter=100
+    )
+    ```
 """
 
 comptime _phi: Float64 = 1.618033988749895

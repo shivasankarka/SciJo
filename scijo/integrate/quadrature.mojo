@@ -1,27 +1,32 @@
 # ===----------------------------------------------------------------------=== #
-# Scijo: Integrate - Quadrature
-# Distributed under the Apache 2.0 License with LLVM Exceptions.
-# See LICENSE and the LLVM License for more information.
-# https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo/blob/main/LICENSE
-# https://llvm.org/LICENSE.txt
-#  ===----------------------------------------------------------------------=== #
-"""Integrate Module - Quadrature (scijo.integrate.quadrature)
+# SciJo: Integrate module for Mojo
+# Distributed under the Apache 2.0 License.
+# ===----------------------------------------------------------------------=== #
+"""Quadrature Integration (`scijo.integrate.quadrature`)
+=======================================================
 
 General-purpose numerical integration using adaptive quadrature methods based on
 the QUADPACK library. Currently implements the non-adaptive Gauss-Kronrod-Patterson
 (QNG) algorithm.
 
-Examples:
+Examples
+--------
     ```mojo
     from scijo.integrate import quad
+
+    fn integrand[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+        return x * x
+
+    var result = quad[f64, integrand](0.0, 1.0, None)
     ```
 
-References:
-    - SciPy quad documentation:
-      https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.quad.html
-    - Netlib QUADPACK: https://www.netlib.org/quadpack/
-    - Advanpix G10K21 coefficients:
-      https://www.advanpix.com/2011/11/07/gauss-kronrod-quadrature-nodes-weights/
+References
+----------
+- SciPy quad documentation:
+  https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.quad.html
+- Netlib QUADPACK: https://www.netlib.org/quadpack/
+- Advanpix G10K21 coefficients:
+  https://www.advanpix.com/2011/11/07/gauss-kronrod-quadrature-nodes-weights/
 """
 
 from math import sqrt

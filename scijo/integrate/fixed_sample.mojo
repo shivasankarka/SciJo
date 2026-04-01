@@ -1,14 +1,23 @@
 # ===----------------------------------------------------------------------=== #
-# Scijo: Integrate - Fixed Sample
-# Distributed under the Apache 2.0 License with LLVM Exceptions.
-# See LICENSE and the LLVM License for more information.
-# https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo/blob/main/LICENSE
-# https://llvm.org/LICENSE.txt
-#  ===----------------------------------------------------------------------=== #
-"""Integrate Module - Fixed Sample Methods (scijo.integrate.fixed_sample)
+# SciJo: Integrate module for Mojo
+# Distributed under the Apache 2.0 License.
+# ===----------------------------------------------------------------------=== #
+"""Fixed Sample Integration Methods (`scijo.integrate.fixed_sample`)
+===================================================================
 
 Integration methods for discrete, evenly or unevenly spaced sample data.
 Includes the composite trapezoidal rule, Simpson's rule, and Romberg integration.
+
+Examples
+--------
+    ```mojo
+    from scijo.integrate import trapezoid, simpson, romb
+
+    var y = nm.linspace[f64](0.0, 10.0, 100) ** 2
+    var area_trap = trapezoid(y, dx=0.1)
+    var area_sim = simpson(y, dx=0.1)
+    var area_rom = romb(y, dx=0.1)
+    ```
 """
 
 from numojo.core.ndarray import NDArray, NDArrayShape
@@ -244,13 +253,18 @@ fn simpson[
         )
     var integral: Scalar[dtype] = 0.0
     comptime multiplier: Scalar[dtype] = 1.0 / 6.0
-    for i in range(0, y.size - 1, 2):
+    for i in range(0, y.size - 2, 2):
         integral += (
             multiplier
             * dx
             * 2
             * (y.item(i) + 4.0 * y.item(i + 1) + y.item(i + 2))
         )
+
+    if y.size % 2 == 0:
+        var y_n1 = y.item(y.size - 2)
+        var y_n = y.item(y.size - 1)
+        integral += (y_n1 + y_n) * dx * 0.5
 
     return integral
 

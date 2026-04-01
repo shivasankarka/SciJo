@@ -1,11 +1,9 @@
 # ===----------------------------------------------------------------------=== #
-# Scijo: Optimize - Utility
-# Distributed under the Apache 2.0 License with LLVM Exceptions.
-# See LICENSE and the LLVM License for more information.
-# https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo/blob/main/LICENSE
-# https://llvm.org/LICENSE.txt
-#  ===----------------------------------------------------------------------=== #
-"""Optimize Module - Utility Functions (scijo.optimize.utility)
+# SciJo: Optimize module for Mojo
+# Distributed under the Apache 2.0 License.
+# ===----------------------------------------------------------------------=== #
+"""Optimization Utility Functions (`scijo.optimize.utility`)
+===========================================================
 
 Data structures for returning results from optimization and root-finding routines.
 """

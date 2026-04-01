@@ -1,11 +1,9 @@
 # ===----------------------------------------------------------------------=== #
-# Scijo: Constants
-# Distributed under the Apache 2.0 License with LLVM Exceptions.
-# See LICENSE and the LLVM License for more information.
-# https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo/blob/main/LICENSE
-# https://llvm.org/LICENSE.txt
-#  ===----------------------------------------------------------------------=== #
-"""Constants Module (scijo.constants.constants)
+# SciJo: Constants module for Mojo
+# Distributed under the Apache 2.0 License.
+# ===----------------------------------------------------------------------=== #
+"""Constants Module (`scijo.constants.constants`)
+=================================================
 
 Provides commonly used scientific constants, primarily in SI units.
 Values are based on the SciPy constants module.
@@ -17,13 +15,15 @@ The `constants` module includes:
 - Binary prefixes (e.g., kibi, mebi).
 - Units of mass, length, time, energy, power, and force in SI and imperial systems.
 
-Examples:
+Examples
+--------
     ```mojo
-    import scijo.constants as const
-    print(const.pi)  # 3.141592653589793
-    print(const.c)   # 299792458.0
-    print(const.kilo) # 1000.0
-    print(const.inch) # 0.0254
+    from scijo.constants import pi, c, kilo, inch
+
+    print(pi)     # 3.141592653589793
+    print(c)      # 299792458.0
+    print(kilo)   # 1000.0
+    print(inch)   # 0.0254
     ```
 """
 

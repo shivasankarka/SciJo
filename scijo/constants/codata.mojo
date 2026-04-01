@@ -1,29 +1,28 @@
 # ===----------------------------------------------------------------------=== #
-# Scijo: CODATA Physical Constants
-# Distributed under the Apache 2.0 License with LLVM Exceptions.
-# See LICENSE and the LLVM License for more information.
-# https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo/blob/main/LICENSE
-# https://llvm.org/LICENSE.txt
-#  ===----------------------------------------------------------------------=== #
-"""
-CODATA Physical Constants Module
+# SciJo: Constants module for Mojo
+# Distributed under the Apache 2.0 License.
+# ===----------------------------------------------------------------------=== #
+"""CODATA Physical Constants Module (`scijo.constants.codata`)
+=============================================================
 
 Provides access to the CODATA 2022 recommended values for fundamental
 physical constants. Constants are stored in a global dictionary, similar to
 SciPy's constants module.
 
-Examples:
+Examples
+--------
     ```mojo
-    import scijo.constants as const
+    from scijo.constants import value
 
-    var c = const.value("speed_of_light_in_vacuum")
-    var h = const.value("Planck_constant")
-    var e = const.value("elementary_charge")
+    var c = value("speed_of_light_in_vacuum")
+    var h = value("Planck_constant")
+    var e = value("elementary_charge")
     ```
 
-References:
-    - CODATA 2022 Recommended Values
-    - https://github.com/scipy/scipy/blob/main/scipy/constants/_codata.py
+References
+----------
+- CODATA 2022 Recommended Values
+- https://github.com/scipy/scipy/blob/main/scipy/constants/_codata.py
 
 Based on the official CODATA 2022 adjustment for maximum accuracy.
 """

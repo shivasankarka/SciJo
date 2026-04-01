@@ -1,11 +1,9 @@
 # ===----------------------------------------------------------------------=== #
-# Scijo: Interpolate - Utility
-# Distributed under the Apache 2.0 License with LLVM Exceptions.
-# See LICENSE and the LLVM License for more information.
-# https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo/blob/main/LICENSE
-# https://llvm.org/LICENSE.txt
-#  ===----------------------------------------------------------------------=== #
-"""Interpolate Module - Utility Functions (scijo.interpolate.utility)
+# SciJo: Interpolate module for Mojo
+# Distributed under the Apache 2.0 License.
+# ===----------------------------------------------------------------------=== #
+"""Interpolation Utility Functions (`scijo.interpolate.utility`)
+===============================================================
 
 Internal utility functions for interpolation, including binary search and
 input validation.

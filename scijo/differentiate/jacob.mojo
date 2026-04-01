@@ -1,14 +1,24 @@
 # ===----------------------------------------------------------------------=== #
-# Scijo: Differentiate - Jacobian
-# Distributed under the Apache 2.0 License with LLVM Exceptions.
-# See LICENSE and the LLVM License for more information.
-# https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo/blob/main/LICENSE
-# https://llvm.org/LICENSE.txt
-#  ===----------------------------------------------------------------------=== #
-"""Differentiate Module - Jacobian Matrix (scijo.differentiate.jacobian)
+# SciJo: Differentiate module for Mojo
+# Distributed under the Apache 2.0 License.
+# ===----------------------------------------------------------------------=== #
+"""Jacobian Matrix Computation (`scijo.differentiate.jacob`)
+===========================================================
 
 Computes the Jacobian matrix of a vector-valued function using central finite
 differences with parallelized column evaluation.
+
+Examples
+--------
+    ```mojo
+    from scijo.differentiate import jacobian
+
+    fn f[dtype: DType](x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]) raises -> NDArray[dtype]:
+        return x * x
+
+    var x = nm.array[f64]([1.0, 2.0])
+    var J = jacobian[f64, f](x)
+    ```
 """
 
 from numojo.routines.creation import zeros, full

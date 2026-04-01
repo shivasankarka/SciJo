@@ -1,15 +1,29 @@
 # ===----------------------------------------------------------------------=== #
-# Scijo: Interpolate
-# Distributed under the Apache 2.0 License with LLVM Exceptions.
-# See LICENSE and the LLVM License for more information.
-# https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo/blob/main/LICENSE
-# https://llvm.org/LICENSE.txt
-#  ===----------------------------------------------------------------------=== #
-"""Interpolate Module (scijo.interpolate)
+# SciJo: Interpolate module for Mojo
+# Distributed under the Apache 2.0 License.
+# ===----------------------------------------------------------------------=== #
+"""Interpolate Module (`scijo.interpolate`)
+===========================================
 
-The `interpolate` module provides tools for interpolating data. It includes
-linear interpolation functions and callable interpolator objects for both
-single-point and array-based evaluation.
+Provides tools for interpolating data. It includes linear interpolation
+functions and callable interpolator objects for both single-point and
+array-based evaluation.
+
+Available Functions
+-------------------
+- `interp1d`            — Create a callable linear interpolator or interpolate directly.
+- `LinearInterpolator`  — A reusable callable interpolation object.
+
+Examples
+--------
+    ```mojo
+    from scijo.interpolate import interp1d
+
+    var x = nm.arange[f64](0.0, 1.0, 0.5)
+    var y = x * x
+    var interp = interp1d(x, y, bounds_error=False, fill_value=0.0)
+    var yq = interp(Scalar[f64](0.25))
+    ```
 """
 
 from .interpolate import interp1d, LinearInterpolator

@@ -1,21 +1,20 @@
 # ===----------------------------------------------------------------------=== #
-# Scijo: Integrate - Utility
-# Distributed under the Apache 2.0 License with LLVM Exceptions.
-# See LICENSE and the LLVM License for more information.
-# https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo/blob/main/LICENSE
-# https://llvm.org/LICENSE.txt
-#  ===----------------------------------------------------------------------=== #
-"""Integrate Module - Utility Functions (scijo.integrate.utility)
+# SciJo: Integrate module for Mojo
+# Distributed under the Apache 2.0 License.
+# ===----------------------------------------------------------------------=== #
+"""Integration Utility Functions (`scijo.integrate.utility`)
+===========================================================
 
 Utility functions, data structures, and Gauss-Kronrod quadrature tables for
 numerical integration. Includes result types, priority queue for adaptive
 subdivision, machine epsilon computation, and precomputed quadrature nodes
 and weights from Netlib QUADPACK.
 
-References:
-    - Netlib QUADPACK: https://www.netlib.org/quadpack/
-    - Advanpix G10K21 coefficients:
-      https://www.advanpix.com/2011/11/07/gauss-kronrod-quadrature-nodes-weights/
+References
+----------
+- Netlib QUADPACK: https://www.netlib.org/quadpack/
+- Advanpix G10K21 coefficients:
+  https://www.advanpix.com/2011/11/07/gauss-kronrod-quadrature-nodes-weights/
 """
 
 from utils import StaticTuple

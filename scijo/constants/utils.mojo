@@ -1,13 +1,12 @@
 # ===----------------------------------------------------------------------=== #
-# Scijo: Utils for Constants
-# Distributed under the Apache 2.0 License with LLVM Exceptions.
-# See LICENSE and the LLVM License for more information.
-# https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo/blob/main/LICENSE
-# https://llvm.org/LICENSE.txt
-#  ===----------------------------------------------------------------------=== #
-"""Utility functions for physical constants.
+# SciJo: Constants module for Mojo
+# Distributed under the Apache 2.0 License.
+# ===----------------------------------------------------------------------=== #
+"""Utility Functions for Constants (`scijo.constants.utils`)
+===========================================================
 
-Includes temperature conversions and frequency-wavelength calculations.
+Includes temperature conversions, frequency-wavelength calculations, and
+functions for accessing physical constant properties.
 """
 
 from builtin.value import materialize

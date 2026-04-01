@@ -1,20 +1,19 @@
 # ===----------------------------------------------------------------------=== #
-# Scijo: Differentiate - Derivative
-# Distributed under the Apache 2.0 License with LLVM Exceptions.
-# See LICENSE and the LLVM License for more information.
-# https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo/blob/main/LICENSE
-# https://llvm.org/LICENSE.txt
-#  ===----------------------------------------------------------------------=== #
-"""Differentiate Module - Numerical Differentiation (scijo.differentiate.derivative)
+# SciJo: Differentiate module for Mojo
+# Distributed under the Apache 2.0 License.
+# ===----------------------------------------------------------------------=== #
+"""Numerical Differentiation (`scijo.differentiate.deriv`)
+=========================================================
 
 Numerical differentiation using finite difference methods. Provides functions to
 compute first-order derivatives of scalar functions using central, forward, and
 backward finite difference schemes with adaptive step sizing.
 
-References:
-    - SciPy derivative documentation.
-    - Wikipedia: Finite difference coefficient
-      https://en.wikipedia.org/wiki/Finite_difference_coefficient
+References
+----------
+- SciPy derivative documentation.
+- Wikipedia: Finite difference coefficient
+  https://en.wikipedia.org/wiki/Finite_difference_coefficient
 """
 
 
@@ -560,9 +559,9 @@ fn _derivative_backward_difference[
 
     for i in range(max_iter):
         diff_estimate = 0.0
-        var j: Scalar[dtype] = 0
+        var j: Int = 0
         for ref coeff in coefficients:
-            diff_estimate += coeff * func(x0 + step * j, args)
+            diff_estimate += coeff * func(x0 + step * Scalar[dtype](j), args)
             j += 1
         diff_estimate /= step
         if i > 0:

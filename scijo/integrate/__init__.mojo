@@ -1,19 +1,30 @@
 # ===----------------------------------------------------------------------=== #
-# Scijo: Integrate
-# Distributed under the Apache 2.0 License with LLVM Exceptions.
-# See LICENSE and the LLVM License for more information.
-# https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo/blob/main/LICENSE
-# https://llvm.org/LICENSE.txt
-#  ===----------------------------------------------------------------------=== #
-"""Integrate Module (scijo.integrate)
+# SciJo: Integrate module for Mojo
+# Distributed under the Apache 2.0 License.
+# ===----------------------------------------------------------------------=== #
+"""Integrate Module (`scijo.integrate`)
+=======================================
 
-The `integrate` module provides tools for numerical integration and quadrature.
-It includes adaptive and non-adaptive methods for computing definite integrals,
-as well as fixed-sample integration rules for discrete data.
+Provides tools for numerical integration and quadrature. It includes adaptive
+and non-adaptive methods for computing definite integrals, as well as
+fixed-sample integration rules for discrete data.
 
-Examples:
+Available Functions
+-------------------
+- `quad`        — General-purpose adaptive quadrature (Gauss-Kronrod).
+- `trapezoid`   — Composite trapezoidal rule for discrete data.
+- `simpson`     — Simpson's rule for discrete data.
+- `romb`        — Romberg integration with Richardson extrapolation.
+
+Examples
+--------
     ```mojo
     from scijo.integrate import quad, trapezoid
+
+    fn integrand[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+        return x * x
+
+    var result = quad[f64, integrand](0.0, 1.0, None)
     ```
 """
 

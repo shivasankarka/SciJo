@@ -1,14 +1,27 @@
 # ===----------------------------------------------------------------------=== #
-# Scijo: FFT - Fast Fourier Transform
-# Distributed under the Apache 2.0 License with LLVM Exceptions.
-# See LICENSE and the LLVM License for more information.
-# https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo/blob/main/LICENSE
-# https://llvm.org/LICENSE.txt
-#  ===----------------------------------------------------------------------=== #
-"""FFT Module - Fast Fourier Transform (scijo.fft.fastfourier)
+# SciJo: FFT module for Mojo
+# Distributed under the Apache 2.0 License.
+# ===----------------------------------------------------------------------=== #
+"""Fast Fourier Transform (`scijo.fft.fastfourier`)
+===================================================
 
 Forward and inverse Fast Fourier Transform using the Cooley-Tukey radix-2
 decimation-in-time algorithm for 1-D complex arrays with power-of-2 lengths.
+
+Constraints
+-----------
+- Input arrays must be 1-dimensional.
+- Array length must be a power of 2.
+
+Examples
+--------
+    ```mojo
+    from scijo.fft import fft, ifft
+
+    var arr = nm.linspace[cf32](CScalar[cf32](0, 0), CScalar[cf32](10, 10), num=10)
+    var freq = fft(arr)
+    var time = ifft(freq)
+    ```
 """
 
 from math import sin, cos
