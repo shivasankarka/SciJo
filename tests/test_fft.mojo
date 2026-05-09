@@ -10,7 +10,7 @@ from numojo.core.ndarray import NDArray
 from numojo.core.layout import NDArrayShape
 
 
-fn compare_complex_arrays[
+def compare_complex_arrays[
     dtype: nm.ComplexDType
 ](
     arr: ComplexNDArray[dtype],
@@ -57,7 +57,7 @@ fn compare_complex_arrays[
     print(msg + " - PASSED")
 
 
-fn compare_real_arrays[
+def compare_real_arrays[
     dtype: DType
 ](
     arr: NDArray[dtype],
@@ -85,7 +85,7 @@ fn compare_real_arrays[
     print(msg + " - PASSED")
 
 
-fn test_fft_basic() raises:
+def test_fft_basic() raises:
     """Test basic FFT with simple input."""
     var np = Python.import_module("numpy")
 
@@ -118,7 +118,7 @@ fn test_fft_basic() raises:
     compare_complex_arrays[nm.cf64](result2, np_result2, "FFT test: impulse")
 
 
-fn test_fft_sequential() raises:
+def test_fft_sequential() raises:
     """Test FFT with sequential input."""
     var np = Python.import_module("numpy")
 
@@ -137,7 +137,7 @@ fn test_fft_sequential() raises:
     )
 
 
-fn test_fft_complex_input() raises:
+def test_fft_complex_input() raises:
     """Test FFT with complex input."""
     var np = Python.import_module("numpy")
 
@@ -161,7 +161,7 @@ fn test_fft_complex_input() raises:
 
 
 # make it larger later and test performance.
-fn test_fft_larger_size() raises:
+def test_fft_larger_size() raises:
     """Test FFT with larger size (16 elements)."""
     var np = Python.import_module("numpy")
 
@@ -179,7 +179,7 @@ fn test_fft_larger_size() raises:
     )
 
 
-fn test_ifft_basic() raises:
+def test_ifft_basic() raises:
     """Test inverse FFT."""
     var np = Python.import_module("numpy")
 
@@ -202,7 +202,7 @@ fn test_ifft_basic() raises:
     )
 
 
-fn test_ifft_standalone() raises:
+def test_ifft_standalone() raises:
     """Test inverse FFT with known frequency domain input."""
     var np = Python.import_module("numpy")
 
@@ -224,7 +224,7 @@ fn test_ifft_standalone() raises:
     )
 
 
-fn test_edge_cases() raises:
+def test_edge_cases() raises:
     """Test edge cases and special conditions."""
     var np = Python.import_module("numpy")
 
@@ -250,7 +250,7 @@ fn test_edge_cases() raises:
     compare_complex_arrays[nm.cf64](result2, np_result2, "FFT test: 2 elements")
 
 
-fn test_error_conditions() raises:
+def test_error_conditions() raises:
     """Test error conditions."""
     var np = Python.import_module("numpy")
 

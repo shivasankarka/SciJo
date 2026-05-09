@@ -23,7 +23,7 @@ Examples
     ```mojo
     from scijo.optimize import root_scalar, minimize_scalar
 
-    fn f[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+    def f[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
         return x * x - 2
 
     var root = root_scalar[f64, f](bracket=(1.0, 2.0), method="bisect")

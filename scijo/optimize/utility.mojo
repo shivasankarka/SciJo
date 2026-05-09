@@ -12,6 +12,7 @@ Data structures for returning results from optimization and root-finding routine
 # RootResults
 # ===----------------------------------------------------------------------=== #
 
+
 struct RootResults[dtype: DType = DType.float64]():
     """Result structure for scalar root-finding operations.
 
@@ -35,7 +36,7 @@ struct RootResults[dtype: DType = DType.float64]():
     var method: String
     """Name of the method used."""
 
-    fn __init__(
+    def __init__(
         out self,
         root: Scalar[Self.dtype],
         iterations: Int,
@@ -51,7 +52,7 @@ struct RootResults[dtype: DType = DType.float64]():
         self.flag = flag
         self.method = method
 
-    fn __str__(self) raises -> String:
+    def __str__(self) raises -> String:
         return String(
             "RootResults(root={}, iterations={}, function_calls={}, "
             "converged={}, flag='{}', method='{}')"
@@ -64,7 +65,7 @@ struct RootResults[dtype: DType = DType.float64]():
             self.method,
         )
 
-    fn write_to[W: Writer](self, mut writer: W):
+    def write_to[W: Writer](self, mut writer: W):
         try:
             writer.write(
                 String(

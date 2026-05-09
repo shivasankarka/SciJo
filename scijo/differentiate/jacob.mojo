@@ -13,7 +13,7 @@ Examples
     ```mojo
     from scijo.differentiate import jacobian
 
-    fn f[dtype: DType](x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]) raises -> NDArray[dtype]:
+    def f[dtype: DType](x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]) raises -> NDArray[dtype]:
         return x * x
 
     var x = nm.array[f64]([1.0, 2.0])
@@ -21,15 +21,15 @@ Examples
     ```
 """
 
+from std.algorithm.functional import parallelize
+
 from numojo.routines.creation import zeros, full
 from numojo.core import NDArray, Shape
 
-from algorithm.functional import parallelize
 
-
-fn jacobian[
+def jacobian[
     dtype: DType,
-    f: fn[dtype: DType](
+    f: def[dtype: DType](
         x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
     ) raises -> NDArray[dtype],
 ](
@@ -46,7 +46,7 @@ fn jacobian[
 
     Parameters:
         dtype: The floating-point data type.
-        f: Vector-valued function with signature fn(x, args) -> NDArray[dtype].
+        f: Vector-valued function with signature def(x, args) -> NDArray[dtype].
 
     Args:
         x: Input vector of shape (n,) at which to evaluate the Jacobian.
@@ -67,7 +67,7 @@ fn jacobian[
         from scijo.differentiate import jacobian
         from scijo.prelude import *
 
-        fn f[dtype: DType](x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]) raises -> NDArray[dtype]:
+        def f[dtype: DType](x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]) raises -> NDArray[dtype]:
             return x * x
 
         var x = nm.array[f64]([1.0, 2.0])
@@ -82,7 +82,7 @@ fn jacobian[
     var step: NDArray[dtype] = full[dtype](Shape(n), fill_value=0.5)
 
     @parameter
-    fn closure(j: Int):
+    def closure(j: Int):
         try:
             var x_plus = x.deep_copy()
             var x_minus = x.deep_copy()

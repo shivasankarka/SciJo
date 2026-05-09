@@ -14,7 +14,7 @@ input validation.
 # ===----------------------------------------------------------------------=== #
 
 
-fn _binary_search[
+def _binary_search[
     dtype: DType
 ](x: NDArray[dtype], value: Scalar[dtype]) raises -> Int:
     """Binary search to find the interval containing the interpolation point.
@@ -47,7 +47,7 @@ fn _binary_search[
 # ===----------------------------------------------------------------------=== #
 
 
-fn _validate_interpolation_input[
+def _validate_interpolation_input[
     dtype: DType
 ](x: NDArray[dtype], y: NDArray[dtype]) raises:
     """Validates input arrays for interpolation.

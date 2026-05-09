@@ -5,8 +5,8 @@ import scijo as sj
 from scijo.optimize.root_scalar import root_scalar, newton, bisect, secant
 
 
-fn test_bisect_root_scalar_basic() raises:
-    fn f[
+def test_bisect_root_scalar_basic() raises:
+    def f[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
         return x * x - 2.0
@@ -18,13 +18,13 @@ fn test_bisect_root_scalar_basic() raises:
     assert_almost_equal(root2, sqrt(2.0), atol=1e-8)
 
 
-fn test_newton_basic() raises:
-    fn f[
+def test_newton_basic() raises:
+    def f[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
         return x * x - 2.0
 
-    fn fprime[
+    def fprime[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
         return 2.0 * x
@@ -33,8 +33,8 @@ fn test_newton_basic() raises:
     assert_almost_equal(root, sqrt(2.0), atol=1e-10)
 
 
-fn test_secant_basic() raises:
-    fn f[
+def test_secant_basic() raises:
+    def f[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
         return x * x - 2.0
@@ -43,8 +43,8 @@ fn test_secant_basic() raises:
     assert_almost_equal(root, sqrt(2.0), atol=1e-8)
 
 
-fn test_bisect_invalid_bracket_raises() raises:
-    fn g[
+def test_bisect_invalid_bracket_raises() raises:
+    def g[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
         return x * x + 1.0

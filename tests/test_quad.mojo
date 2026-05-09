@@ -20,7 +20,7 @@ def test_quad_basic_polynomials():
     """
 
     # Test ∫x dx from 0 to 1 = 1/2
-    fn linear[
+    def linear[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
         return x
@@ -30,7 +30,7 @@ def test_quad_basic_polynomials():
     assert_true(result.ier == 0)  # Success
 
     # Test ∫x² dx from 0 to 2 = 8/3
-    fn quadratic[
+    def quadratic[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
         return x * x
@@ -40,7 +40,7 @@ def test_quad_basic_polynomials():
     assert_true(result2.ier == 0)
 
     # Test ∫x³ dx from 0 to 3 = 81/4
-    fn cubic[
+    def cubic[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
         return x * x * x
@@ -54,7 +54,7 @@ def test_quad_trigonometric():
     """Test quad with trigonometric functions."""
 
     # Test ∫sin(x) dx from 0 to π = 2
-    fn sine[
+    def sine[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
         dtype
@@ -66,7 +66,7 @@ def test_quad_trigonometric():
     assert_true(result.ier == 0)
 
     # Test ∫cos(x) dx from 0 to π/2 = 1
-    fn cosine[
+    def cosine[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
         dtype
@@ -78,7 +78,7 @@ def test_quad_trigonometric():
     assert_true(result2.ier == 0)
 
     # Test ∫sin²(x) dx from 0 to π = π/2
-    fn sin_squared[
+    def sin_squared[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
         dtype
@@ -95,7 +95,7 @@ def test_quad_exponential():
     """Test quad with exponential functions."""
 
     # Test ∫e^x dx from 0 to 1 = e - 1
-    fn exponential[
+    def exponential[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
         dtype
@@ -108,7 +108,7 @@ def test_quad_exponential():
     assert_true(result.ier == 0)
 
     # Test ∫e^(-x) dx from 0 to ∞ ≈ 1 (using large upper bound)
-    fn exp_decay[
+    def exp_decay[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
         dtype
@@ -126,7 +126,7 @@ def test_quad_edge_cases():
     """Test quad with edge cases and boundary conditions."""
 
     # Test with identical limits (should return 0)
-    fn constant_func[
+    def constant_func[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
         return 5.0
@@ -152,7 +152,7 @@ def test_quad_with_parameters():
     """Test quad with parameterized functions using args."""
 
     # Test ∫a*x dx with parameter a
-    fn linear_param[
+    def linear_param[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
         if args:
@@ -174,7 +174,7 @@ def test_quad_difficult_integrands():
 
     # Test Gaussian integral ∫e^(-x²) dx from -∞ to ∞ ≈ √π
     # Using finite bounds that approximate infinity
-    fn gaussian[
+    def gaussian[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
         dtype
@@ -186,7 +186,7 @@ def test_quad_difficult_integrands():
     assert_true(result.ier == 0)
 
     # Test oscillatory function sin(x)/x near origin (needs careful handling)
-    fn sinc_like[
+    def sinc_like[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
         dtype
@@ -203,7 +203,7 @@ def test_quad_difficult_integrands():
 # ! this isn't giving enough precision to pass tests yet.
 # def test_quad_precision_and_tolerance():
 #     """Test quad with different precision requirements."""
-#     fn smooth_func[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+#     def smooth_func[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
 #         return x * exp(-x)
 
 # Test with default tolerance
@@ -222,7 +222,7 @@ def test_quad_difficult_integrands():
 # def test_quad_float32():
 #     """Test quad with Float32 precision."""
 
-#     fn simple_func[
+#     def simple_func[
 #         dtype: DType
 #     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
 #         return x * x
@@ -241,7 +241,7 @@ def test_quad_difficult_integrands():
 #     """Test quad error handling and convergence failure cases."""
 
 #     # Test with very few subdivisions allowed (should still work for simple functions)
-#     fn simple_func[
+#     def simple_func[
 #         dtype: DType
 #     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
 #         return x
@@ -250,7 +250,7 @@ def test_quad_difficult_integrands():
 #     assert_almost_equal(result.integral, 0.5, atol=1e-8)
 
 #     # Test extremely oscillatory function that might challenge the algorithm
-#     fn oscillatory[
+#     def oscillatory[
 #         dtype: DType
 #     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
 #         return sin(100.0 * x)  # High frequency oscillation

@@ -29,7 +29,7 @@ import numojo as nm
 # ===----------------------------------------------------------------------=== #
 
 
-fn trapezoid[
+def trapezoid[
     dtype: DType
 ](
     y: NDArray[dtype],
@@ -93,7 +93,7 @@ fn trapezoid[
     return integral
 
 
-fn trapezoid[
+def trapezoid[
     dtype: DType
 ](
     y: NDArray[dtype],
@@ -202,7 +202,8 @@ fn trapezoid[
 # Simpson
 # ===----------------------------------------------------------------------=== #
 
-fn simpson[
+
+def simpson[
     dtype: DType
 ](
     y: NDArray[dtype],
@@ -269,7 +270,7 @@ fn simpson[
     return integral
 
 
-fn simpson[
+def simpson[
     dtype: DType
 ](
     y: NDArray[dtype],
@@ -373,8 +374,9 @@ fn simpson[
 # Romberg
 # ===----------------------------------------------------------------------=== #
 
+
 # TODO: fix the loop implementation.
-fn romb[
+def romb[
     dtype: DType
 ](y: NDArray[dtype], dx: Scalar[dtype] = 1.0, axis: Int = -1) raises -> Scalar[
     dtype

@@ -12,7 +12,7 @@ from python import Python, PythonObject
 
 
 # TODO: Instead of checking element by element, we could use nm.all for array comparisons similar to NuMojo tests.
-fn test_input_validation() raises:
+def test_input_validation() raises:
     """Test input validation."""
     var x1 = nm.arange[nm.f64](0, 3, 1)
     var y1 = nm.arange[nm.f64](0, 4, 1)
@@ -61,7 +61,7 @@ fn test_input_validation() raises:
     assert_true(caught_error, "Should raise error for duplicate x values")
 
 
-fn test_bounds_handling() raises:
+def test_bounds_handling() raises:
     """Test bounds error and fill value handling against SciPy."""
     try:
         var np = Python.import_module("numpy")
@@ -135,7 +135,7 @@ fn test_bounds_handling() raises:
         print("SciPy not available, skipping bounds handling test")
 
 
-fn test_memory_access_consistency() raises:
+def test_memory_access_consistency() raises:
     """Test that memory access is consistent and matches SciPy results."""
 
     try:
@@ -204,7 +204,7 @@ fn test_memory_access_consistency() raises:
         print("SciPy not available, skipping memory access consistency test")
 
 
-fn test_functional_interface() raises:
+def test_functional_interface() raises:
     """Test the functional interp1d interface against NumPy."""
     try:
         var np = Python.import_module("numpy")
@@ -263,7 +263,7 @@ fn test_functional_interface() raises:
         print("NumPy not available, skipping functional interface test")
 
 
-fn test_edge_cases() raises:
+def test_edge_cases() raises:
     """Test edge cases against SciPy."""
     print("Testing edge cases...")
 
@@ -336,7 +336,7 @@ fn test_edge_cases() raises:
     )
 
 
-fn test_accuracy_against_known_functions() raises:
+def test_accuracy_against_known_functions() raises:
     """Test interpolation accuracy against SciPy for known mathematical functions.
     """
     var np = Python.import_module("numpy")
@@ -400,7 +400,7 @@ fn test_accuracy_against_known_functions() raises:
         )
 
 
-fn test_scipy_comprehensive_compatibility() raises:
+def test_scipy_comprehensive_compatibility() raises:
     """Comprehensive SciPy compatibility test covering all major features."""
     var np = Python.import_module("numpy")
     var scipy_interpolate = Python.import_module("scipy.interpolate")
@@ -480,7 +480,7 @@ fn test_scipy_comprehensive_compatibility() raises:
         )
 
 
-fn test_performance_comparison() raises:
+def test_performance_comparison() raises:
     var np = Python.import_module("numpy")
     var scipy_interpolate = Python.import_module("scipy.interpolate")
 

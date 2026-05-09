@@ -17,8 +17,8 @@ References
   https://www.advanpix.com/2011/11/07/gauss-kronrod-quadrature-nodes-weights/
 """
 
-from utils import StaticTuple
-from utils.numerics import min_finite, max_finite
+from std.utils import StaticTuple
+from std.utils.numerics import min_finite, max_finite
 
 comptime smallest_positive_dtype[dtype: DType] = min_finite[dtype]()
 comptime largest_positive_dtype[dtype: DType] = max_finite[dtype]()
@@ -30,7 +30,8 @@ comptime largest_positive_dtype[dtype: DType] = max_finite[dtype]()
 # Helpers
 # ===----------------------------------------------------------------------=== #
 
-fn machine_epsilon[dtype: DType]() -> Float64 where dtype.is_floating_point():
+
+def machine_epsilon[dtype: DType]() -> Float64 where dtype.is_floating_point():
     """Returns the machine epsilon for the given floating-point dtype.
 
     Parameters:
@@ -39,9 +40,9 @@ fn machine_epsilon[dtype: DType]() -> Float64 where dtype.is_floating_point():
     Returns:
         The machine epsilon as a Float64 value.
     """
+
     # TODO: Check if these values are correct lol
-    @parameter
-    if dtype == DType.float16:
+    comptime if dtype == DType.float16:
         return Float64(0.0009765625)  # 2**-10
     elif dtype == DType.float32:
         return Float64(1.1920928955078125e-07)  # 2**-23
@@ -52,6 +53,7 @@ fn machine_epsilon[dtype: DType]() -> Float64 where dtype.is_floating_point():
 # ===----------------------------------------------------------------------=== #
 # Adaptive intervals
 # ===----------------------------------------------------------------------=== #
+
 
 struct QAGSInterval[dtype: DType](ImplicitlyCopyable, Movable):
     """Represents an integration subinterval with error estimate for adaptive subdivision.
@@ -71,7 +73,7 @@ struct QAGSInterval[dtype: DType](ImplicitlyCopyable, Movable):
     var level: Int
     """Subdivision level."""
 
-    fn __init__(
+    def __init__(
         out self,
         a: Float64,
         b: Float64,
@@ -96,31 +98,31 @@ struct QAGSPriorityQueue[dtype: DType]:
     var intervals: List[QAGSInterval[Self.dtype]]
     """Heap-ordered list of integration intervals."""
 
-    fn __init__(out self):
+    def __init__(out self):
         self.intervals = List[QAGSInterval[Self.dtype]]()
 
-    fn __len__(self) -> Int:
+    def __len__(self) -> Int:
         return len(self.intervals)
 
-    fn is_empty(self) -> Bool:
+    def is_empty(self) -> Bool:
         """Returns True if the queue contains no intervals."""
         return len(self.intervals) == 0
 
-    fn _parent(self, i: Int) -> Int:
+    def _parent(self, i: Int) -> Int:
         return (i - 1) // 2
 
-    fn _left_child(self, i: Int) -> Int:
+    def _left_child(self, i: Int) -> Int:
         return 2 * i + 1
 
-    fn _right_child(self, i: Int) -> Int:
+    def _right_child(self, i: Int) -> Int:
         return 2 * i + 2
 
-    fn _swap(mut self, i: Int, j: Int):
+    def _swap(mut self, i: Int, j: Int):
         var temp = self.intervals[i]
         self.intervals[i] = self.intervals[j]
         self.intervals[j] = temp
 
-    fn _heapify_up(mut self, index: Int):
+    def _heapify_up(mut self, index: Int):
         if index == 0:
             return
 
@@ -129,7 +131,7 @@ struct QAGSPriorityQueue[dtype: DType]:
             self._swap(index, parent_idx)
             self._heapify_up(parent_idx)
 
-    fn _heapify_down(mut self, index: Int):
+    def _heapify_down(mut self, index: Int):
         var largest = index
         var left = self._left_child(index)
         var right = self._right_child(index)
@@ -151,7 +153,7 @@ struct QAGSPriorityQueue[dtype: DType]:
             self._swap(index, largest)
             self._heapify_down(largest)
 
-    fn push(mut self, interval: QAGSInterval[Self.dtype]):
+    def push(mut self, interval: QAGSInterval[Self.dtype]):
         """Adds an interval to the priority queue.
 
         Args:
@@ -160,7 +162,7 @@ struct QAGSPriorityQueue[dtype: DType]:
         self.intervals.append(interval)
         self._heapify_up(len(self.intervals) - 1)
 
-    fn pop(mut self) -> QAGSInterval[Self.dtype]:
+    def pop(mut self) -> QAGSInterval[Self.dtype]:
         """Removes and returns the interval with the largest error estimate.
 
         Returns:
@@ -184,7 +186,7 @@ struct QAGSPriorityQueue[dtype: DType]:
 
         return max_interval
 
-    fn peek(self) -> QAGSInterval[Self.dtype]:
+    def peek(self) -> QAGSInterval[Self.dtype]:
         """Returns the interval with the largest error estimate without removing it.
 
         Returns:
@@ -193,7 +195,7 @@ struct QAGSPriorityQueue[dtype: DType]:
         return self.intervals[0]
 
 
-fn get_quad_error_message(ier: Int) -> String:
+def get_quad_error_message(ier: Int) -> String:
     """Returns the error message corresponding to a QUADPACK integration error code.
 
     Args:
@@ -242,6 +244,7 @@ fn get_quad_error_message(ier: Int) -> String:
 # Result types
 # ===----------------------------------------------------------------------=== #
 
+
 struct IntegralResult[dtype: DType](Copyable, Movable, Writable):
     """Result structure for numerical integration operations.
 
@@ -261,7 +264,7 @@ struct IntegralResult[dtype: DType](Copyable, Movable, Writable):
     var ier: Int
     """Integration error code (0 = success, >0 = error type)."""
 
-    fn __init__(
+    def __init__(
         out self,
         integral: Scalar[Self.dtype] = 0,
         abserr: Scalar[Self.dtype] = 0,
@@ -273,15 +276,15 @@ struct IntegralResult[dtype: DType](Copyable, Movable, Writable):
         self.neval = neval
         self.ier = ier
 
-    fn success(self) -> Bool:
+    def success(self) -> Bool:
         """Returns True if integration converged successfully (ier == 0)."""
         return self.ier == 0
 
-    fn message(self) -> String:
+    def message(self) -> String:
         """Returns a human-readable status message for this result."""
         return get_quad_error_message(self.ier)
 
-    fn __str__(self) raises -> String:
+    def __str__(self) raises -> String:
         var status = "SUCCESS" if self.success() else "ERROR"
         return String(
             "QuadResult(status={}, message='{}', integral={}, abserr={:.2e},"
@@ -294,7 +297,7 @@ struct IntegralResult[dtype: DType](Copyable, Movable, Writable):
             self.neval,
         )
 
-    fn write_to[W: Writer](self, mut writer: W):
+    def write_to[W: Writer](self, mut writer: W):
         try:
             var status = "SUCCESS" if self.success() else "ERROR"
             writer.write(

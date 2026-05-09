@@ -19,7 +19,7 @@ Examples
     ```mojo
     from scijo.differentiate import derivative
 
-    fn f[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+    def f[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
         return x * x
 
     var res = derivative[f64, f](1.0)

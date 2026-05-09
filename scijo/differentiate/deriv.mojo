@@ -17,7 +17,7 @@ References
 """
 
 
-from .utility import (
+from scijo.differentiate.utility import (
     DiffResult,
     generate_central_finite_difference_table,
     generate_forward_finite_difference_table,
@@ -30,9 +30,9 @@ from .utility import (
 # ===----------------------------------------------------------------------=== #
 
 
-fn derivative[
+def derivative[
     dtype: DType,
-    func: fn[dtype: DType](
+    func: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
     ) -> Scalar[dtype],
     *,
@@ -54,7 +54,7 @@ fn derivative[
 
     Parameters:
         dtype: The floating-point data type.
-        func: Function to differentiate with signature fn(x, args) -> Scalar[dtype].
+        func: Function to differentiate with signature def(x, args) -> Scalar[dtype].
         step_direction: Direction of finite difference
             (central=0, forward=1, backward=-1). Keyword-only.
 
@@ -81,15 +81,14 @@ fn derivative[
         from scijo.differentiate import derivative
         from scijo.prelude import *
 
-        fn f[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+        def f[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
             return x * x
 
         var res = derivative[f64, f](1.0)
         ```
     """
 
-    @parameter
-    if step_direction == 0:
+    comptime if step_direction == 0:
         comptime first_order_coefficients = generate_central_finite_difference_table[
             dtype
         ]()
@@ -147,9 +146,9 @@ fn derivative[
 # ===----------------------------------------------------------------------=== #
 
 
-fn _derivative_central_difference[
+def _derivative_central_difference[
     dtype: DType,
-    func: fn[dtype: DType](
+    func: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
     ) -> Scalar[dtype],
 ](
@@ -168,7 +167,7 @@ fn _derivative_central_difference[
 
     Parameters:
         dtype: The floating-point data type.
-        func: Function to differentiate with signature fn(x, args) -> Scalar[dtype].
+        func: Function to differentiate with signature def(x, args) -> Scalar[dtype].
 
     Args:
         x0: Point at which to evaluate the derivative.
@@ -296,9 +295,9 @@ fn _derivative_central_difference[
     )
 
 
-fn _derivative_forward_difference[
+def _derivative_forward_difference[
     dtype: DType,
-    func: fn[dtype: DType](
+    func: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
     ) -> Scalar[dtype],
 ](
@@ -318,7 +317,7 @@ fn _derivative_forward_difference[
 
     Parameters:
         dtype: The floating-point data type.
-        func: Function to differentiate with signature fn(x, args) -> Scalar[dtype].
+        func: Function to differentiate with signature def(x, args) -> Scalar[dtype].
 
     Args:
         x0: Point at which to evaluate the derivative.
@@ -443,9 +442,9 @@ fn _derivative_forward_difference[
     )
 
 
-fn _derivative_backward_difference[
+def _derivative_backward_difference[
     dtype: DType,
-    func: fn[dtype: DType](
+    func: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
     ) -> Scalar[dtype],
 ](
@@ -465,7 +464,7 @@ fn _derivative_backward_difference[
 
     Parameters:
         dtype: The floating-point data type.
-        func: Function to differentiate with signature fn(x, args) -> Scalar[dtype].
+        func: Function to differentiate with signature def(x, args) -> Scalar[dtype].
 
     Args:
         x0: Point at which to evaluate the derivative.

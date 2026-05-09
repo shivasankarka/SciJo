@@ -9,17 +9,17 @@ Includes temperature conversions, frequency-wavelength calculations, and
 functions for accessing physical constant properties.
 """
 
-from builtin.value import materialize
+from std.builtin.value import materialize
 
-from .constants import c
-from .codata import physical_constants
+from scijo.constants.constants import c
+from scijo.constants.codata import physical_constants
 
 # ===----------------------------------------------------------------------=== #
 # Functions to access physical constants
 # ===----------------------------------------------------------------------=== #
 
 
-fn value(key: String) raises -> Scalar[DType.float64]:
+def value(key: String) raises -> Scalar[DType.float64]:
     """
     Get the value of a physical constant.
 
@@ -37,7 +37,7 @@ fn value(key: String) raises -> Scalar[DType.float64]:
         return 0.0
 
 
-fn unit(key: String) raises -> String:
+def unit(key: String) raises -> String:
     """
     Get the unit of a physical constant.
 
@@ -55,7 +55,7 @@ fn unit(key: String) raises -> String:
         return ""
 
 
-fn precision(key: String) raises -> Scalar[DType.float64]:
+def precision(key: String) raises -> Scalar[DType.float64]:
     """
     Get the relative precision (uncertainty/value) of a physical constant.
 
@@ -77,7 +77,7 @@ fn precision(key: String) raises -> Scalar[DType.float64]:
         return 0.0
 
 
-fn find(substring: String = "") raises -> List[String]:
+def find(substring: String = "") raises -> List[String]:
     """
     Find physical constants containing a substring in their name.
 
@@ -99,7 +99,7 @@ fn find(substring: String = "") raises -> List[String]:
 
 
 # Additional helper functions for common access patterns
-fn get_constant_tuple(
+def get_constant_tuple(
     key: String,
 ) raises -> Tuple[Scalar[DType.float64], String, Scalar[DType.float64]]:
     """
@@ -120,7 +120,7 @@ fn get_constant_tuple(
         return (0.0, "", 0.0)
 
 
-fn list_all_constants() raises -> List[String]:
+def list_all_constants() raises -> List[String]:
     """
     Get a list of all available physical constant names.
 
@@ -139,7 +139,7 @@ fn list_all_constants() raises -> List[String]:
 # ===----------------------------------------------------------------------=== #
 
 
-fn convert_temperature[
+def convert_temperature[
     old_scalar: String, new_scalar: String
 ](value: Scalar[f64]) raises -> Scalar[f64]:
     """Converts a temperature value from one scalar to another.
@@ -155,8 +155,7 @@ fn convert_temperature[
         The converted temperature value in the new scalar.
     """
 
-    @parameter
-    if old_scalar == "Celsius" and new_scalar == "Fahrenheit":
+    comptime if old_scalar == "Celsius" and new_scalar == "Fahrenheit":
         return (value * 9.0 / 5.0) + 32.0
     elif old_scalar == "Celsius" and new_scalar == "Kelvin":
         return value + 273.15
@@ -180,7 +179,7 @@ fn convert_temperature[
 # ===----------------------------------------------------------------------=== #
 
 
-fn lambdanu(frequency: Scalar[f64]) -> Scalar[f64]:
+def lambdanu(frequency: Scalar[f64]) -> Scalar[f64]:
     """
     Calculates the wavelength (lambda) from the frequency (nu) using the speed of light.
 
@@ -193,7 +192,7 @@ fn lambdanu(frequency: Scalar[f64]) -> Scalar[f64]:
     return c / frequency
 
 
-fn nulambda(wavelength: Scalar[f64]) -> Scalar[f64]:
+def nulambda(wavelength: Scalar[f64]) -> Scalar[f64]:
     """
     Calculates the frequency (nu) from the wavelength (lambda) using the speed of light.
 

@@ -24,7 +24,7 @@ Examples
     ```
 """
 
-from math import sin, cos
+from std.math import sin, cos
 
 from numojo.core.complex import ComplexNDArray, ComplexSIMD
 from numojo.core.dtype import ComplexDType
@@ -38,7 +38,7 @@ from numojo.core.indexing import Item
 # ===----------------------------------------------------------------------=== #
 
 
-fn fft[
+def fft[
     dtype: ComplexDType = ComplexDType.float64
 ](arr: ComplexNDArray[dtype]) raises -> ComplexNDArray[
     dtype
@@ -118,7 +118,7 @@ fn fft[
     return result^
 
 
-fn _ifft_unnormalized[
+def _ifft_unnormalized[
     dtype: ComplexDType = ComplexDType.float64
 ](arr: ComplexNDArray[dtype]) raises -> ComplexNDArray[
     dtype
@@ -190,7 +190,7 @@ fn _ifft_unnormalized[
 # ===----------------------------------------------------------------------=== #
 
 
-fn ifft[
+def ifft[
     dtype: ComplexDType = ComplexDType.float64
 ](arr: ComplexNDArray[dtype]) raises -> ComplexNDArray[
     dtype

@@ -22,8 +22,10 @@ Examples
 """
 
 from numojo import zeros
-
-from .utility import _binary_search, _validate_interpolation_input
+from scijo.interpolate.utility import (
+    _binary_search,
+    _validate_interpolation_input,
+)
 
 
 # ===----------------------------------------------------------------------=== #
@@ -66,7 +68,7 @@ struct LinearInterpolator[dtype: DType = DType.float64](Copyable, Movable):
     var fill_value: Optional[Scalar[Self.dtype]]
     """Value to use for out-of-bounds points when bounds_error is False."""
 
-    fn __init__(
+    def __init__(
         out self,
         x: NDArray[Self.dtype],
         y: NDArray[Self.dtype],
@@ -96,7 +98,7 @@ struct LinearInterpolator[dtype: DType = DType.float64](Copyable, Movable):
         self.bounds_error = bounds_error
         self.fill_value = fill_value
 
-    fn __call__(self, xi: Scalar[Self.dtype]) raises -> Scalar[Self.dtype]:
+    def __call__(self, xi: Scalar[Self.dtype]) raises -> Scalar[Self.dtype]:
         """Interpolates a single value.
 
         Example: yq = interp(Scalar[dtype](0.25))
@@ -147,7 +149,7 @@ struct LinearInterpolator[dtype: DType = DType.float64](Copyable, Movable):
         var slope: Scalar[Self.dtype] = (y1 - y0) / (x1 - x0)
         return y0 + slope * (xi - x0)
 
-    fn __call__(self, xi: NDArray[Self.dtype]) raises -> NDArray[Self.dtype]:
+    def __call__(self, xi: NDArray[Self.dtype]) raises -> NDArray[Self.dtype]:
         """Interpolates an array of values.
 
         Example: yq = interp(xq_array)
@@ -216,7 +218,7 @@ struct LinearInterpolator[dtype: DType = DType.float64](Copyable, Movable):
 
 # TODO: Add more interpolation methods like 'quadratic', 'cubic'.
 # TODO: Add both interpolate and extrapolate fill methods.
-fn interp1d[
+def interp1d[
     dtype: DType = DType.float64
 ](
     x: NDArray[dtype],
@@ -268,7 +270,7 @@ fn interp1d[
 # ===----------------------------------------------------------------------=== #
 
 
-fn interp1d[
+def interp1d[
     dtype: DType = DType.float64,
     type: String = "linear",
     fill_method: String = "interpolate",
@@ -317,8 +319,7 @@ fn interp1d[
     """
     _validate_interpolation_input(x, y)
 
-    @parameter
-    if type == "linear" and fill_method == "extrapolate":
+    comptime if type == "linear" and fill_method == "extrapolate":
         return _interp1d_linear_extrapolate(xi, x, y)
     elif type == "linear" and fill_method == "interpolate":
         return _interp1d_linear_interpolate(xi, x, y)
@@ -337,7 +338,7 @@ fn interp1d[
 # ===----------------------------------------------------------------------=== #
 
 
-fn _interp1d_linear_interpolate[
+def _interp1d_linear_interpolate[
     dtype: DType
 ](xi: NDArray[dtype], x: NDArray[dtype], y: NDArray[dtype]) raises -> NDArray[
     dtype
@@ -383,7 +384,7 @@ fn _interp1d_linear_interpolate[
     return result^
 
 
-fn _interp1d_linear_extrapolate[
+def _interp1d_linear_extrapolate[
     dtype: DType
 ](xi: NDArray[dtype], x: NDArray[dtype], y: NDArray[dtype]) raises -> NDArray[
     dtype
@@ -450,13 +451,13 @@ fn _interp1d_linear_extrapolate[
 # ===----------------------------------------------------------------------=== #
 
 
-# fn _interp1d_quadratic_interpolate[dtype: DType](
+# def _interp1d_quadratic_interpolate[dtype: DType](
 #     xi: NDArray[dtype], x: NDArray[dtype], y: NDArray[dtype]
 # ) raises -> NDArray[dtype]:
 #     """Quadratic interpolation with boundary clamping."""
 #     pass
 
-# fn _interp1d_cubic_interpolate[dtype: DType](
+# def _interp1d_cubic_interpolate[dtype: DType](
 #     xi: NDArray[dtype], x: NDArray[dtype], y: NDArray[dtype]
 # ) raises -> NDArray[dtype]:
 #     """Cubic interpolation with boundary clamping."""

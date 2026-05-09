@@ -6,7 +6,7 @@ from testing import assert_almost_equal, assert_equal
 from testing import TestSuite
 
 
-fn test_basic_trapezoid() raises:
+def test_basic_trapezoid() raises:
     """Test basic trapezoid integration matching SciPy examples."""
     var y1 = nm.fromstring[sj.f64]("[1, 2, 3]")
     var result1 = trapezoid[sj.f64](y1)
@@ -28,7 +28,7 @@ fn test_basic_trapezoid() raises:
     )
 
 
-fn test_edge_cases() raises:
+def test_edge_cases() raises:
     """Test edge cases for trapezoid integration."""
 
     var y_single = nm.fromstring[sj.f64]("[5]")
@@ -53,7 +53,7 @@ fn test_edge_cases() raises:
     )
 
 
-fn test_reverse_integration() raises:
+def test_reverse_integration() raises:
     """Test integration with decreasing x values."""
 
     var y = nm.fromstring[sj.f64]("[1, 2, 3]")
@@ -64,7 +64,7 @@ fn test_reverse_integration() raises:
     )
 
 
-fn test_parametric_curve() raises:
+def test_parametric_curve() raises:
     """Test parametric curve integration (approximating x^2 from 0 to 1)."""
 
     var n = 50
@@ -80,7 +80,7 @@ fn test_parametric_curve() raises:
     )
 
 
-fn test_different_spacings() raises:
+def test_different_spacings() raises:
     """Test different dx values."""
 
     var y = nm.fromstring[sj.f64]("[0, 1, 4, 9]")
@@ -100,7 +100,7 @@ fn test_different_spacings() raises:
     )
 
 
-fn test_numerical_accuracy() raises:
+def test_numerical_accuracy() raises:
     """Test numerical accuracy with known integrals."""
 
     var x_linear = nm.fromstring[sj.f64]("[0, 1, 2, 3]")
@@ -120,7 +120,7 @@ fn test_numerical_accuracy() raises:
     )
 
 
-fn test_scipy_compatibility() raises:
+def test_scipy_compatibility() raises:
     """Test compatibility with SciPy results."""
 
     try:
@@ -175,7 +175,7 @@ fn test_scipy_compatibility() raises:
         print("SciPy not available for compatibility testing")
 
 
-fn test_error_conditions() raises:
+def test_error_conditions() raises:
     """Test error conditions and edge cases."""
     var y_mismatch = nm.fromstring[sj.f64]("[1, 2, 3]")
     var x_mismatch = nm.fromstring[sj.f64]("[1, 2]")

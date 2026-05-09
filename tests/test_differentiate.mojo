@@ -5,7 +5,7 @@ from testing import TestSuite
 import math
 
 
-fn constant_function[
+def constant_function[
     dtype: DType
 ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
     """
@@ -14,7 +14,7 @@ fn constant_function[
     return 5.0
 
 
-fn linear_function[
+def linear_function[
     dtype: DType
 ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
     """
@@ -23,7 +23,7 @@ fn linear_function[
     return 3.0 * x + 2.0
 
 
-fn quadratic_function[
+def quadratic_function[
     dtype: DType
 ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
     """
@@ -32,7 +32,7 @@ fn quadratic_function[
     return 2.0 * x * x + 3.0 * x + 1.0
 
 
-fn cubic_function[
+def cubic_function[
     dtype: DType
 ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
     """
@@ -41,7 +41,7 @@ fn cubic_function[
     return x * x * x - 2.0 * x * x + x - 5.0
 
 
-fn sin_function[
+def sin_function[
     dtype: DType
 ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
     dtype
@@ -52,7 +52,7 @@ fn sin_function[
     return math.sin(x)
 
 
-fn cos_function[
+def cos_function[
     dtype: DType
 ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
     dtype
@@ -63,7 +63,7 @@ fn cos_function[
     return math.cos(x)
 
 
-fn exp_function[
+def exp_function[
     dtype: DType
 ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
     dtype
@@ -74,7 +74,7 @@ fn exp_function[
     return math.exp(x)
 
 
-fn parameterized_function[
+def parameterized_function[
     dtype: DType
 ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
     """
@@ -86,7 +86,7 @@ fn parameterized_function[
     return a * x * x + b * x + c
 
 
-fn test_basic_derivatives() raises:
+def test_basic_derivatives() raises:
     """Test derivatives of basic polynomial functions."""
 
     # Test constant function: F(x) = 5, f'(x) = 0
@@ -131,7 +131,7 @@ fn test_basic_derivatives() raises:
     )
 
 
-fn test_cubic_derivatives() raises:
+def test_cubic_derivatives() raises:
     """Test derivative of cubic function."""
 
     # Test cubic function: F(x) = x^3 - 2x^2 + x - 5, f'(x) = 3x^2 - 4x + 1
@@ -152,7 +152,7 @@ fn test_cubic_derivatives() raises:
         )
 
 
-fn test_trigonometric_derivatives() raises:
+def test_trigonometric_derivatives() raises:
     """Test derivatives of trigonometric functions."""
 
     # Test sin(x): f'(x) = cos(x)
@@ -184,7 +184,7 @@ fn test_trigonometric_derivatives() raises:
     )
 
 
-fn test_exponential_derivative() raises:
+def test_exponential_derivative() raises:
     """Test derivative of exponential function."""
 
     # Test exp(x): f'(x) = exp(x)
@@ -202,7 +202,7 @@ fn test_exponential_derivative() raises:
     )
 
 
-fn test_parameterized_function() raises:
+def test_parameterized_function() raises:
     """Test derivative with function parameters."""
 
     # Test F(x) = a*x^2 + b*x + c with a=2, b=5, c=3
@@ -225,7 +225,7 @@ fn test_parameterized_function() raises:
     )
 
 
-fn test_different_step_directions() raises:
+def test_different_step_directions() raises:
     """Test different finite difference methods (central, forward, backward)."""
 
     var x_test = 1.0
@@ -257,7 +257,7 @@ fn test_different_step_directions() raises:
 
     # Backward differences
     var result_backward = derivative[
-        DType.float64, quadratic_function, step_direction= -1
+        DType.float64, quadratic_function, step_direction=-1
     ](x0=x_test, args=None, order=6, max_iter=50)
     assert_true(result_backward.success, "Backward difference should converge")
     assert_almost_equal(
@@ -268,7 +268,7 @@ fn test_different_step_directions() raises:
     )
 
 
-fn test_different_orders() raises:
+def test_different_orders() raises:
     """Test different accuracy orders."""
 
     var x_test = 0.5
@@ -290,7 +290,7 @@ fn test_different_orders() raises:
         )
 
 
-fn test_tolerance_settings() raises:
+def test_tolerance_settings() raises:
     """Test different tolerance settings."""
 
     var x_test = 1.0
@@ -325,7 +325,7 @@ fn test_tolerance_settings() raises:
     )
 
 
-fn test_convergence_properties() raises:
+def test_convergence_properties() raises:
     """Test convergence properties and diagnostic information."""
 
     var result = derivative[
@@ -342,7 +342,7 @@ fn test_convergence_properties() raises:
     assert_true(result.error >= 0.0, "Error estimate should be non-negative")
 
 
-fn test_error_conditions() raises:
+def test_error_conditions() raises:
     """Test error conditions and invalid parameters."""
 
     try:
@@ -354,7 +354,7 @@ fn test_error_conditions() raises:
         pass
 
 
-fn test_step_size_parameters() raises:
+def test_step_size_parameters() raises:
     """Test different step size parameters."""
 
     var x_test = 1.0

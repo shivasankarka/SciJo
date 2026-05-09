@@ -41,7 +41,7 @@ struct PhysicalConstant[dtype: DType = DType.float64](
     var unit: String
     var uncertainty: Scalar[Self.dtype]
 
-    fn __init__(
+    def __init__(
         out self,
         value: Scalar[Self.dtype],
         unit: String,
@@ -51,12 +51,12 @@ struct PhysicalConstant[dtype: DType = DType.float64](
         self.unit = unit
         self.uncertainty = uncertainty
 
-    fn __str__(self) raises -> String:
+    def __str__(self) raises -> String:
         return String("{} {} ± {}").format(
             self.value, self.unit, self.uncertainty
         )
 
-    fn write_to[W: Writer](self, mut writer: W):
+    def write_to[W: Writer](self, mut writer: W):
         """
         Writes the array to a writer.
 

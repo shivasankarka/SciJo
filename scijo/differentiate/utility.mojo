@@ -45,7 +45,7 @@ struct DiffResult[dtype: DType](ImplicitlyCopyable, Writable):
     var x: Scalar[Self.dtype]
     """The point at which the derivative was evaluated."""
 
-    fn __init__(
+    def __init__(
         out self,
         success: Bool,
         df: Scalar[Self.dtype],
@@ -61,12 +61,12 @@ struct DiffResult[dtype: DType](ImplicitlyCopyable, Writable):
         self.nfev = nfev
         self.x = x
 
-    fn __str__(self) raises -> String:
+    def __str__(self) raises -> String:
         return String(
             "Result(success={}, df={}, error={:.2e}, nit={}, nfev={}, x={})"
         ).format(self.success, self.df, self.error, self.nit, self.nfev, self.x)
 
-    fn write_to[W: Writer](self, mut writer: W):
+    def write_to[W: Writer](self, mut writer: W):
         try:
             writer.write(
                 String(
@@ -97,7 +97,7 @@ struct DiffResult[dtype: DType](ImplicitlyCopyable, Writable):
 
 
 @parameter
-fn generate_central_finite_difference_table[
+def generate_central_finite_difference_table[
     dtype: DType
 ]() -> Dict[Int, List[Scalar[dtype]]]:
     """Generates central finite difference coefficients for first-order derivatives.
@@ -154,7 +154,7 @@ fn generate_central_finite_difference_table[
 
 
 @parameter
-fn generate_forward_finite_difference_table[
+def generate_forward_finite_difference_table[
     dtype: DType
 ]() -> Dict[Int, List[Scalar[dtype]]]:
     """Generates forward finite difference coefficients for first-order derivatives.
@@ -222,7 +222,7 @@ fn generate_forward_finite_difference_table[
 
 
 @parameter
-fn generate_backward_finite_difference_table[
+def generate_backward_finite_difference_table[
     dtype: DType
 ]() -> Dict[Int, List[Scalar[dtype]]]:
     """Generates backward finite difference coefficients for first-order derivatives.

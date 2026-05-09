@@ -14,7 +14,7 @@ Examples
     ```mojo
     from scijo.integrate import quad
 
-    fn integrand[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+    def integrand[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
         return x * x
 
     var result = quad[f64, integrand](0.0, 1.0, None)
@@ -29,9 +29,9 @@ References
   https://www.advanpix.com/2011/11/07/gauss-kronrod-quadrature-nodes-weights/
 """
 
-from math import sqrt
-from builtin.math import min, max
-from utils import StaticTuple
+from std.math import sqrt
+from std.math import min, max
+from std.utils import StaticTuple
 
 from .utility import (
     IntegralResult,
@@ -57,9 +57,10 @@ from .utility import (
 # Quad
 # ===----------------------------------------------------------------------=== #
 
-fn quad[
+
+def quad[
     dtype: DType,
-    func: fn[dtype: DType](
+    func: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
     ) -> Scalar[dtype],
     *,
@@ -78,7 +79,7 @@ fn quad[
 
     Parameters:
         dtype: The floating-point data type.
-        func: Integrand function with signature fn(x, args) -> Scalar[dtype].
+        func: Integrand function with signature def(x, args) -> Scalar[dtype].
         method: Quadrature algorithm to use. Currently supported: "qng". Keyword-only.
 
     Args:
@@ -101,18 +102,17 @@ fn quad[
         from scijo.integrate import quad
         from scijo.prelude import *
 
-        fn integrand[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+        def integrand[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
             return x * x  # Example: f(x) = x^2
 
-        fn main() raises:
+        def main() raises:
             var result = quad[f64, integrand](0.0, 1.0, None)
             print("Integral:", result.integral)  # Should be close to 1/3
             print("Estimated error:", result.abserr)
         ```
     """
 
-    @parameter
-    if method == "qng":
+    comptime if method == "qng":
         return _qng[dtype, func](a, b, args, epsabs, epsrel)
     else:
         raise Error(
@@ -122,9 +122,9 @@ fn quad[
         )
 
 
-fn _qng[
+def _qng[
     dtype: DType,
-    func: fn[dtype: DType](
+    func: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
     ) -> Scalar[dtype],
 ](
@@ -146,7 +146,7 @@ fn _qng[
 
     Parameters:
         dtype: The floating-point data type.
-        func: Integrand function with signature fn(x, args) -> Scalar[dtype].
+        func: Integrand function with signature def(x, args) -> Scalar[dtype].
 
     Args:
         a: Lower integration limit.

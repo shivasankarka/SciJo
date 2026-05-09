@@ -21,7 +21,7 @@ Examples
     ```mojo
     from scijo.integrate import quad, trapezoid
 
-    fn integrand[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+    def integrand[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
         return x * x
 
     var result = quad[f64, integrand](0.0, 1.0, None)
