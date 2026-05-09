@@ -1,4 +1,4 @@
-from scijo.fft.fastfourier import fft, ifft
+from scijo.fft.fastfourier import fft, ifft, rfft, irfft
 import scijo as sj
 import numojo as nm
 from python import Python, PythonObject
@@ -262,6 +262,63 @@ def test_error_conditions() raises:
         var _ = fft[nm.cf64](arr_bad)
     except:
         print("Non-power-of-2 error handling - PASSED")
+
+
+def test_rfft_basic() raises:
+    """Test rfft against NumPy rfft."""
+    var np = Python.import_module("numpy")
+
+    # Real impulse [1, 0, 0, 0, 0, 0, 0, 0] → all bins == 1
+    var x = nm.zeros[nm.f64](nm.Shape(8))
+    x.itemset(0, 1.0)
+
+    var result = rfft[nm.f64](x)
+    assert_equal(result.shape[0], 5, msg="rfft output length should be N//2+1")
+
+    var np_x = np.zeros(8)
+    np_x[0] = 1.0
+    var np_result = np.fft.rfft(np_x)
+
+    compare_complex_arrays[nm.cf64](
+        result, np_result, "rfft: impulse", atol=1e-10
+    )
+
+
+def test_rfft_sine() raises:
+    """Test rfft on a known sine wave."""
+    var np = Python.import_module("numpy")
+
+    var n = 8
+    var x = nm.zeros[nm.f64](nm.Shape(n))
+    for i in range(n):
+        x.itemset(i, Float64(i))
+
+    var result = rfft[nm.f64](x)
+
+    var np_x = np.arange(8, dtype=np.float64)
+    var np_result = np.fft.rfft(np_x)
+
+    compare_complex_arrays[nm.cf64](
+        result, np_result, "rfft: arange(8)", atol=1e-10
+    )
+
+
+def test_irfft_roundtrip() raises:
+    """Test that irfft(rfft(x)) ≈ x."""
+    var np = Python.import_module("numpy")
+
+    var n = 8
+    var x = nm.zeros[nm.f64](nm.Shape(n))
+    for i in range(n):
+        x.itemset(i, Float64(i) * 0.5 + 1.0)
+
+    var freq = rfft[nm.f64](x)
+    var x_rec = irfft[nm.f64](freq, n)
+
+    var np_x = np.array(Python.list(1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5))
+    var np_x_rec = np.fft.irfft(np.fft.rfft(np_x), n)
+
+    compare_real_arrays[nm.f64](x_rec, np_x_rec, "irfft roundtrip", atol=1e-10)
 
 
 def main():

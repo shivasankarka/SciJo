@@ -67,6 +67,7 @@ def test_bisect_invalid_bracket_raises() raises:
 
 def test_root_results_fields() raises:
     """Verify RootResults carries all diagnostic fields."""
+
     def f[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
