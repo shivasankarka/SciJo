@@ -66,7 +66,7 @@ comptime coeffs: List[Scalar[dtype]] = [
 comptime simd_width: Int = simd_width_of[dtype]()
 
 
-fn poly_func[
+def poly_func[
     dtype: DType
 ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
     var result: Scalar[dtype] = 0.0
@@ -76,7 +76,7 @@ fn poly_func[
 
     # test only for 10 coeffs.
     @parameter
-    fn closure[wid: Int](i: Int) unified {mut result, read coeff_ptr, read x}:
+    def closure[wid: Int](i: Int) unified {mut result, read coeff_ptr, read x}:
         result += SIMD[dtype, wid](
             coeff_ptr.load[width=wid](i)
         ).reduce_add() * (x**i)
@@ -89,7 +89,7 @@ fn poly_func[
     return result
 
 
-fn sin_func[
+def sin_func[
     dtype: DType
 ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
     dtype
@@ -100,7 +100,7 @@ fn sin_func[
 comptime x0 = 1.0
 
 
-fn numeric_derivative_1point[order: Int]() raises:
+def numeric_derivative_1point[order: Int]() raises:
     var result = derivative[dtype, poly_func, step_direction=0](
         x0=x0,
         args=None,
@@ -114,7 +114,7 @@ from scijo.differentiate.utility import DiffResult
 comptime npoints: Int = 10
 
 
-fn numeric_derivative_npoints[order: Int]() raises:
+def numeric_derivative_npoints[order: Int]() raises:
     var xs: NDArray[dtype] = nm.linspace[dtype](-1.0, 1.0, npoints)
 
     @parameter
@@ -159,7 +159,7 @@ fn numeric_derivative_npoints[order: Int]() raises:
 from time import perf_counter_ns
 
 
-fn main() raises:
+def main() raises:
     # testing only order 8 for now.
     comptime ord2 = 8
     var report2 = benchmark.run[numeric_derivative_1point[ord2]](2, 100)
