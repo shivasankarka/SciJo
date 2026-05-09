@@ -13,6 +13,7 @@ preview = ["pixi-build"]
 mojo = ">=1.0.0b1,<2"
 # numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", branch = "pre-0.10"}
 numojo = { path = "../NuMojo"}
+msl = {git = "https://github.com/shivasankarka/MojoScientificLibrary.git", branch = "main"}
 
 [feature.test.dependencies]
 python = ">=3.13,<3.14"
