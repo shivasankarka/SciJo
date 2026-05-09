@@ -92,8 +92,8 @@ struct LinearInterpolator[dtype: DType = DType.float64](Copyable, Movable):
         """
         _validate_interpolation_input(x, y)
 
-        self.x = x.deep_copy()
-        self.y = y.deep_copy()
+        self.x = x.copy()
+        self.y = y.copy()
         self.bounds_error = bounds_error
         self.fill_value = fill_value
 
