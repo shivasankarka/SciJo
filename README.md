@@ -24,7 +24,8 @@ SciJo is a high-performance scientific computing library for Mojo that brings th
 
 ### Numerical Differentiation (`scijo.differentiate`)
 Accurate derivatives using finite difference methods:
-- **Methods**: Central, forward, and backward differences
+- **`derivative`**: Central, forward, and backward differences
+- **`jacobian`**: Jacobian matrix computation for vector-valued functions
 - **Order control**: Specify accuracy order (1-6 for forward/backward, 2-8 for central)
 - **Adaptive stepping**: Automatic step size refinement with Richardson extrapolation
 - **Error estimation**: Built-in convergence tracking
@@ -32,12 +33,15 @@ Accurate derivatives using finite difference methods:
 ### Integration (`scijo.integrate`)
 Numerical integration with adaptive algorithms:
 - **`quad`**: (QUADPACK QNG algorithm)
-  - Succesively increasing precision levels (10, 21, 43, 87 point rules)
-- **`trapezoid`**: Basic trapezoidal rule for uniform or non-uniform grids
+  - Successively increasing precision levels (10, 21, 43, 87 point rules)
+- **`trapezoid`**: Composite trapezoidal rule for uniform or non-uniform grids
+- **`simpson`**: Simpson's rule for discrete data
+- **`romb`**: Romberg integration with Richardson extrapolation
 
 ### Interpolation (`scijo.interpolate`)
 1D data interpolation:
-- **`interp1d`**: Linear interpolation
+- **`interp1d`**: Linear interpolation (functional and callable interfaces)
+- **`LinearInterpolator`**: Reusable callable interpolation object
 - Handles both extrapolation and boundary fill methods
 - Compatible with NuMojo arrays
 
@@ -50,9 +54,21 @@ Fast Fourier Transform operations:
 
 ### Physical Constants (`scijo.constants`)
 Access fundamental physical constants from CODATA 2022:
-- Lots physical constants with values, units, and uncertainties
+- Comprehensive physical constants with values, units, and uncertainties
+- Mathematical constants (pi, golden ratio, etc.)
+- SI prefixes, binary prefixes, and unit conversions
+- Helper functions: `value()`, `unit()`, `precision()`, `find()`
+- Temperature conversion utilities
 - Compatible with `scipy.constants` structure
-- Helper functions: `value()`, `unit()`, `uncertainty()`
+
+### Optimization (`scijo.optimize`)
+Scalar root-finding and minimization:
+- **`root_scalar`**: Unified interface for root finding
+  - **`newton`**: Newton-Raphson method
+  - **`bisect`**: Bisection method
+  - **`secant`**: Secant method (derivative-free)
+- **`minimize_scalar`**: Scalar function minimization
+  - Brent's method, golden section search, bounded minimization
 
 ## Installation
 
@@ -170,18 +186,41 @@ fn main() raises:
     print("Planck constant:", value("Planck_constant"), unit("Planck_constant"))
 ```
 
+### Optimization
+```mojo
+from scijo.optimize import root_scalar, minimize_scalar
+
+fn f[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+    return x * x - 2
+
+fn objective[dtype: DType](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+    return (x - 2) * (x - 2) + 1
+
+fn main() raises:
+    # Root finding
+    var root = root_scalar[f64, f](bracket=(1.0, 2.0), method="bisect")
+    print("Root:", root)
+
+    # Minimization
+    var result = minimize_scalar[Float64, objective, method="Brent"](
+        Bracket=(0.0, 4.0),
+        tol=1e-8,
+        maxiter=100
+    )
+    print("Minimum at:", result.x)
+```
+
 
 ## Roadmap
 
 ### Near Term
-- More integration algorithms (Simpson's, Romberg, QAGSE etc)
+- More integration algorithms (QAGSE etc)
 - Real FFT (`rfft`, `irfft`) and 2D FFT support
 - Additional interpolation methods (cubic, spline)
-- Expand differentiation module.
+- Expand differentiation module
 
 ### Future
-- **Optimization**: Minimization, root finding, curve fitting
-- **Statistics**: Distributions, hypothesis tests, descriptive statistics
+- **Optimization**: Multi-dimensional minimization, curve fitting
 - **Signal Processing**: Filtering, windowing, convolution
 - **Linear Algebra**: Matrix decompositions (SVD, QR, Cholesky)
 - **Sparse Matrices**: Efficient storage and operations
@@ -207,7 +246,7 @@ Feel free to cite SciJo in your work, helps with visibility :)
   author = {Shivasankar K.A. and SciJo Contributors},
   title = {SciJo: High-Performance Scientific Computing in Mojo},
   url = {https://github.com/shivasankarka/SciJo},
-  year = {2025}
+  year = {2026}
 }
 ```
 
