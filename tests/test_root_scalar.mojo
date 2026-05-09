@@ -32,7 +32,7 @@ def test_newton_basic() raises:
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
         return 2.0 * x
 
-    var result = newton[sj.f64, f, fprime](None, x0=1.0, xtol=1e-12, rtol=1e-12)
+    var result = newton[sj.f64, f, fprime](None, x0=1.0, atol=1e-12, rtol=1e-12)
     assert_almost_equal(result.root, sqrt(2.0), atol=1e-10)
     assert_equal(result.success, True)
     assert_equal(result.method, "newton")

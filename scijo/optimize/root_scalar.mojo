@@ -50,7 +50,7 @@ def root_scalar[
     x0: Optional[Scalar[dtype]] = None,
     x1: Optional[Scalar[dtype]] = None,
     bracket: Optional[Tuple[Scalar[dtype], Scalar[dtype]]] = None,
-    xtol: Scalar[dtype] = 1e-8,
+    atol: Scalar[dtype] = 1e-8,
     rtol: Scalar[dtype] = 1e-8,
     maxiter: Int = 100,
 ) raises -> RootResult[dtype]:
@@ -67,7 +67,7 @@ def root_scalar[
         x0: Initial guess. Required for Newton and secant methods.
         x1: Second initial guess. Required for secant method.
         bracket: (a, b) tuple where f(a) and f(b) have opposite signs. Required for bisection.
-        xtol: Absolute tolerance for convergence.
+        atol: Absolute tolerance for convergence.
         rtol: Relative tolerance for convergence.
         maxiter: Maximum number of iterations.
 
@@ -85,14 +85,14 @@ def root_scalar[
                 "Scijo [root_scalar]: Derivative fprime must be provided for"
                 " Newton's method."
             )
-        return newton[dtype, f, fprime.value()](args, x0, xtol, rtol, maxiter)
+        return newton[dtype, f, fprime.value()](args, x0, atol, rtol, maxiter)
     elif method == "bisect":
         if not bracket:
             raise Error(
                 "Scijo [root_scalar]: Bracket must be provided for bisection"
                 " method."
             )
-        return bisect[dtype, f](args, bracket.value(), xtol, rtol, maxiter)
+        return bisect[dtype, f](args, bracket.value(), atol, rtol, maxiter)
     elif method == "secant":
         if not (x0 and x1):
             raise Error(
@@ -100,7 +100,7 @@ def root_scalar[
                 " provided for secant method."
             )
         return secant[dtype, f](
-            args, x0.value(), x1.value(), xtol, rtol, maxiter
+            args, x0.value(), x1.value(), atol, rtol, maxiter
         )
     else:
         raise Error(
@@ -125,14 +125,14 @@ def newton[
 ](
     args: Optional[List[Scalar[dtype]]],
     x0: Optional[Scalar[dtype]] = None,
-    xtol: Scalar[dtype] = 1e-8,
+    atol: Scalar[dtype] = 1e-8,
     rtol: Scalar[dtype] = 1e-8,
     maxiter: Int = 100,
 ) raises -> RootResult[dtype]:
     """Finds a root using the Newton-Raphson method.
 
     Terminates when the step size or function value falls below
-    max(xtol, rtol * |x|), or when maxiter is reached.
+    max(atol, rtol * |x|), or when maxiter is reached.
 
     Parameters:
         dtype: The floating-point data type.
@@ -143,7 +143,7 @@ def newton[
     Args:
         args: Optional arguments forwarded to f and fprime.
         x0: Initial guess. Required.
-        xtol: Absolute tolerance for convergence.
+        atol: Absolute tolerance for convergence.
         rtol: Relative tolerance for convergence.
         maxiter: Maximum number of iterations.
 
@@ -180,8 +180,8 @@ def newton[
         var delta = fx / fpx
         var xn_next = xn - delta
 
-        var tol_x = max(xtol, rtol * abs(xn_next))
-        var tol_f = max(xtol, rtol * abs(fx))
+        var tol_x = max(atol, rtol * abs(xn_next))
+        var tol_f = max(atol, rtol * abs(fx))
 
         if abs(fx) <= tol_f or abs(delta) <= tol_x:
             return RootResult[dtype](
@@ -213,14 +213,14 @@ def bisect[
 ](
     args: Optional[List[Scalar[dtype]]],
     bracket: Tuple[Scalar[dtype], Scalar[dtype]],
-    xtol: Scalar[dtype] = 1e-8,
+    atol: Scalar[dtype] = 1e-8,
     rtol: Scalar[dtype] = 1e-8,
     maxiter: Int = 100,
 ) raises -> RootResult[dtype]:
     """Finds a root using the bisection method over a bracket [a, b].
 
     Requires f(a) and f(b) to have opposite signs. Terminates when the
-    interval half-width falls below max(xtol, rtol * |c|), f(c) == 0,
+    interval half-width falls below max(atol, rtol * |c|), f(c) == 0,
     or maxiter is reached.
 
     Parameters:
@@ -230,7 +230,7 @@ def bisect[
     Args:
         args: Optional arguments forwarded to f.
         bracket: (a, b) tuple where f(a) and f(b) have opposite signs.
-        xtol: Absolute tolerance for convergence.
+        atol: Absolute tolerance for convergence.
         rtol: Relative tolerance for convergence.
         maxiter: Maximum number of iterations.
 
@@ -289,7 +289,7 @@ def bisect[
                 method="bisect",
             )
 
-        var tol_x = max(xtol, rtol * abs(c))
+        var tol_x = max(atol, rtol * abs(c))
         var half_width = abs(b - a) / 2
         if half_width <= tol_x:
             return RootResult[dtype](
@@ -326,7 +326,7 @@ def secant[
     args: Optional[List[Scalar[dtype]]],
     x0: Scalar[dtype],
     x1: Scalar[dtype],
-    xtol: Scalar[dtype] = 1e-8,
+    atol: Scalar[dtype] = 1e-8,
     rtol: Scalar[dtype] = 1e-8,
     maxiter: Int = 100,
 ) raises -> RootResult[dtype]:
@@ -343,7 +343,7 @@ def secant[
         args: Optional arguments forwarded to f.
         x0: First initial guess.
         x1: Second initial guess.
-        xtol: Absolute tolerance for convergence.
+        atol: Absolute tolerance for convergence.
         rtol: Relative tolerance for convergence.
         maxiter: Maximum number of iterations.
 
@@ -375,8 +375,8 @@ def secant[
 
         var fxn = f(xn, args)
         nfev += 1
-        var tol_x = max(xtol, rtol * abs(xn))
-        var tol_f = max(xtol, rtol * abs(fxn))
+        var tol_x = max(atol, rtol * abs(xn))
+        var tol_f = max(atol, rtol * abs(fxn))
 
         if abs(fxn) <= tol_f or abs(xn - b) <= tol_x:
             return RootResult[dtype](
