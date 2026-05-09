@@ -40,7 +40,8 @@ def derivative[
 ](
     x0: Scalar[dtype],
     args: Optional[List[Scalar[dtype]]] = None,
-    tolerances: Dict[String, Scalar[dtype]] = {"atol": 1e-6, "rtol": 1e-6},
+    atol: Scalar[dtype] = 1e-6,
+    rtol: Scalar[dtype] = 1e-6,
     max_iter: Int = 10,
     order: Int = 8,
     initial_step: Scalar[dtype] = 0.5,
@@ -61,7 +62,8 @@ def derivative[
     Args:
         x0: Point at which to evaluate the derivative.
         args: Optional arguments to pass to the function.
-        tolerances: Convergence tolerances with "atol" (absolute) and "rtol" (relative) keys.
+        atol: Absolute convergence tolerance (default 1e-6).
+        rtol: Relative convergence tolerance (default 1e-6).
         max_iter: Maximum number of iterations.
         order: Accuracy order for finite differences.
             Central: {2, 4, 6, 8}. Forward/Backward: {1, 2, 3, 4, 5, 6}.
@@ -95,7 +97,8 @@ def derivative[
         return _derivative_central_difference[dtype, func](
             x0,
             args,
-            tolerances=tolerances,
+            atol=atol,
+            rtol=rtol,
             order=order,
             initial_step=initial_step,
             step_factor=step_factor,
@@ -108,7 +111,8 @@ def derivative[
         return _derivative_forward_difference[dtype, func](
             x0,
             args,
-            tolerances,
+            atol,
+            rtol,
             order,
             initial_step,
             step_factor,
@@ -121,7 +125,8 @@ def derivative[
         return _derivative_backward_difference[dtype, func](
             x0,
             args,
-            tolerances,
+            atol,
+            rtol,
             order,
             initial_step,
             step_factor,
@@ -154,7 +159,8 @@ def _derivative_central_difference[
 ](
     x0: Scalar[dtype],
     args: Optional[List[Scalar[dtype]]],
-    tolerances: Dict[String, Scalar[dtype]] = {"atol": 1e-6, "rtol": 1e-6},
+    atol: Scalar[dtype] = 1e-6,
+    rtol: Scalar[dtype] = 1e-6,
     order: Int = 8,
     initial_step: Scalar[dtype] = 0.5,
     step_factor: Scalar[dtype] = 2.0,
@@ -172,7 +178,8 @@ def _derivative_central_difference[
     Args:
         x0: Point at which to evaluate the derivative.
         args: Optional arguments to pass to the function.
-        tolerances: Convergence tolerances with "atol" and "rtol" keys.
+        atol: Absolute convergence tolerance.
+        rtol: Relative convergence tolerance.
         order: Accuracy order (2, 4, 6, or 8).
         initial_step: Initial step size for finite differences.
         step_factor: Factor by which to reduce step size in each iteration.
@@ -194,8 +201,6 @@ def _derivative_central_difference[
 
     var diff_estimate: Scalar[dtype] = 0.0
     var prev_diff: Scalar[dtype] = 0.0
-    var atol: Scalar[dtype] = tolerances["atol"]
-    var rtol: Scalar[dtype] = tolerances["rtol"]
 
     if atol < 0:
         raise Error(
@@ -303,7 +308,8 @@ def _derivative_forward_difference[
 ](
     x0: Scalar[dtype],
     args: Optional[List[Scalar[dtype]]],
-    tolerances: Dict[String, Scalar[dtype]] = {"atol": 1e-6, "rtol": 1e-6},
+    atol: Scalar[dtype] = 1e-6,
+    rtol: Scalar[dtype] = 1e-6,
     order: Int = 8,
     initial_step: Scalar[dtype] = 0.5,
     step_factor: Scalar[dtype] = 2.0,
@@ -322,7 +328,8 @@ def _derivative_forward_difference[
     Args:
         x0: Point at which to evaluate the derivative.
         args: Optional arguments to pass to the function.
-        tolerances: Convergence tolerances with "atol" and "rtol" keys.
+        atol: Absolute convergence tolerance.
+        rtol: Relative convergence tolerance.
         order: Accuracy order (1, 2, 3, 4, 5, or 6).
         initial_step: Initial step size for finite differences.
         step_factor: Factor by which to reduce step size in each iteration.
@@ -344,8 +351,6 @@ def _derivative_forward_difference[
 
     var diff_estimate: Scalar[dtype] = 0.0
     var prev_diff: Scalar[dtype] = 0.0
-    var atol: Scalar[dtype] = tolerances["atol"]
-    var rtol: Scalar[dtype] = tolerances["rtol"]
 
     if atol < 0:
         raise Error(
@@ -450,7 +455,8 @@ def _derivative_backward_difference[
 ](
     x0: Scalar[dtype],
     args: Optional[List[Scalar[dtype]]],
-    tolerances: Dict[String, Scalar[dtype]] = {"atol": 1e-6, "rtol": 1e-6},
+    atol: Scalar[dtype] = 1e-6,
+    rtol: Scalar[dtype] = 1e-6,
     order: Int = 8,
     initial_step: Scalar[dtype] = 0.5,
     step_factor: Scalar[dtype] = 2.0,
@@ -469,7 +475,8 @@ def _derivative_backward_difference[
     Args:
         x0: Point at which to evaluate the derivative.
         args: Optional arguments to pass to the function.
-        tolerances: Convergence tolerances with "atol" and "rtol" keys.
+        atol: Absolute convergence tolerance.
+        rtol: Relative convergence tolerance.
         order: Accuracy order (1, 2, 3, 4, 5, or 6).
         initial_step: Initial step size for finite differences.
         step_factor: Factor by which to reduce step size in each iteration.
@@ -491,8 +498,6 @@ def _derivative_backward_difference[
 
     var diff_estimate: Scalar[dtype] = 0.0
     var prev_diff: Scalar[dtype] = 0.0
-    var atol: Scalar[dtype] = tolerances["atol"]
-    var rtol: Scalar[dtype] = tolerances["rtol"]
 
     if atol < 0:
         raise Error(

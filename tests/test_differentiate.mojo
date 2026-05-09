@@ -296,13 +296,9 @@ def test_tolerance_settings() raises:
     var x_test = 1.0
     var expected = 4.0 * x_test + 3.0
 
-    var strict_tolerance = Dict[String, Scalar[DType.float64]]()
-    strict_tolerance["atol"] = 1e-10
-    strict_tolerance["rtol"] = 1e-10
-
     var result_strict = derivative[
         DType.float64, quadratic_function, step_direction=0
-    ](x0=x_test, args=None, tolerances=strict_tolerance)
+    ](x0=x_test, args=None, atol=1e-10, rtol=1e-10)
     assert_almost_equal(
         result_strict.df,
         expected,
@@ -310,13 +306,9 @@ def test_tolerance_settings() raises:
         msg="Strict tolerance should give accurate result",
     )
 
-    var loose_tolerance = Dict[String, Scalar[DType.float64]]()
-    loose_tolerance["atol"] = 1e-3
-    loose_tolerance["rtol"] = 1e-3
-
     var result_loose = derivative[
         DType.float64, quadratic_function, step_direction=0
-    ](x0=x_test, args=None, tolerances=loose_tolerance)
+    ](x0=x_test, args=None, atol=1e-3, rtol=1e-3)
     assert_almost_equal(
         result_loose.df,
         expected,
