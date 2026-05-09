@@ -251,11 +251,11 @@ def interp1d[
 
 
 # ===----------------------------------------------------------------------=== #
-# interp1d (functional)
+# interp (functional, like numpy.interp)
 # ===----------------------------------------------------------------------=== #
 
 
-def interp1d[
+def interp[
     dtype: DType = DType.float64,
     type: String = "linear",
     fill_method: String = "interpolate",
@@ -266,12 +266,11 @@ def interp1d[
 ) raises -> NDArray[
     dtype
 ]:
-    """Interpolates the values of y at the points xi using the specified method.
+    """Interpolates y values at query points xi (functional interface).
 
-    Example: yq = interp1d(xq, x, y)
-
-    Functional interface similar to numpy.interp that directly returns
-    interpolated values without creating a reusable interpolator object.
+    Similar to ``numpy.interp``: directly returns interpolated values without
+    creating a reusable interpolator object. Use ``interp1d`` when you need a
+    callable object for repeated evaluations.
 
     Parameters:
         dtype: The floating-point data type. Defaults to DType.float64.
@@ -280,7 +279,7 @@ def interp1d[
             values) or "extrapolate" (linear extrapolation).
 
     Args:
-        xi: Array of points at which to interpolate.
+        xi: Array of query points at which to interpolate.
         x: Array of x-coordinates of data points, must be strictly increasing.
         y: Array of y-coordinates of data points, same length as x.
 
@@ -293,13 +292,13 @@ def interp1d[
     Examples:
         ```mojo
         import numojo as nm
-        from scijo.interpolate import interp1d
+        from scijo.interpolate import interp
         from scijo.prelude import *
 
         var x = nm.arange[f64](0.0, 1.0, 0.5)  # [0.0, 0.5, 1.0]
         var y = x * x  # y = x^2
         var xq = nm.array[f64]([0.1, 0.5, 0.9])
-        var yq = interp1d[f64, type="linear", fill_method="interpolate"](xq, x, y)
+        var yq = interp[f64, type="linear", fill_method="interpolate"](xq, x, y)
         ```
     """
     _validate_interpolation_input(x, y)
