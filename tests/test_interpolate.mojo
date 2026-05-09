@@ -480,6 +480,35 @@ def test_scipy_comprehensive_compatibility() raises:
         )
 
 
+def test_fill_value_none_clamps_to_boundary() raises:
+    """Clamp to boundary when bounds_error=False and fill_value=None."""
+    var x = nm.array[nm.f64]([1.0, 2.0, 3.0], [3])
+    var y = nm.array[nm.f64]([10.0, 20.0, 30.0], [3])
+    var interp = LinearInterpolator(x, y, bounds_error=False)
+
+    # Below range → clamp to y[0]
+    assert_almost_equal(
+        interp(Scalar[nm.f64](0.0)),
+        10.0,
+        atol=1e-15,
+        msg="Below range with fill_value=None should return y[0]",
+    )
+    # Above range → clamp to y[-1]
+    assert_almost_equal(
+        interp(Scalar[nm.f64](5.0)),
+        30.0,
+        atol=1e-15,
+        msg="Above range with fill_value=None should return y[-1]",
+    )
+
+    # Array overload
+    var xi = nm.array[nm.f64]([0.0, 1.5, 5.0], [3])
+    var yi = interp(xi)
+    assert_almost_equal(yi.item(0), 10.0, atol=1e-15, msg="Array: below clamp")
+    assert_almost_equal(yi.item(1), 15.0, atol=1e-15, msg="Array: in range")
+    assert_almost_equal(yi.item(2), 30.0, atol=1e-15, msg="Array: above clamp")
+
+
 def test_performance_comparison() raises:
     var np = Python.import_module("numpy")
     var scipy_interpolate = Python.import_module("scipy.interpolate")

@@ -127,16 +127,11 @@ struct LinearInterpolator[dtype: DType = DType.float64](Copyable, Movable):
                     + String(x_max)
                     + "]"
                 )
-            elif self.fill_value:
-                return self.fill_value.value()
-
-        if xi <= x_min:
             if self.fill_value:
                 return self.fill_value.value()
-            return self.y._buf.ptr[0]
-        elif xi >= x_max:
-            if self.fill_value:
-                return self.fill_value.value()
+            # bounds_error=False, fill_value=None: clamp to boundary
+            if xi < x_min:
+                return self.y._buf.ptr[0]
             return self.y._buf.ptr[self.y.size - 1]
 
         var j: Int = _binary_search(self.x, xi)
@@ -181,19 +176,10 @@ struct LinearInterpolator[dtype: DType = DType.float64](Copyable, Movable):
                         + String(x_max)
                         + "]"
                     )
-                elif self.fill_value:
+                if self.fill_value:
                     result._buf.ptr[i] = self.fill_value.value()
-                    continue
-
-            if x_val <= x_min:
-                if self.fill_value and x_val < x_min:
-                    result._buf.ptr[i] = self.fill_value.value()
-                else:
+                elif x_val < x_min:
                     result._buf.ptr[i] = self.y._buf.ptr[0]
-                continue
-            elif x_val >= x_max:
-                if self.fill_value and x_val > x_max:
-                    result._buf.ptr[i] = self.fill_value.value()
                 else:
                     result._buf.ptr[i] = self.y._buf.ptr[self.y.size - 1]
                 continue
