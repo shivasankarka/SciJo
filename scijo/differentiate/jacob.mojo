@@ -28,9 +28,9 @@ from numojo.core import NDArray, Shape
 
 def jacobian[
     dtype: DType,
-    f: def[dtype: DType](
+    jacob_func: def[dtype: DType](
         x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-    ) raises -> NDArray[dtype],
+    ) capturing raises -> NDArray[dtype],
 ](
     x: NDArray[dtype],
     args: Optional[List[Scalar[dtype]]] = None,
@@ -45,7 +45,7 @@ def jacobian[
 
     Parameters:
         dtype: The floating-point data type.
-        f: Vector-valued function with signature def(x, args) -> NDArray[dtype].
+        jacob_func: Vector-valued function with signature def(x, args) -> NDArray[dtype].
 
     Args:
         x: Input vector of shape (n,) at which to evaluate the Jacobian.
@@ -74,7 +74,7 @@ def jacobian[
         ```
     """
     var n: Int = len(x)
-    var f0: NDArray[dtype] = f(x, args)
+    var f0: NDArray[dtype] = jacob_func(x, args)
     var m: Int = len(f0)
 
     var jacob: NDArray[dtype] = zeros[dtype](Shape(m, n))
@@ -83,13 +83,13 @@ def jacobian[
     @parameter
     def closure(j: Int):
         try:
-            var x_plus = x.deep_copy()
-            var x_minus = x.deep_copy()
+            var x_plus = x.copy()
+            var x_minus = x.copy()
             var hj = step.load(j)
             x_plus.store(j, val=x.load(j) + hj)
             x_minus.store(j, val=x.load(j) - hj)
-            var f_plus = f(x_plus, args)
-            var f_minus = f(x_minus, args)
+            var f_plus = jacob_func(x_plus, args)
+            var f_minus = jacob_func(x_minus, args)
 
             var col: NDArray[dtype] = (f_plus - f_minus) / (2.0 * hj)
 
