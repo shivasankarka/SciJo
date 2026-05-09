@@ -435,10 +435,10 @@ def minimize_scalar[
     *,
     method: String = "Brent",
 ](
-    Bracket: Optional[Tuple[Scalar[dtype], Scalar[dtype]]] = None,
+    bracket: Optional[Tuple[Scalar[dtype], Scalar[dtype]]] = None,
     bounds: Optional[Tuple[Scalar[dtype], Scalar[dtype]]] = None,
     args: Optional[List[Scalar[dtype]]] = None,
-    tol: Scalar[dtype] = 1e-8,
+    atol: Scalar[dtype] = 1e-8,
     maxiter: Int = 500,
 ) raises -> OptimizeResult[dtype]:
     """Minimize a scalar function using the specified method.
