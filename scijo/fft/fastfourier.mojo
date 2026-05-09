@@ -141,15 +141,15 @@ def rfft[
             ComplexDType with the same underlying float type.
 
     Args:
-        arr: Real-valued 1-D input array. Length must be a power of 2.
+        arr: Real-valued 1-D input array. If length is not a power of 2, the
+            array is zero-padded to the next power of 2 (matching NumPy behaviour).
 
     Raises:
         Error: If the input array is not 1-dimensional.
-        Error: If the array length is not a power of 2.
 
     Returns:
-        ComplexNDArray of length ``N // 2 + 1`` containing the non-redundant
-        frequency components.
+        ComplexNDArray of length ``N_padded // 2 + 1`` containing the non-redundant
+        frequency components, where ``N_padded`` is the next power of 2 ≥ len(arr).
 
     Examples:
         ```mojo
@@ -157,26 +157,33 @@ def rfft[
         from scijo.fft import rfft, irfft
         from scijo.prelude import *
 
-        var x = nm.linspace[f64](0.0, 1.0, 8)
-        var freqs = rfft(x)          # shape: (5,)
-        var x_rec = irfft(freqs, 8)  # shape: (8,)
+        var x = nm.linspace[f64](0.0, 1.0, 6)   # length 6, padded to 8
+        var freqs = rfft(x)                       # shape: (5,)
+        var x_rec = irfft(freqs, 8)               # shape: (8,)
         ```
     """
     if arr.ndim != 1:
         raise Error("Scijo [rfft]: rfft currently only supports 1D arrays")
 
     var n = arr.shape[0]
+    # Zero-pad to next power of 2 if needed
+    var n_padded = n
+    if (n & (n - 1)) != 0:
+        n_padded = 1
+        while n_padded < n:
+            n_padded <<= 1
 
-    var complex_input = ComplexNDArray[cdtype](NDArrayShape(n))
+    var complex_input = ComplexNDArray[cdtype](NDArrayShape(n_padded))
     for i in range(n):
         complex_input[Item(i)] = ComplexSIMD[cdtype](
             arr._buf.ptr[i].cast[cdtype.dtype](),
             Scalar[cdtype.dtype](0),
         )
+    # Remaining elements are already zero-initialized
 
     var full = fft[cdtype](complex_input)
 
-    var out_len = n // 2 + 1
+    var out_len = n_padded // 2 + 1
     var result = ComplexNDArray[cdtype](NDArrayShape(out_len))
     for i in range(out_len):
         result[Item(i)] = full[Item(i)]
@@ -207,13 +214,14 @@ def irfft[
     Args:
         arr: Complex 1-D input array of ``N // 2 + 1`` frequency bins.
         n: Length of the output signal. Defaults to ``2 * (len(arr) - 1)``.
+            If not a power of 2, it is rounded up to the next power of 2
+            (matching NumPy behaviour).
 
     Raises:
         Error: If the input array is not 1-dimensional.
-        Error: If the reconstructed length is not a power of 2.
 
     Returns:
-        Real-valued NDArray of length ``n``.
+        Real-valued NDArray of length ``n_padded`` (next power of 2 ≥ n).
 
     Examples:
         ```mojo
@@ -236,11 +244,12 @@ def irfft[
     else:
         full_n = 2 * (m - 1)
 
+    # Round up to next power of 2
     if (full_n & (full_n - 1)) != 0:
-        raise Error(
-            "Scijo [irfft]: output length must be a power of 2, got "
-            + String(full_n)
-        )
+        var padded = 1
+        while padded < full_n:
+            padded <<= 1
+        full_n = padded
 
     # Reconstruct the full symmetric spectrum
     var full = ComplexNDArray[cdtype](NDArrayShape(full_n))
