@@ -449,10 +449,10 @@ def minimize_scalar[
         method: Optimization algorithm: "Brent", "Golden", or "Bounded".
 
     Args:
-        Bracket: (a, b) tuple specifying an initial interval for bracketing methods.
-        bounds: (lower, upper) tuple specifying the search interval for bounded methods.
+        bracket: (a, b) tuple specifying an initial interval for Brent and Golden methods.
+        bounds: (lower, upper) tuple specifying the search interval for Bounded method.
         args: Optional arguments forwarded to f.
-        tol: Tolerance for convergence.
+        atol: Absolute tolerance for convergence.
         maxiter: Maximum number of iterations.
 
     Returns:
@@ -467,8 +467,8 @@ def minimize_scalar[
             return (x - 2) * (x - 2) + 1
 
         var result = minimize_scalar[Float64, objective, method="Brent"](
-            Bracket=(0.0, 4.0),
-            tol=1e-8,
+            bracket=(0.0, 4.0),
+            atol=1e-8,
             maxiter=100
         )
         print(result)
@@ -476,29 +476,29 @@ def minimize_scalar[
     """
 
     if method == "Brent" or method == "brent":
-        if Bracket:
+        if bracket:
             return _brent_minimize[dtype, f](
-                args, Bracket.value(), tol, maxiter
+                args, bracket.value(), atol, maxiter
             )
         if bounds:
-            return _brent_minimize[dtype, f](args, bounds.value(), tol, maxiter)
-        raise Error("Bracket or bounds must be provided for Brent method.")
+            return _brent_minimize[dtype, f](args, bounds.value(), atol, maxiter)
+        raise Error("bracket or bounds must be provided for Brent method.")
 
     if method == "Golden" or method == "golden":
-        if Bracket:
+        if bracket:
             return _golden_minimize[dtype, f](
-                args, Bracket.value(), tol, maxiter
+                args, bracket.value(), atol, maxiter
             )
         if bounds:
             return _golden_minimize[dtype, f](
-                args, bounds.value(), tol, maxiter
+                args, bounds.value(), atol, maxiter
             )
-        raise Error("Bracket or bounds must be provided for Golden method.")
+        raise Error("bracket or bounds must be provided for Golden method.")
 
     if method == "Bounded" or method == "bounded":
         if not bounds:
-            raise Error("Bounds must be provided for bounded method.")
-        return _bounded_minimize[dtype, f](args, bounds.value(), tol, maxiter)
+            raise Error("bounds must be provided for bounded method.")
+        return _bounded_minimize[dtype, f](args, bounds.value(), atol, maxiter)
 
     raise Error(
         "Unsupported method: "
