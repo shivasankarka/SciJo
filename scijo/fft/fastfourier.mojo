@@ -123,7 +123,9 @@ def fft[
 
 
 def rfft[
-    dtype: DType = DType.float64, *, cdtype: ComplexDType = ComplexDType(mlir_value=dtype._mlir_value)
+    dtype: DType = DType.float64,
+    *,
+    cdtype: ComplexDType = ComplexDType(mlir_value=dtype._mlir_value),
 ](arr: NDArray[dtype]) raises -> ComplexNDArray[
     cdtype
 ] where cdtype.dtype.is_floating_point():
@@ -182,11 +184,15 @@ def rfft[
 
 
 def irfft[
-    dtype: DType = DType.float64, *, cdtype: ComplexDType = ComplexDType(mlir_value=dtype._mlir_value)
+    dtype: DType = DType.float64,
+    *,
+    cdtype: ComplexDType = ComplexDType(mlir_value=dtype._mlir_value),
 ](
     arr: ComplexNDArray[cdtype],
     n: Optional[Int] = None,
-) raises -> NDArray[dtype] where cdtype.dtype.is_floating_point():
+) raises -> NDArray[
+    dtype
+] where cdtype.dtype.is_floating_point():
     """Computes the inverse real Fast Fourier Transform.
 
     Reconstructs a real-valued signal from the non-redundant frequency bins
@@ -306,7 +312,10 @@ def _ifft_unnormalized[
 
     for k in range(half_size):
         var angle = (
-            2.0 * Constants.pi * Scalar[cdtype.dtype](k) / Scalar[cdtype.dtype](n)
+            2.0
+            * Constants.pi
+            * Scalar[cdtype.dtype](k)
+            / Scalar[cdtype.dtype](n)
         )
         var twiddle = ComplexSIMD[cdtype](
             cos(angle).cast[cdtype.dtype](), sin(angle).cast[cdtype.dtype]()

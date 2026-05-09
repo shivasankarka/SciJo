@@ -67,8 +67,11 @@ struct OptimizeResult[dtype: DType](ImplicitlyCopyable, Writable):
 
     def __str__(self) raises -> String:
         return String(
-            "OptimizeResult(success={}, x={}, fun={}, nit={}, nfev={}, message='{}')"
-        ).format(self.success, self.x, self.fun, self.nit, self.nfev, self.message)
+            "OptimizeResult(success={}, x={}, fun={}, nit={}, nfev={},"
+            " message='{}')"
+        ).format(
+            self.success, self.x, self.fun, self.nit, self.nfev, self.message
+        )
 
     def write_to[W: Writer](self, mut writer: W):
         try:
@@ -83,7 +86,12 @@ struct OptimizeResult[dtype: DType](ImplicitlyCopyable, Writable):
                     "Evals   : {}\n"
                     "Message : {}\n"
                 ).format(
-                    self.success, self.x, self.fun, self.nit, self.nfev, self.message
+                    self.success,
+                    self.x,
+                    self.fun,
+                    self.nit,
+                    self.nfev,
+                    self.message,
                 )
             )
         except e:
@@ -155,8 +163,8 @@ def _brent_minimize[
     var fx = fb
     var fw = fb
     var fv = fb
-    var d: Scalar[dtype] = 0
-    var e: Scalar[dtype] = 0
+    var d: Scalar[dtype] = 0.0
+    var e: Scalar[dtype] = 0.0
 
     for i in range(maxiter):
         var m = (a + c) / 2

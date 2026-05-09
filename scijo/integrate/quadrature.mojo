@@ -287,9 +287,9 @@ def _qng[
 
     for k in range(11):
         var abscissa: Scalar[dtype] = half_length * Scalar[dtype](x3_nodes[k])
-        var fval: Scalar[dtype] = integrand_func(center + abscissa, args) + integrand_func(
-            center - abscissa, args
-        )
+        var fval: Scalar[dtype] = integrand_func(
+            center + abscissa, args
+        ) + integrand_func(center - abscissa, args)
         result_43 += Scalar[dtype](w43b_kronrod_weights[k]) * fval
         saved_fvalues[index] = fval
         index += 1
@@ -326,7 +326,8 @@ def _qng[
     for k in range(22):
         var abscissa: Scalar[dtype] = half_length * Scalar[dtype](x4_nodes[k])
         result_87 += Scalar[dtype](w87b_kronrod_weights[k]) * (
-            integrand_func(center + abscissa, args) + integrand_func(center - abscissa, args)
+            integrand_func(center + abscissa, args)
+            + integrand_func(center - abscissa, args)
         )
     nfev += 44
 

@@ -39,9 +39,9 @@ def root_scalar[
     fprime: Optional[
         def[
             dtype: DType
-        ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
-            dtype
-        ]
+        ](
+            x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
+        ) capturing -> Scalar[dtype]
     ] = None,
     *,
     method: String = "bisect",

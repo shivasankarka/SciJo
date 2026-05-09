@@ -417,7 +417,9 @@ def _derivative_forward_difference[
         diff_estimate = 0.0
         var j: Int = 0
         for ref coeff in coefficients:
-            diff_estimate += coeff * deriv_func(x0 + step * Scalar[dtype](j), args)
+            diff_estimate += coeff * deriv_func(
+                x0 + step * Scalar[dtype](j), args
+            )
             j += 1
         diff_estimate /= step
         if i > 0:
@@ -564,7 +566,9 @@ def _derivative_backward_difference[
         diff_estimate = 0.0
         var j: Int = 0
         for ref coeff in coefficients:
-            diff_estimate += coeff * deriv_func(x0 + step * Scalar[dtype](j), args)
+            diff_estimate += coeff * deriv_func(
+                x0 + step * Scalar[dtype](j), args
+            )
             j += 1
         diff_estimate /= step
         if i > 0:
