@@ -35,11 +35,11 @@ def root_scalar[
     dtype: DType,
     f: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) -> Scalar[dtype],
+    ) capturing -> Scalar[dtype],
     fprime: Optional[
         def[
             dtype: DType
-        ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
+        ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
             dtype
         ]
     ] = None,
@@ -117,10 +117,10 @@ def newton[
     dtype: DType,
     f: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) -> Scalar[dtype],
+    ) capturing -> Scalar[dtype],
     fprime: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) -> Scalar[dtype],
+    ) capturing -> Scalar[dtype],
     method: String = "newton",
 ](
     args: Optional[List[Scalar[dtype]]],
@@ -209,7 +209,7 @@ def bisect[
     dtype: DType,
     f: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) -> Scalar[dtype],
+    ) capturing -> Scalar[dtype],
 ](
     args: Optional[List[Scalar[dtype]]],
     bracket: Tuple[Scalar[dtype], Scalar[dtype]],
@@ -321,7 +321,7 @@ def secant[
     dtype: DType,
     f: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) -> Scalar[dtype],
+    ) capturing -> Scalar[dtype],
 ](
     args: Optional[List[Scalar[dtype]]],
     x0: Scalar[dtype],
