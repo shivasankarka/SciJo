@@ -19,50 +19,52 @@ from scijo.constants.codata import physical_constants
 
 
 def value(key: String) raises -> Scalar[DType.float64]:
-    """
-    Get the value of a physical constant.
+    """Get the value of a physical constant.
 
     Args:
         key: Name of the physical constant.
 
     Returns:
         The numerical value of the constant.
+
+    Raises:
+        Error: If the constant name is not found.
     """
     var physical_constants = materialize[physical_constants]()
     if key in physical_constants:
         return physical_constants[key].value
-    else:
-        print("Warning: Unknown constant '" + key + "'")
-        return 0.0
+    raise Error("Unknown physical constant: '" + key + "'")
 
 
 def unit(key: String) raises -> String:
-    """
-    Get the unit of a physical constant.
+    """Get the unit of a physical constant.
 
     Args:
         key: Name of the physical constant.
 
     Returns:
         The unit string of the constant.
+
+    Raises:
+        Error: If the constant name is not found.
     """
     var physical_constants = materialize[physical_constants]()
     if key in physical_constants:
         return physical_constants[key].unit
-    else:
-        print("Warning: Unknown constant '" + key + "'")
-        return ""
+    raise Error("Unknown physical constant: '" + key + "'")
 
 
 def precision(key: String) raises -> Scalar[DType.float64]:
-    """
-    Get the relative precision (uncertainty/value) of a physical constant.
+    """Get the relative precision (uncertainty/value) of a physical constant.
 
     Args:
         key: Name of the physical constant.
 
     Returns:
         The relative precision of the constant.
+
+    Raises:
+        Error: If the constant name is not found.
     """
     var physical_constants = materialize[physical_constants]()
     if key in physical_constants:
@@ -71,9 +73,7 @@ def precision(key: String) raises -> Scalar[DType.float64]:
             return constant.uncertainty / constant.value
         else:
             return 0.0
-    else:
-        print("Warning: Unknown constant '" + key + "'")
-        return 0.0
+    raise Error("Unknown physical constant: '" + key + "'")
 
 
 def find(substring: String = "") raises -> List[String]:
@@ -114,9 +114,7 @@ def get_constant_tuple(
     if key in physical_constants:
         var constant = physical_constants[key]
         return (constant.value, constant.unit, constant.uncertainty)
-    else:
-        print("Warning: Unknown constant '" + key + "'")
-        return (0.0, "", 0.0)
+    raise Error("Unknown physical constant: '" + key + "'")
 
 
 def list_all_constants() raises -> List[String]:
