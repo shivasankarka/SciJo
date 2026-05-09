@@ -100,7 +100,7 @@ def _brent_minimize[
     dtype: DType,
     f: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) -> Scalar[dtype],
+    ) capturing -> Scalar[dtype],
 ](
     args: Optional[List[Scalar[dtype]]],
     bracket: Tuple[Scalar[dtype], Scalar[dtype]],
@@ -240,7 +240,7 @@ def _golden_minimize[
     dtype: DType,
     f: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) -> Scalar[dtype],
+    ) capturing -> Scalar[dtype],
 ](
     args: Optional[List[Scalar[dtype]]],
     bounds: Tuple[Scalar[dtype], Scalar[dtype]],
@@ -308,7 +308,7 @@ def _bounded_minimize[
     dtype: DType,
     f: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) -> Scalar[dtype],
+    ) capturing -> Scalar[dtype],
 ](
     args: Optional[List[Scalar[dtype]]],
     bounds: Tuple[Scalar[dtype], Scalar[dtype]],
@@ -423,7 +423,7 @@ def minimize_scalar[
     dtype: DType,
     f: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) -> Scalar[dtype],
+    ) capturing -> Scalar[dtype],
     *,
     method: String = "Brent",
 ](
