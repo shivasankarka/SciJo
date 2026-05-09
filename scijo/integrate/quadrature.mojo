@@ -59,9 +59,9 @@ from .utility import (
 
 def quad[
     dtype: DType,
-    func: def[dtype: DType](
+    integrand_func: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) -> Scalar[dtype],
+    ) capturing -> Scalar[dtype],
     *,
     method: String = "qng",
 ](
@@ -78,7 +78,7 @@ def quad[
 
     Parameters:
         dtype: The floating-point data type.
-        func: Integrand function with signature def(x, args) -> Scalar[dtype].
+        integrand_func: Integrand function with signature def(x, args) -> Scalar[dtype].
         method: Quadrature algorithm to use. Currently supported: "qng". Keyword-only.
 
     Args:
@@ -112,7 +112,7 @@ def quad[
     """
 
     comptime if method == "qng":
-        return _qng[dtype, func](a, b, args, atol, rtol)
+        return _qng[dtype, integrand_func](a, b, args, atol, rtol)
     else:
         raise Error(
             "Unsupported quad method: "
@@ -123,9 +123,9 @@ def quad[
 
 def _qng[
     dtype: DType,
-    func: def[dtype: DType](
+    integrand_func: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) -> Scalar[dtype],
+    ) capturing -> Scalar[dtype],
 ](
     a: Scalar[dtype],
     b: Scalar[dtype],
@@ -145,7 +145,7 @@ def _qng[
 
     Parameters:
         dtype: The floating-point data type.
-        func: Integrand function with signature def(x, args) -> Scalar[dtype].
+        integrand_func: Integrand function with signature def(x, args) -> Scalar[dtype].
 
     Args:
         a: Lower integration limit.
@@ -184,7 +184,7 @@ def _qng[
     var half_length: Scalar[dtype] = Scalar[dtype](0.5) * (b - a)
     var abs_half_length: Scalar[dtype] = abs(half_length)
     var center: Scalar[dtype] = Scalar[dtype](0.5) * (b + a)
-    var f_center: Scalar[dtype] = func(center, args)
+    var f_center: Scalar[dtype] = integrand_func(center, args)
     var nfev: Int = 1
 
     # 10-point Gauss / 21-point Kronrod Rule
@@ -208,8 +208,8 @@ def _qng[
     )
     for k in range(5):
         var abscissa: Scalar[dtype] = half_length * Scalar[dtype](x1_nodes[k])
-        var fval1: Scalar[dtype] = func(center + abscissa, args)
-        var fval2: Scalar[dtype] = func(center - abscissa, args)
+        var fval1: Scalar[dtype] = integrand_func(center + abscissa, args)
+        var fval2: Scalar[dtype] = integrand_func(center - abscissa, args)
         var fval: Scalar[dtype] = fval1 + fval2
         result_10 += Scalar[dtype](w10_gauss_weights[k]) * fval
         result_21 += Scalar[dtype](w21a_kronrod_weights[k]) * fval
@@ -230,8 +230,8 @@ def _qng[
     )
     for k in range(5):
         var abscissa: Scalar[dtype] = half_length * Scalar[dtype](x2_nodes[k])
-        var fval1: Scalar[dtype] = func(center + abscissa, args)
-        var fval2: Scalar[dtype] = func(center - abscissa, args)
+        var fval1: Scalar[dtype] = integrand_func(center + abscissa, args)
+        var fval2: Scalar[dtype] = integrand_func(center - abscissa, args)
         var fval: Scalar[dtype] = fval1 + fval2
         result_21 += Scalar[dtype](w21b_kronrod_weights[k]) * fval
         result_abs += Scalar[dtype](w21b_kronrod_weights[k]) * (
@@ -287,7 +287,7 @@ def _qng[
 
     for k in range(11):
         var abscissa: Scalar[dtype] = half_length * Scalar[dtype](x3_nodes[k])
-        var fval: Scalar[dtype] = func(center + abscissa, args) + func(
+        var fval: Scalar[dtype] = integrand_func(center + abscissa, args) + integrand_func(
             center - abscissa, args
         )
         result_43 += Scalar[dtype](w43b_kronrod_weights[k]) * fval
@@ -326,7 +326,7 @@ def _qng[
     for k in range(22):
         var abscissa: Scalar[dtype] = half_length * Scalar[dtype](x4_nodes[k])
         result_87 += Scalar[dtype](w87b_kronrod_weights[k]) * (
-            func(center + abscissa, args) + func(center - abscissa, args)
+            integrand_func(center + abscissa, args) + integrand_func(center - abscissa, args)
         )
     nfev += 44
 
