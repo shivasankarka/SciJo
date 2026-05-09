@@ -67,7 +67,7 @@ def quad[
 ](
     a: Scalar[dtype],
     b: Scalar[dtype],
-    args: Optional[List[Scalar[dtype]]],
+    args: Optional[List[Scalar[dtype]]] = None,
     atol: Scalar[dtype] = 1.49e-8,
     rtol: Scalar[dtype] = 1.49e-8,
 ) raises -> IntegralResult[dtype] where dtype.is_floating_point():
@@ -129,7 +129,7 @@ def _qng[
 ](
     a: Scalar[dtype],
     b: Scalar[dtype],
-    args: Optional[List[Scalar[dtype]]],
+    args: Optional[List[Scalar[dtype]]] = None,
     atol: Scalar[dtype] = 1.49e-8,
     rtol: Scalar[dtype] = 1.49e-8,
 ) -> IntegralResult[dtype] where dtype.is_floating_point():
