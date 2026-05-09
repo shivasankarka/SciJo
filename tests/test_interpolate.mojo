@@ -5,7 +5,7 @@ Tests for Interpolation Module.
 from math import sin
 
 import numojo as nm
-from scijo.interpolate import LinearInterpolator, interp1d
+from scijo.interpolate import LinearInterpolator, interp1d, interp
 from testing import assert_true, assert_false, assert_equal, assert_almost_equal
 from testing import TestSuite
 from python import Python, PythonObject
@@ -205,7 +205,7 @@ def test_memory_access_consistency() raises:
 
 
 def test_functional_interface() raises:
-    """Test the functional interp1d interface against NumPy."""
+    """Test the functional interp interface against NumPy."""
     try:
         var np = Python.import_module("numpy")
 
@@ -213,7 +213,7 @@ def test_functional_interface() raises:
         var y = x * x
         var xi = nm.linspace[nm.f64](0.5, 3.5, 4)
 
-        var yi_interp = interp1d[
+        var yi_interp = interp[
             nm.f64, type="linear", fill_method="interpolate"
         ](xi, x, y)
 
@@ -234,7 +234,7 @@ def test_functional_interface() raises:
 
         # Test extrapolation behavior
         var xi_extrap = nm.linspace[nm.f64](-0.5, 4.5, 6)
-        var yi_extrap = interp1d[
+        var yi_extrap = interp[
             nm.f64, type="linear", fill_method="extrapolate"
         ](xi_extrap, x, y)
 
@@ -250,7 +250,7 @@ def test_functional_interface() raises:
         # Test invalid parameters
         var caught_error = False
         try:
-            var _ = interp1d[nm.f64, type="invalid", fill_method="interpolate"](
+            var _ = interp[nm.f64, type="invalid", fill_method="interpolate"](
                 xi, x, y
             )
         except:
@@ -464,7 +464,7 @@ def test_scipy_comprehensive_compatibility() raises:
     )
 
     # Test 4: Functional interface vs NumPy interp
-    var mojo_func_result = interp1d[
+    var mojo_func_result = interp[
         nm.f64, type="linear", fill_method="interpolate"
     ](xi_test, x_data, y_data)
     var py_numpy_result = np.interp(py_xi, py_x, py_y)

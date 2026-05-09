@@ -25,4 +25,4 @@ Examples
     ```
 """
 
-from .interpolate import interp1d, LinearInterpolator
+from .interpolate import interp1d, interp, LinearInterpolator
