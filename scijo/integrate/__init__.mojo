@@ -4,7 +4,6 @@
 # ===----------------------------------------------------------------------=== #
 """Integrate Module (`scijo.integrate`)
 =======================================
-
 Provides tools for numerical integration and quadrature. It includes adaptive
 and non-adaptive methods for computing definite integrals, as well as
 fixed-sample integration rules for discrete data.

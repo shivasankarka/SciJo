@@ -4,7 +4,6 @@
 # ===----------------------------------------------------------------------=== #
 """SciJo Prelude (`scijo.prelude`)
 ==================================
-
 The SciJo prelude provides convenient access to core scientific computation tools
 and modules for Mojo.
 

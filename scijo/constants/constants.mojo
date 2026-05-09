@@ -4,7 +4,6 @@
 # ===----------------------------------------------------------------------=== #
 """Constants Module (`scijo.constants.constants`)
 =================================================
-
 Provides commonly used scientific constants, primarily in SI units.
 Values are based on the SciPy constants module.
 

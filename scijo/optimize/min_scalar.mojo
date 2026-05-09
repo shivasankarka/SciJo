@@ -38,19 +38,23 @@ struct OptimizeResult[dtype: DType](ImplicitlyCopyable, Writable):
     """Result structure for scalar minimization operations."""
 
     var x: Scalar[Self.dtype]
+    """The minimizer."""
     var fun: Scalar[Self.dtype]
+    """The function value at the minimizer."""
     var success: Bool
-    var status: Int
+    """Whether the optimization converged."""
     var message: String
+    """Human-readable status message."""
     var nit: Int
+    """Number of iterations performed."""
     var nfev: Int
+    """Number of function evaluations used."""
 
     def __init__(
         out self,
         x: Scalar[Self.dtype],
         fun: Scalar[Self.dtype],
         success: Bool,
-        status: Int,
         message: String,
         nit: Int,
         nfev: Int,
@@ -58,27 +62,33 @@ struct OptimizeResult[dtype: DType](ImplicitlyCopyable, Writable):
         self.x = x
         self.fun = fun
         self.success = success
-        self.status = status
         self.message = message
         self.nit = nit
         self.nfev = nfev
 
     def __str__(self) raises -> String:
         return String(
-            t"Result(success={self.success}, x={self.x}, fun={self.fun},"
-            t" status={self.status}, nit={self.nit}, nfev={self.nfev})"
-        )
+            "OptimizeResult(success={}, x={}, fun={}, nit={}, nfev={}, message='{}')"
+        ).format(self.success, self.x, self.fun, self.nit, self.nfev, self.message)
 
     def write_to[W: Writer](self, mut writer: W):
-        """Writes the array to a writer.
-
-        Args:
-            writer: The writer to write the array to.
-        """
-        writer.write(
-            t"Result(success={self.success}, x={self.x}, fun={self.fun},"
-            t" status={self.status}, nit={self.nit}, nfev={self.nfev})"
-        )
+        try:
+            writer.write(
+                String(
+                    "Minimize Result\n"
+                    "===============\n"
+                    "Success : {}\n"
+                    "x       : {}\n"
+                    "f(x)    : {}\n"
+                    "Iters   : {}\n"
+                    "Evals   : {}\n"
+                    "Message : {}\n"
+                ).format(
+                    self.success, self.x, self.fun, self.nit, self.nfev, self.message
+                )
+            )
+        except e:
+            writer.write("Error displaying OptimizeResult: " + String(e) + "\n")
 
 
 # ===----------------------------------------------------------------------=== #
@@ -159,7 +169,6 @@ def _brent_minimize[
                 x=x,
                 fun=fx,
                 success=True,
-                status=0,
                 message="Optimization terminated successfully.",
                 nit=i,
                 nfev=nfev,
@@ -222,7 +231,6 @@ def _brent_minimize[
         x=x,
         fun=fx,
         success=False,
-        status=1,
         message="Maximum number of iterations exceeded.",
         nit=maxiter,
         nfev=nfev,
@@ -265,7 +273,6 @@ def _golden_minimize[
                 x=x,
                 fun=fx,
                 success=True,
-                status=0,
                 message="Optimization terminated successfully.",
                 nit=i,
                 nfev=nfev,
@@ -292,7 +299,6 @@ def _golden_minimize[
         x=x2,
         fun=fx2,
         success=False,
-        status=1,
         message="Maximum number of iterations exceeded.",
         nit=maxiter,
         nfev=nfev,
@@ -341,7 +347,6 @@ def _bounded_minimize[
                 x=x,
                 fun=fx,
                 success=True,
-                status=0,
                 message="Optimization terminated successfully.",
                 nit=i,
                 nfev=nfev,
@@ -409,7 +414,6 @@ def _bounded_minimize[
         x=x,
         fun=fx,
         success=False,
-        status=1,
         message="Maximum number of iterations exceeded.",
         nit=maxiter,
         nfev=nfev,
@@ -461,7 +465,6 @@ def minimize_scalar[
             maxiter=100
         )
         print(result)
-        # Output: Result(success=True, x=2.0, fun=1.0, status=0, nit=5, nfev=8)
         ```
     """
 

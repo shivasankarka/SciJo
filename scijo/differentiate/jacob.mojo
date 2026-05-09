@@ -4,7 +4,6 @@
 # ===----------------------------------------------------------------------=== #
 """Jacobian Matrix Computation (`scijo.differentiate.jacob`)
 ===========================================================
-
 Computes the Jacobian matrix of a vector-valued function using central finite
 differences with parallelized column evaluation.
 

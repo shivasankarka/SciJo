@@ -4,7 +4,6 @@
 # ===----------------------------------------------------------------------=== #
 """Interpolate Module (`scijo.interpolate`)
 ===========================================
-
 Provides tools for interpolating data. It includes linear interpolation
 functions and callable interpolator objects for both single-point and
 array-based evaluation.

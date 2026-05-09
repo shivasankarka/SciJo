@@ -4,7 +4,6 @@
 # ===----------------------------------------------------------------------=== #
 """Optimize Module (`scijo.optimize`)
 =====================================
-
 Provides tools for numerical optimization and root-finding. It includes scalar
 root-finding methods such as bisection, Newton-Raphson, and the secant method,
 as well as scalar minimization using Brent's method, golden section search,
@@ -31,4 +30,5 @@ Examples
 """
 
 from .root_scalar import root_scalar, newton, bisect, secant
-from .min_scalar import minimize_scalar
+from .min_scalar import minimize_scalar, OptimizeResult
+from .utility import RootResult

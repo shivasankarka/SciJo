@@ -4,7 +4,6 @@
 # ===----------------------------------------------------------------------=== #
 """Utility Functions for Constants (`scijo.constants.utils`)
 ===========================================================
-
 Includes temperature conversions, frequency-wavelength calculations, and
 functions for accessing physical constant properties.
 """

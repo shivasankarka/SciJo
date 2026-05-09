@@ -23,7 +23,7 @@ Examples
     ```
 """
 
-from scijo.optimize.utility import RootResults
+from scijo.optimize.utility import RootResult
 
 # TODO: check if we are using the right tolerance conditions in all methods.
 
@@ -54,7 +54,7 @@ def root_scalar[
     xtol: Scalar[dtype] = 1e-8,
     rtol: Scalar[dtype] = 1e-8,
     maxiter: Int = 100,
-) raises -> RootResults[dtype]:
+) raises -> RootResult[dtype]:
     """Finds a root of a scalar function using the specified method.
 
     Parameters:
@@ -76,7 +76,7 @@ def root_scalar[
         Error: If required inputs for the chosen method are missing or invalid.
 
     Returns:
-        RootResults[dtype] containing the root, convergence status, iteration
+        RootResult[dtype] containing the root, convergence status, iteration
         count, function evaluation count, and method name.
     """
 
@@ -129,7 +129,7 @@ def newton[
     xtol: Scalar[dtype] = 1e-8,
     rtol: Scalar[dtype] = 1e-8,
     maxiter: Int = 100,
-) raises -> RootResults[dtype]:
+) raises -> RootResult[dtype]:
     """Finds a root using the Newton-Raphson method.
 
     Terminates when the step size or function value falls below
@@ -152,7 +152,7 @@ def newton[
         Error: If x0 is not provided or the derivative is zero at any step.
 
     Returns:
-        RootResults[dtype] containing the root and convergence information.
+        RootResult[dtype] containing the root and convergence information.
     """
     var xn: Scalar[dtype]
     if x0:
@@ -185,23 +185,23 @@ def newton[
         var tol_f = max(xtol, rtol * abs(fx))
 
         if abs(fx) <= tol_f or abs(delta) <= tol_x:
-            return RootResults[dtype](
+            return RootResult[dtype](
                 root=xn_next,
-                iterations=nit,
-                function_calls=nfev,
-                converged=True,
-                flag="converged",
+                nit=nit,
+                nfev=nfev,
+                success=True,
+                message="converged",
                 method="newton",
             )
 
         xn = xn_next
 
-    return RootResults[dtype](
+    return RootResult[dtype](
         root=xn,
-        iterations=nit,
-        function_calls=nfev,
-        converged=False,
-        flag="maximum iterations exceeded",
+        nit=nit,
+        nfev=nfev,
+        success=False,
+        message="maximum iterations exceeded",
         method="newton",
     )
 
@@ -217,7 +217,7 @@ def bisect[
     xtol: Scalar[dtype] = 1e-8,
     rtol: Scalar[dtype] = 1e-8,
     maxiter: Int = 100,
-) raises -> RootResults[dtype]:
+) raises -> RootResult[dtype]:
     """Finds a root using the bisection method over a bracket [a, b].
 
     Requires f(a) and f(b) to have opposite signs. Terminates when the
@@ -239,7 +239,7 @@ def bisect[
         Error: If f(a) and f(b) do not have opposite signs.
 
     Returns:
-        RootResults[dtype] containing the root and convergence information.
+        RootResult[dtype] containing the root and convergence information.
     """
     var a: Scalar[dtype] = bracket[0]
     var b: Scalar[dtype] = bracket[1]
@@ -250,21 +250,21 @@ def bisect[
     var nit: Int = 0
 
     if fa == 0:
-        return RootResults[dtype](
+        return RootResult[dtype](
             root=a,
-            iterations=0,
-            function_calls=nfev,
-            converged=True,
-            flag="converged",
+            nit=0,
+            nfev=nfev,
+            success=True,
+            message="converged",
             method="bisect",
         )
     if fb == 0:
-        return RootResults[dtype](
+        return RootResult[dtype](
             root=b,
-            iterations=0,
-            function_calls=nfev,
-            converged=True,
-            flag="converged",
+            nit=0,
+            nfev=nfev,
+            success=True,
+            message="converged",
             method="bisect",
         )
 
@@ -281,24 +281,24 @@ def bisect[
         nit += 1
 
         if fc == 0:
-            return RootResults[dtype](
+            return RootResult[dtype](
                 root=c,
-                iterations=nit,
-                function_calls=nfev,
-                converged=True,
-                flag="converged",
+                nit=nit,
+                nfev=nfev,
+                success=True,
+                message="converged",
                 method="bisect",
             )
 
         var tol_x = max(xtol, rtol * abs(c))
         var half_width = abs(b - a) / 2
         if half_width <= tol_x:
-            return RootResults[dtype](
+            return RootResult[dtype](
                 root=c,
-                iterations=nit,
-                function_calls=nfev,
-                converged=True,
-                flag="converged",
+                nit=nit,
+                nfev=nfev,
+                success=True,
+                message="converged",
                 method="bisect",
             )
 
@@ -308,12 +308,12 @@ def bisect[
             a = c
             fa = fc
 
-    return RootResults[dtype](
+    return RootResult[dtype](
         root=(a + b) / 2,
-        iterations=nit,
-        function_calls=nfev,
-        converged=False,
-        flag="maximum iterations exceeded",
+        nit=nit,
+        nfev=nfev,
+        success=False,
+        message="maximum iterations exceeded",
         method="bisect",
     )
 
@@ -330,7 +330,7 @@ def secant[
     xtol: Scalar[dtype] = 1e-8,
     rtol: Scalar[dtype] = 1e-8,
     maxiter: Int = 100,
-) raises -> RootResults[dtype]:
+) raises -> RootResult[dtype]:
     """Finds a root using the secant method.
 
     A derivative-free method that approximates the derivative using finite
@@ -352,7 +352,7 @@ def secant[
         Error: If zero slope is encountered.
 
     Returns:
-        RootResults[dtype] containing the root and convergence information.
+        RootResult[dtype] containing the root and convergence information.
     """
     var a: Scalar[dtype] = x0
     var b: Scalar[dtype] = x1
@@ -380,23 +380,23 @@ def secant[
         var tol_f = max(xtol, rtol * abs(fxn))
 
         if abs(fxn) <= tol_f or abs(xn - b) <= tol_x:
-            return RootResults[dtype](
+            return RootResult[dtype](
                 root=xn,
-                iterations=nit,
-                function_calls=nfev,
-                converged=True,
-                flag="converged",
+                nit=nit,
+                nfev=nfev,
+                success=True,
+                message="converged",
                 method="secant",
             )
 
         a = b
         b = xn
 
-    return RootResults[dtype](
+    return RootResult[dtype](
         root=b,
-        iterations=nit,
-        function_calls=nfev,
-        converged=False,
-        flag="maximum iterations exceeded",
+        nit=nit,
+        nfev=nfev,
+        success=False,
+        message="maximum iterations exceeded",
         method="secant",
     )

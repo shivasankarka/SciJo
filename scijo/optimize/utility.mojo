@@ -13,7 +13,7 @@ Data structures for returning results from optimization and root-finding routine
 # ===----------------------------------------------------------------------=== #
 
 
-struct RootResults[dtype: DType = DType.float64]():
+struct RootResult[dtype: DType = DType.float64]():
     """Result structure for scalar root-finding operations.
 
     Encapsulates the computed root, convergence status, and diagnostic
@@ -25,13 +25,13 @@ struct RootResults[dtype: DType = DType.float64]():
 
     var root: Scalar[Self.dtype]
     """The estimated root value."""
-    var iterations: Int
+    var nit: Int
     """Number of iterations performed."""
-    var function_calls: Int
+    var nfev: Int
     """Number of function evaluations used."""
-    var converged: Bool
+    var success: Bool
     """Whether the algorithm converged within tolerances."""
-    var flag: String
+    var message: String
     """Human-readable status message."""
     var method: String
     """Name of the method used."""
@@ -39,29 +39,29 @@ struct RootResults[dtype: DType = DType.float64]():
     def __init__(
         out self,
         root: Scalar[Self.dtype],
-        iterations: Int,
-        function_calls: Int,
-        converged: Bool,
-        flag: String,
+        nit: Int,
+        nfev: Int,
+        success: Bool,
+        message: String,
         method: String,
     ):
         self.root = root
-        self.iterations = iterations
-        self.function_calls = function_calls
-        self.converged = converged
-        self.flag = flag
+        self.nit = nit
+        self.nfev = nfev
+        self.success = success
+        self.message = message
         self.method = method
 
     def __str__(self) raises -> String:
         return String(
-            "RootResults(root={}, iterations={}, function_calls={}, "
-            "converged={}, flag='{}', method='{}')"
+            "RootResult(root={}, nit={}, nfev={}, "
+            "success={}, message='{}', method='{}')"
         ).format(
             self.root,
-            self.iterations,
-            self.function_calls,
-            self.converged,
-            self.flag,
+            self.nit,
+            self.nfev,
+            self.success,
+            self.message,
             self.method,
         )
 
@@ -69,22 +69,22 @@ struct RootResults[dtype: DType = DType.float64]():
         try:
             writer.write(
                 String(
-                    "Root Results\n"
-                    "============\n"
-                    "Root          : {}\n"
-                    "Iterations    : {}\n"
-                    "Function Calls: {}\n"
-                    "Converged     : {}\n"
-                    "Flag          : {}\n"
-                    "Method        : {}\n"
+                    "Root Result\n"
+                    "===========\n"
+                    "Root    : {}\n"
+                    "Iters   : {}\n"
+                    "Evals   : {}\n"
+                    "Success : {}\n"
+                    "Message : {}\n"
+                    "Method  : {}\n"
                 ).format(
                     self.root,
-                    self.iterations,
-                    self.function_calls,
-                    self.converged,
-                    self.flag,
+                    self.nit,
+                    self.nfev,
+                    self.success,
+                    self.message,
                     self.method,
                 )
             )
         except e:
-            writer.write("Error displaying RootResults: " + String(e) + "\n")
+            writer.write("Error displaying RootResult: " + String(e) + "\n")

@@ -4,7 +4,6 @@
 # ===----------------------------------------------------------------------=== #
 """SciJo Top-Level Package (`scijo`)
 ====================================
-
 Welcome to SciJo, a scientific computation library built for the Mojo programming language.
 
 This top-level package exposes the core components of SciJo, including array types, error

@@ -4,7 +4,6 @@
 # ===----------------------------------------------------------------------=== #
 """Differentiation Utility Functions (`scijo.differentiate.utility`)
 ===================================================================
-
 Utility functions and data structures for numerical differentiation using finite
 difference methods. Implements central, forward, and backward finite difference
 coefficient tables.

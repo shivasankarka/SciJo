@@ -134,7 +134,7 @@ def test_quad_edge_cases():
     var result = quad[sj.f64, constant_func](2.0, 2.0, None)
     assert_equal(result.integral, 0.0)
     assert_true(result.ier == 0)
-    assert_equal(result.neval, 0)
+    assert_equal(result.nfev, 0)
 
     # Test with reversed limits (should negate result)
     var result_normal = quad[sj.f64, constant_func](0.0, 1.0, None)

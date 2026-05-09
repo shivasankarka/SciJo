@@ -4,7 +4,6 @@
 # ===----------------------------------------------------------------------=== #
 """FFT Module (`scijo.fft`)
 ===========================
-
 Provides Fast Fourier Transform operations for complex and real arrays.
 It includes forward and inverse FFT using the Cooley-Tukey algorithm.
 

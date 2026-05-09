@@ -4,7 +4,6 @@
 # ===----------------------------------------------------------------------=== #
 """Differentiate Module (`scijo.differentiate`)
 ===============================================
-
 Provides tools for numerical differentiation and gradient computation.
 It includes functions for calculating derivatives, Jacobians, with much more
 to come in the future.

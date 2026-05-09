@@ -69,8 +69,8 @@ def quad[
     a: Scalar[dtype],
     b: Scalar[dtype],
     args: Optional[List[Scalar[dtype]]],
-    epsabs: Scalar[dtype] = 1.49e-8,
-    epsrel: Scalar[dtype] = 1.49e-8,
+    atol: Scalar[dtype] = 1.49e-8,
+    rtol: Scalar[dtype] = 1.49e-8,
 ) raises -> IntegralResult[dtype] where dtype.is_floating_point():
     """Computes the definite integral of a scalar function over [a, b].
 
@@ -86,8 +86,8 @@ def quad[
         a: Lower integration limit.
         b: Upper integration limit.
         args: Optional arguments to pass to the integrand.
-        epsabs: Absolute error tolerance.
-        epsrel: Relative error tolerance.
+        atol: Absolute error tolerance.
+        rtol: Relative error tolerance.
 
     Raises:
         Error: If the specified method is not supported.
@@ -113,7 +113,7 @@ def quad[
     """
 
     comptime if method == "qng":
-        return _qng[dtype, func](a, b, args, epsabs, epsrel)
+        return _qng[dtype, func](a, b, args, atol, rtol)
     else:
         raise Error(
             "Unsupported quad method: "
@@ -131,8 +131,8 @@ def _qng[
     a: Scalar[dtype],
     b: Scalar[dtype],
     args: Optional[List[Scalar[dtype]]],
-    epsabs: Scalar[dtype] = 1.49e-8,
-    epsrel: Scalar[dtype] = 1.49e-8,
+    atol: Scalar[dtype] = 1.49e-8,
+    rtol: Scalar[dtype] = 1.49e-8,
 ) -> IntegralResult[dtype] where dtype.is_floating_point():
     """Non-adaptive Gauss-Kronrod-Patterson integration (QUADPACK QNG).
 
@@ -152,8 +152,8 @@ def _qng[
         a: Lower integration limit.
         b: Upper integration limit.
         args: Optional arguments to pass to the integrand.
-        epsabs: Absolute error tolerance.
-        epsrel: Relative error tolerance.
+        atol: Absolute error tolerance.
+        rtol: Relative error tolerance.
 
     Returns:
         IntegralResult[dtype] containing the integral value, error estimate,
@@ -168,17 +168,17 @@ def _qng[
         return IntegralResult(
             integral=Scalar[dtype](0),
             abserr=Scalar[dtype](0),
-            neval=0,
+            nfev=0,
             ier=0,
         )
 
-    if epsabs <= 0 and epsrel < max(
+    if atol <= 0 and rtol < max(
         Scalar[dtype](0.5e-14), Scalar[dtype](50.0) * epsilon_mach
     ):
         return IntegralResult[dtype](
             integral=Scalar[dtype](0),
             abserr=Scalar[dtype](0),
-            neval=0,
+            nfev=0,
             ier=6,
         )
 
@@ -186,7 +186,7 @@ def _qng[
     var abs_half_length: Scalar[dtype] = abs(half_length)
     var center: Scalar[dtype] = Scalar[dtype](0.5) * (b + a)
     var f_center: Scalar[dtype] = func(center, args)
-    var neval: Int = 1
+    var nfev: Int = 1
 
     # 10-point Gauss / 21-point Kronrod Rule
     var result_10: Scalar[dtype] = Scalar[dtype](0)
@@ -220,7 +220,7 @@ def _qng[
         saved_fvalues[k] = fval
         fv1[k] = fval1
         fv2[k] = fval2
-    neval += 10
+    nfev += 10
 
     var index: Int = 5
     var fv3: StaticTuple[Scalar[dtype], 5] = StaticTuple[Scalar[dtype], 5](
@@ -242,7 +242,7 @@ def _qng[
         fv3[k] = fval1
         fv4[k] = fval2
         index += 1
-    neval += 10
+    nfev += 10
 
     var result: Scalar[dtype] = result_21 * half_length
     result_abs = result_abs * abs_half_length
@@ -270,11 +270,11 @@ def _qng[
             (epsilon_mach * Scalar[dtype](50)) * result_abs, abs_error
         )
 
-    if abs_error <= max(epsabs, epsrel * abs(result)):
+    if abs_error <= max(atol, rtol * abs(result)):
         return IntegralResult[dtype](
             integral=result,
             abserr=abs_error,
-            neval=neval,
+            nfev=nfev,
             ier=0,
         )
 
@@ -294,7 +294,7 @@ def _qng[
         result_43 += Scalar[dtype](w43b_kronrod_weights[k]) * fval
         saved_fvalues[index] = fval
         index += 1
-    neval += 22
+    nfev += 22
 
     result = result_43 * half_length
     abs_error = abs((result_43 - result_21) * half_length)
@@ -308,11 +308,11 @@ def _qng[
             (epsilon_mach * Scalar[dtype](50)) * result_abs, abs_error
         )
 
-    if abs_error <= max(epsabs, epsrel * abs(result)):
+    if abs_error <= max(atol, rtol * abs(result)):
         return IntegralResult[dtype](
             integral=result,
             abserr=abs_error,
-            neval=neval,
+            nfev=nfev,
             ier=0,
         )
 
@@ -329,7 +329,7 @@ def _qng[
         result_87 += Scalar[dtype](w87b_kronrod_weights[k]) * (
             func(center + abscissa, args) + func(center - abscissa, args)
         )
-    neval += 44
+    nfev += 44
 
     result = result_87 * half_length
     abs_error = abs((result_87 - result_43) * half_length)
@@ -343,17 +343,17 @@ def _qng[
             (epsilon_mach * Scalar[dtype](50)) * result_abs, abs_error
         )
 
-    if abs_error <= max(epsabs, epsrel * abs(result)):
+    if abs_error <= max(atol, rtol * abs(result)):
         return IntegralResult[dtype](
             integral=result,
             abserr=abs_error,
-            neval=neval,
+            nfev=nfev,
             ier=0,
         )
 
     return IntegralResult[dtype](
         integral=result,
         abserr=abs_error,
-        neval=neval,
+        nfev=nfev,
         ier=1,
     )

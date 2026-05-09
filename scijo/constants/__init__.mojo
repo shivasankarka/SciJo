@@ -4,7 +4,6 @@
 # ===----------------------------------------------------------------------=== #
 """Constants Module (`scijo.constants`)
 =======================================
-
 Provides a collection of physical and mathematical constants, CODATA 2022
 recommended values, and utility functions for accessing constant properties.
 

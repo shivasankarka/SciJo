@@ -4,7 +4,6 @@
 # ===----------------------------------------------------------------------=== #
 """Numerical Differentiation (`scijo.differentiate.deriv`)
 =========================================================
-
 Numerical differentiation using finite difference methods. Provides functions to
 compute first-order derivatives of scalar functions using central, forward, and
 backward finite difference schemes with adaptive step sizing.

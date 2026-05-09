@@ -259,7 +259,7 @@ struct IntegralResult[dtype: DType](Copyable, Movable, Writable):
     """The computed integral value."""
     var abserr: Scalar[Self.dtype]
     """Absolute error estimate."""
-    var neval: Int
+    var nfev: Int
     """Number of function evaluations used."""
     var ier: Int
     """Integration error code (0 = success, >0 = error type)."""
@@ -268,12 +268,12 @@ struct IntegralResult[dtype: DType](Copyable, Movable, Writable):
         out self,
         integral: Scalar[Self.dtype] = 0,
         abserr: Scalar[Self.dtype] = 0,
-        neval: Int = 0,
+        nfev: Int = 0,
         ier: Int = 0,
     ):
         self.integral = integral
         self.abserr = abserr
-        self.neval = neval
+        self.nfev = nfev
         self.ier = ier
 
     def success(self) -> Bool:
@@ -288,13 +288,13 @@ struct IntegralResult[dtype: DType](Copyable, Movable, Writable):
         var status = "SUCCESS" if self.success() else "ERROR"
         return String(
             "QuadResult(status={}, message='{}', integral={}, abserr={:.2e},"
-            " neval={})"
+            " nfev={})"
         ).format(
             status,
             self.message(),
             self.integral,
             self.abserr,
-            self.neval,
+            self.nfev,
         )
 
     def write_to[W: Writer](self, mut writer: W):
@@ -314,7 +314,7 @@ struct IntegralResult[dtype: DType](Copyable, Movable, Writable):
                     self.message(),
                     self.integral,
                     self.abserr,
-                    self.neval,
+                    self.nfev,
                 )
             )
         except e:
