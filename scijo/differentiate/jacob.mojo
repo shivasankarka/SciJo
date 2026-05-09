@@ -22,7 +22,7 @@ Examples
 
 from std.algorithm.functional import parallelize
 
-from numojo.routines.creation import zeros, full
+from numojo.routines.creation import zeros
 from numojo.core import NDArray, Shape
 
 
@@ -34,8 +34,7 @@ def jacobian[
 ](
     x: NDArray[dtype],
     args: Optional[List[Scalar[dtype]]] = None,
-    tolerances: Dict[String, Scalar[dtype]] = {"abs": 1e-5, "rel": 1e-3},
-    maxiter: Int = 10,
+    step: Scalar[dtype] = 0.5,
 ) raises -> NDArray[dtype]:
     """Computes the Jacobian matrix of a vector-valued function using central finite differences.
 
@@ -50,11 +49,10 @@ def jacobian[
     Args:
         x: Input vector of shape (n,) at which to evaluate the Jacobian.
         args: Optional arguments to pass to the function.
-        tolerances: Tolerance dictionary with "abs" and "rel" keys (reserved for future use).
-        maxiter: Maximum iterations (reserved for future use).
+        step: Finite difference step size. Defaults to 0.5.
 
     Raises:
-        Error: If function evaluation fails for any perturbation.
+        Error: If function evaluation fails for any column perturbation.
 
     Returns:
         NDArray[dtype] of shape (m, n) representing the Jacobian matrix,
@@ -78,28 +76,28 @@ def jacobian[
     var m: Int = len(f0)
 
     var jacob: NDArray[dtype] = zeros[dtype](Shape(m, n))
-    var step: NDArray[dtype] = full[dtype](Shape(n), fill_value=0.5)
+    var errors = List[String]()
 
     @parameter
     def closure(j: Int):
         try:
             var x_plus = x.copy()
             var x_minus = x.copy()
-            var hj = step.load(j)
-            x_plus.store(j, val=x.load(j) + hj)
-            x_minus.store(j, val=x.load(j) - hj)
+            x_plus.store(j, val=x.load(j) + step)
+            x_minus.store(j, val=x.load(j) - step)
             var f_plus = jacob_func(x_plus, args)
             var f_minus = jacob_func(x_minus, args)
 
-            var col: NDArray[dtype] = (f_plus - f_minus) / (2.0 * hj)
+            var col: NDArray[dtype] = (f_plus - f_minus) / (2.0 * step)
 
             for i in range(m):
-                var val: Scalar[dtype] = col.load(i)
-                var flat_idx: Int = i * n + j
-                jacob.store(flat_idx, val=val)
-        except:
-            print("Error in computing Jacobian column for j =", j)
+                jacob.store(i * n + j, val=col.load(i))
+        except e:
+            errors.append("column " + String(j) + ": " + String(e))
 
     parallelize[closure](n, num_workers=n)
+
+    if len(errors) > 0:
+        raise Error("SciJo [jacobian]: " + errors[0])
 
     return jacob^
