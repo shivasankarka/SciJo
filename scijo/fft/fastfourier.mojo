@@ -38,17 +38,17 @@ from numojo.core.indexing import Item
 
 
 def fft[
-    dtype: ComplexDType = ComplexDType.float64
-](arr: ComplexNDArray[dtype]) raises -> ComplexNDArray[
-    dtype
-] where dtype.dtype.is_floating_point():
+    cdtype: ComplexDType = ComplexDType.float64
+](arr: ComplexNDArray[cdtype]) raises -> ComplexNDArray[
+    cdtype
+] where cdtype.dtype.is_floating_point():
     """Computes the Fast Fourier Transform using the Cooley-Tukey algorithm.
 
     Decomposes the DFT computation by recursively breaking down the transform
     of size N into two transforms of size N/2, achieving O(N log N) complexity.
 
     Parameters:
-        dtype: The data type of the complex elements (ComplexDType).
+        cdtype: The data type of the complex elements (ComplexDType).
 
     Args:
         arr: Input complex array to transform. Must be 1-dimensional with length
@@ -77,7 +77,7 @@ def fft[
 
     var n: Int = arr.shape[0]
     if n <= 1:
-        return ComplexNDArray[dtype](re=arr._re.copy(), im=arr._im.copy())
+        return ComplexNDArray[cdtype](re=arr._re.copy(), im=arr._im.copy())
 
     if (n & (n - 1)) != 0:
         raise Error(
@@ -86,27 +86,27 @@ def fft[
         )
 
     var half_size = n // 2
-    var even_indices = ComplexNDArray[dtype](NDArrayShape(half_size))
-    var odd_indices = ComplexNDArray[dtype](NDArrayShape(half_size))
+    var even_indices = ComplexNDArray[cdtype](NDArrayShape(half_size))
+    var odd_indices = ComplexNDArray[cdtype](NDArrayShape(half_size))
 
     for i in range(half_size):
         even_indices[Item(i)] = arr[Item(2 * i)]
         odd_indices[Item(i)] = arr[Item(2 * i + 1)]
 
-    var even_fft = fft[dtype](even_indices)
-    var odd_fft = fft[dtype](odd_indices)
+    var even_fft = fft[cdtype](even_indices)
+    var odd_fft = fft[cdtype](odd_indices)
 
-    var result = ComplexNDArray[dtype](arr.shape)
+    var result = ComplexNDArray[cdtype](arr.shape)
 
     for k in range(half_size):
         var angle = (
             -2.0
             * Constants.pi
-            * Scalar[dtype.dtype](k)
-            / Scalar[dtype.dtype](n)
+            * Scalar[cdtype.dtype](k)
+            / Scalar[cdtype.dtype](n)
         )
-        var twiddle = ComplexSIMD[dtype](
-            cos(angle).cast[dtype.dtype](), sin(angle).cast[dtype.dtype]()
+        var twiddle = ComplexSIMD[cdtype](
+            cos(angle).cast[cdtype.dtype](), sin(angle).cast[cdtype.dtype]()
         )
 
         var twiddle_odd = twiddle * odd_fft[Item(k)]
@@ -123,10 +123,10 @@ def fft[
 
 
 def rfft[
-    dtype: DType = DType.float64
+    dtype: DType = DType.float64, *, cdtype: ComplexDType = ComplexDType(mlir_value=dtype._mlir_value)
 ](arr: NDArray[dtype]) raises -> ComplexNDArray[
-    ComplexDType.from_dtype[dtype]()
-] where dtype.is_floating_point():
+    cdtype
+] where cdtype.dtype.is_floating_point():
     """Computes the real Fast Fourier Transform.
 
     Equivalent to `fft` on a zero-imaginary complex signal, but returns only
@@ -135,6 +135,8 @@ def rfft[
 
     Parameters:
         dtype: The floating-point element type of the input array.
+        cdtype: The complex data type corresponding to the input dtype. Defaults to
+            ComplexDType with the same underlying float type.
 
     Args:
         arr: Real-valued 1-D input array. Length must be a power of 2.
@@ -162,7 +164,6 @@ def rfft[
         raise Error("Scijo [rfft]: rfft currently only supports 1D arrays")
 
     var n = arr.shape[0]
-    alias cdtype = ComplexDType.from_dtype[dtype]()
 
     var complex_input = ComplexNDArray[cdtype](NDArrayShape(n))
     for i in range(n):
@@ -181,11 +182,11 @@ def rfft[
 
 
 def irfft[
-    dtype: DType = DType.float64
+    dtype: DType = DType.float64, *, cdtype: ComplexDType = ComplexDType(mlir_value=dtype._mlir_value)
 ](
-    arr: ComplexNDArray[ComplexDType.from_dtype[dtype]()],
+    arr: ComplexNDArray[cdtype],
     n: Optional[Int] = None,
-) raises -> NDArray[dtype] where dtype.is_floating_point():
+) raises -> NDArray[dtype] where cdtype.dtype.is_floating_point():
     """Computes the inverse real Fast Fourier Transform.
 
     Reconstructs a real-valued signal from the non-redundant frequency bins
@@ -194,6 +195,8 @@ def irfft[
 
     Parameters:
         dtype: The floating-point element type of the output array.
+        cdtype: The complex data type corresponding to the output dtype. Defaults to
+            ComplexDType with the same underlying float type.
 
     Args:
         arr: Complex 1-D input array of ``N // 2 + 1`` frequency bins.
@@ -220,7 +223,6 @@ def irfft[
     if arr.ndim != 1:
         raise Error("Scijo [irfft]: irfft currently only supports 1D arrays")
 
-    alias cdtype = ComplexDType.from_dtype[dtype]()
     var m = arr.shape[0]
     var full_n: Int
     if n:
@@ -252,10 +254,10 @@ def irfft[
 
 
 def _ifft_unnormalized[
-    dtype: ComplexDType = ComplexDType.float64
-](arr: ComplexNDArray[dtype]) raises -> ComplexNDArray[
-    dtype
-] where dtype.dtype.is_floating_point():
+    cdtype: ComplexDType = ComplexDType.float64
+](arr: ComplexNDArray[cdtype]) raises -> ComplexNDArray[
+    cdtype
+] where cdtype.dtype.is_floating_point():
     """Computes the unnormalized inverse FFT using the Cooley-Tukey algorithm.
 
     This is an internal helper that performs the inverse butterfly operations
@@ -263,7 +265,7 @@ def _ifft_unnormalized[
     The caller is responsible for applying normalization.
 
     Parameters:
-        dtype: The data type of the complex elements (ComplexDType).
+        cdtype: The data type of the complex elements (ComplexDType).
 
     Args:
         arr: Input complex array to transform. Must be 1-dimensional with length
@@ -281,7 +283,7 @@ def _ifft_unnormalized[
 
     var n: Int = arr.shape[0]
     if n <= 1:
-        return ComplexNDArray[dtype](re=arr._re.copy(), im=arr._im.copy())
+        return ComplexNDArray[cdtype](re=arr._re.copy(), im=arr._im.copy())
 
     if (n & (n - 1)) != 0:
         raise Error(
@@ -290,24 +292,24 @@ def _ifft_unnormalized[
         )
 
     var half_size = n // 2
-    var even_indices = ComplexNDArray[dtype](NDArrayShape(half_size))
-    var odd_indices = ComplexNDArray[dtype](NDArrayShape(half_size))
+    var even_indices = ComplexNDArray[cdtype](NDArrayShape(half_size))
+    var odd_indices = ComplexNDArray[cdtype](NDArrayShape(half_size))
 
     for i in range(half_size):
         even_indices[Item(i)] = arr[Item(2 * i)]
         odd_indices[Item(i)] = arr[Item(2 * i + 1)]
 
-    var even_ifft = _ifft_unnormalized[dtype](even_indices)
-    var odd_ifft = _ifft_unnormalized[dtype](odd_indices)
+    var even_ifft = _ifft_unnormalized[cdtype](even_indices)
+    var odd_ifft = _ifft_unnormalized[cdtype](odd_indices)
 
-    var result = ComplexNDArray[dtype](arr.shape)
+    var result = ComplexNDArray[cdtype](arr.shape)
 
     for k in range(half_size):
         var angle = (
-            2.0 * Constants.pi * Scalar[dtype.dtype](k) / Scalar[dtype.dtype](n)
+            2.0 * Constants.pi * Scalar[cdtype.dtype](k) / Scalar[cdtype.dtype](n)
         )
-        var twiddle = ComplexSIMD[dtype](
-            cos(angle).cast[dtype.dtype](), sin(angle).cast[dtype.dtype]()
+        var twiddle = ComplexSIMD[cdtype](
+            cos(angle).cast[cdtype.dtype](), sin(angle).cast[cdtype.dtype]()
         )
 
         var twiddle_odd = twiddle * odd_ifft[Item(k)]
@@ -324,17 +326,17 @@ def _ifft_unnormalized[
 
 
 def ifft[
-    dtype: ComplexDType = ComplexDType.float64
-](arr: ComplexNDArray[dtype]) raises -> ComplexNDArray[
-    dtype
-] where dtype.dtype.is_floating_point():
+    cdtype: ComplexDType = ComplexDType.float64
+](arr: ComplexNDArray[cdtype]) raises -> ComplexNDArray[
+    cdtype
+] where cdtype.dtype.is_floating_point():
     """Computes the Inverse Fast Fourier Transform using the Cooley-Tukey algorithm.
 
     Recovers the original signal from its frequency-domain representation by
     computing the unnormalized inverse FFT and applying 1/N normalization.
 
     Parameters:
-        dtype: The data type of the complex elements (ComplexDType).
+        cdtype: The data type of the complex elements (ComplexDType).
 
     Args:
         arr: Input complex array to transform. Must be 1-dimensional with length
@@ -360,10 +362,10 @@ def ifft[
         ```
     """
     var n: Int = arr.shape[0]
-    var result = _ifft_unnormalized[dtype](arr)
+    var result = _ifft_unnormalized[cdtype](arr)
 
-    var inv_n = CScalar[dtype](1.0, 1.0) / CScalar[dtype](
-        Scalar[dtype.dtype](n), Scalar[dtype.dtype](n)
+    var inv_n = CScalar[cdtype](1.0, 1.0) / CScalar[cdtype](
+        Scalar[cdtype.dtype](n), Scalar[cdtype.dtype](n)
     )
     for i in range(n):
         result.store[width=1](i, result.load[width=1](i) * inv_n)
