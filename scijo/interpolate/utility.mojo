@@ -4,7 +4,6 @@
 # ===----------------------------------------------------------------------=== #
 """Interpolation Utility Functions (`scijo.interpolate.utility`)
 ===============================================================
-
 Internal utility functions for interpolation, including binary search and
 input validation.
 """

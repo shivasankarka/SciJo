@@ -4,7 +4,6 @@
 # ===----------------------------------------------------------------------=== #
 """Fast Fourier Transform (`scijo.fft.fastfourier`)
 ===================================================
-
 Forward and inverse Fast Fourier Transform using the Cooley-Tukey radix-2
 decimation-in-time algorithm for 1-D complex arrays with power-of-2 lengths.
 

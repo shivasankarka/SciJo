@@ -4,7 +4,6 @@
 # ===----------------------------------------------------------------------=== #
 """Integration Utility Functions (`scijo.integrate.utility`)
 ===========================================================
-
 Utility functions, data structures, and Gauss-Kronrod quadrature tables for
 numerical integration. Includes result types, priority queue for adaptive
 subdivision, machine epsilon computation, and precomputed quadrature nodes

@@ -4,7 +4,6 @@
 # ===----------------------------------------------------------------------=== #
 """Scalar Root-Finding (`scijo.optimize.root_scalar`)
 =====================================================
-
 Scalar root-finding methods for nonlinear equations. Includes bracketing methods
 (bisection), derivative-based methods (Newton-Raphson), and derivative-free
 methods (secant).

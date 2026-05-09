@@ -4,7 +4,6 @@
 # ===----------------------------------------------------------------------=== #
 """Scalar Minimization (`scijo.optimize.min_scalar`)
 ====================================================
-
 Provides scalar minimization algorithms including Brent's method, golden
 section search, and bounded minimization.
 

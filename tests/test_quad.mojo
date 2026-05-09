@@ -116,7 +116,7 @@ def test_quad_exponential():
         return exp(-x)
 
     var result2 = quad[sj.f64, exp_decay](
-        0.0, 10.0, None, epsrel=1e-8
+        0.0, 10.0, None, rtol=1e-8
     )  # 10 is "large enough"
     assert_almost_equal(result2.integral, 1.0, atol=1e-3)
     assert_true(result2.ier == 0)
@@ -181,7 +181,7 @@ def test_quad_difficult_integrands():
     ] where dtype.is_floating_point():
         return exp(-x * x)
 
-    var result = quad[sj.f64, gaussian](-5.0, 5.0, None, epsrel=1e-8)
+    var result = quad[sj.f64, gaussian](-5.0, 5.0, None, rtol=1e-8)
     assert_almost_equal(result.integral, sqrt(pi), atol=1e-6)
     assert_true(result.ier == 0)
 
@@ -207,13 +207,13 @@ def test_quad_difficult_integrands():
 #         return x * exp(-x)
 
 # Test with default tolerance
-# var result_default = quad[sj.f64, smooth_func](0.0, 5.0, None, epsabs=1e-8, epsrel=1e-8, limit=100)
+# var result_default = quad[sj.f64, smooth_func](0.0, 5.0, None, atol=1e-8, rtol=1e-8, limit=100)
 # assert_almost_equal(result_default.integral, 1.0)
 # assert_true(result_default.ier == 0)
 
 # Test with stricter tolerance
 # var result_strict = quad[sj.f64, smooth_func](
-#     0.0, 5.0, None, epsabs=1e-12, epsrel=1e-12
+#     0.0, 5.0, None, atol=1e-12, rtol=1e-12
 # )
 # # Analytical result: ∫x*e^(-x) dx from 0 to ∞ = 1
 # assert_almost_equal(result_strict.integral, 1.0)

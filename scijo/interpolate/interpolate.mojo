@@ -4,7 +4,6 @@
 # ===----------------------------------------------------------------------=== #
 """Linear Interpolation (`scijo.interpolate.interpolate`)
 =========================================================
-
 Linear interpolation utilities for 1-D data. Provides a reusable
 `LinearInterpolator` and a functional `interp1d` interface.
 

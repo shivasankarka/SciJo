@@ -4,7 +4,6 @@
 # ===----------------------------------------------------------------------=== #
 """Optimization Utility Functions (`scijo.optimize.utility`)
 ===========================================================
-
 Data structures for returning results from optimization and root-finding routines.
 """
 

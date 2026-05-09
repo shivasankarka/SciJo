@@ -4,7 +4,6 @@
 # ===----------------------------------------------------------------------=== #
 """Fixed Sample Integration Methods (`scijo.integrate.fixed_sample`)
 ===================================================================
-
 Integration methods for discrete, evenly or unevenly spaced sample data.
 Includes the composite trapezoidal rule, Simpson's rule, and Romberg integration.
 

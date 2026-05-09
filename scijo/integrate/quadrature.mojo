@@ -4,7 +4,6 @@
 # ===----------------------------------------------------------------------=== #
 """Quadrature Integration (`scijo.integrate.quadrature`)
 =======================================================
-
 General-purpose numerical integration using adaptive quadrature methods based on
 the QUADPACK library. Currently implements the non-adaptive Gauss-Kronrod-Patterson
 (QNG) algorithm.
