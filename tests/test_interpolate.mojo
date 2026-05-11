@@ -2,14 +2,13 @@
 Tests for Interpolation Module.
 """
 
-from math import sin
+from std.math import sin
+from std.testing import assert_true, assert_false, assert_equal, assert_almost_equal
+from std.testing import TestSuite
+from std.python import Python, PythonObject
 
 import numojo as nm
 from scijo.interpolate import LinearInterpolator, interp1d, interp
-from testing import assert_true, assert_false, assert_equal, assert_almost_equal
-from testing import TestSuite
-from python import Python, PythonObject
-
 
 # TODO: Instead of checking element by element, we could use nm.all for array comparisons similar to NuMojo tests.
 def test_input_validation() raises:
@@ -546,5 +545,5 @@ def test_performance_comparison() raises:
         )
 
 
-def main():
+def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()

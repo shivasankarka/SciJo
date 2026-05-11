@@ -481,7 +481,9 @@ def minimize_scalar[
                 args, bracket.value(), atol, maxiter
             )
         if bounds:
-            return _brent_minimize[dtype, f](args, bounds.value(), atol, maxiter)
+            return _brent_minimize[dtype, f](
+                args, bounds.value(), atol, maxiter
+            )
         raise Error("bracket or bounds must be provided for Brent method.")
 
     if method == "Golden" or method == "golden":

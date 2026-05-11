@@ -1,13 +1,13 @@
-from scijo.differentiate import derivative
+from std.testing import assert_almost_equal, assert_equal, assert_true, assert_false
+from std.testing import TestSuite
+from std.math import sin, cos, exp
 
-from testing import assert_almost_equal, assert_equal, assert_true, assert_false
-from testing import TestSuite
-import math
+from scijo.differentiate import derivative
 
 
 def constant_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
     """
     F(x) = 5, f'(x) = 0.
     """
@@ -16,7 +16,7 @@ def constant_function[
 
 def linear_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
     """
     F(x) = 3x + 2, f'(x) = 3.
     """
@@ -25,7 +25,7 @@ def linear_function[
 
 def quadratic_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
     """
     F(x) = 2x^2 + 3x + 1, f'(x) = 4x + 3.
     """
@@ -34,7 +34,7 @@ def quadratic_function[
 
 def cubic_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
     """
     F(x) = x^3 - 2x^2 + x - 5, f'(x) = 3x^2 - 4x + 1.
     """
@@ -43,40 +43,40 @@ def cubic_function[
 
 def sin_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
     dtype
 ] where dtype.is_floating_point():
     """
     F(x) = sin(x), f'(x) = cos(x).
     """
-    return math.sin(x)
+    return sin(x)
 
 
 def cos_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
     dtype
 ] where dtype.is_floating_point():
     """
     F(x) = cos(x), f'(x) = -sin(x).
     """
-    return math.cos(x)
+    return cos(x)
 
 
 def exp_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
     dtype
 ] where dtype.is_floating_point():
     """
     F(x) = e^x, f'(x) = e^x.
     """
-    return math.exp(x)
+    return exp(x)
 
 
 def parameterized_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
     """
     F(x) = a*x^2 + b*x + c, f'(x) = 2*a*x + b.
     """
@@ -157,7 +157,7 @@ def test_trigonometric_derivatives() raises:
 
     # Test sin(x): f'(x) = cos(x)
     var x_sin = 0.5
-    var expected_sin = math.cos(x_sin)
+    var expected_sin = cos(x_sin)
     var result_sin = derivative[DType.float64, sin_function, step_direction=0](
         x0=x_sin, args=None, order=6
     )
@@ -171,7 +171,7 @@ def test_trigonometric_derivatives() raises:
 
     # Test cos(x): f'(x) = -sin(x)
     var x_cos = 1.0
-    var expected_cos = -math.sin(x_cos)
+    var expected_cos = -sin(x_cos)
     var result_cos = derivative[DType.float64, cos_function, step_direction=0](
         x0=x_cos, args=None, order=6
     )
@@ -189,7 +189,7 @@ def test_exponential_derivative() raises:
 
     # Test exp(x): f'(x) = exp(x)
     var x_exp = 1.0
-    var expected_exp = math.exp(x_exp)
+    var expected_exp = exp(x_exp)
     var result_exp = derivative[DType.float64, exp_function, step_direction=0](
         x0=x_exp, args=None, order=6
     )
@@ -383,5 +383,5 @@ def test_step_size_parameters() raises:
         )
 
 
-def main():
+def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()

@@ -1,11 +1,13 @@
-from testing import assert_almost_equal, assert_equal
-from testing import TestSuite
-from math import sqrt
+from std.testing import assert_almost_equal, assert_equal
+from std.testing import TestSuite
+from std.math import sqrt
+
 import scijo as sj
 from scijo.optimize.root_scalar import root_scalar, newton, bisect, secant
 
 
 def test_bisect_root_scalar_basic() raises:
+    @parameter
     def f[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
@@ -18,15 +20,17 @@ def test_bisect_root_scalar_basic() raises:
 
     var result2 = bisect[sj.f64, f](None, (0.0, 2.0))
     assert_almost_equal(result2.root, sqrt(2.0), atol=1e-8)
-    assert_equal(result2.converged, True)
+    assert_equal(result2.success, True)
 
 
 def test_newton_basic() raises:
+    @parameter
     def f[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
         return x * x - 2.0
 
+    @parameter
     def fprime[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
@@ -39,6 +43,7 @@ def test_newton_basic() raises:
 
 
 def test_secant_basic() raises:
+    @parameter
     def f[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
@@ -51,6 +56,7 @@ def test_secant_basic() raises:
 
 
 def test_bisect_invalid_bracket_raises() raises:
+    @parameter
     def g[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
@@ -68,6 +74,7 @@ def test_bisect_invalid_bracket_raises() raises:
 def test_root_results_fields() raises:
     """Verify RootResults carries all diagnostic fields."""
 
+    @parameter
     def f[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
@@ -80,5 +87,5 @@ def test_root_results_fields() raises:
     assert_equal(result.nfev > 0, True)
 
 
-def main():
+def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()

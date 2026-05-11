@@ -1,9 +1,10 @@
-from scijo.fft.fastfourier import fft, ifft, rfft, irfft
+from std.python import Python, PythonObject
+from std.testing import assert_almost_equal, assert_equal, assert_true
+from std.testing import TestSuite
+
 import scijo as sj
 import numojo as nm
-from python import Python, PythonObject
-from testing import assert_almost_equal, assert_equal, assert_true
-from testing import TestSuite
+from scijo.fft.fastfourier import fft, ifft, rfft, irfft
 from numojo.core.complex import ComplexNDArray, ComplexSIMD
 from numojo.core import CScalar
 from numojo.core.ndarray import NDArray
@@ -321,5 +322,5 @@ def test_irfft_roundtrip() raises:
     compare_real_arrays[nm.f64](x_rec, np_x_rec, "irfft roundtrip", atol=1e-10)
 
 
-def main():
+def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()

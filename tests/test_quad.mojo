@@ -7,19 +7,20 @@ solutions and edge cases, similar to SciPy's quad function tests.
 To run: `mojo test tests/test_quad.mojo -I .` from the project root directory.
 """
 
-from testing import assert_almost_equal, assert_equal, assert_true, assert_false
-from testing import TestSuite
-from math import sin, cos, exp, log, pi, sqrt
+from std.testing import assert_almost_equal, assert_equal, assert_true, assert_false
+from std.testing import TestSuite
+from std.math import sin, cos, exp, log, pi, sqrt
 
 from scijo.integrate import quad
 import scijo as sj
 
 
-def test_quad_basic_polynomials():
+def test_quad_basic_polynomials() raises:
     """Test quad with simple polynomial functions that have analytical solutions.
     """
 
     # Test ∫x dx from 0 to 1 = 1/2
+    @parameter
     def linear[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
@@ -30,6 +31,7 @@ def test_quad_basic_polynomials():
     assert_true(result.ier == 0)  # Success
 
     # Test ∫x² dx from 0 to 2 = 8/3
+    @parameter
     def quadratic[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
@@ -40,6 +42,7 @@ def test_quad_basic_polynomials():
     assert_true(result2.ier == 0)
 
     # Test ∫x³ dx from 0 to 3 = 81/4
+    @parameter
     def cubic[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
@@ -50,10 +53,11 @@ def test_quad_basic_polynomials():
     assert_true(result3.ier == 0)
 
 
-def test_quad_trigonometric():
+def test_quad_trigonometric() raises:
     """Test quad with trigonometric functions."""
 
     # Test ∫sin(x) dx from 0 to π = 2
+    @parameter
     def sine[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
@@ -66,6 +70,7 @@ def test_quad_trigonometric():
     assert_true(result.ier == 0)
 
     # Test ∫cos(x) dx from 0 to π/2 = 1
+    @parameter
     def cosine[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
@@ -78,6 +83,7 @@ def test_quad_trigonometric():
     assert_true(result2.ier == 0)
 
     # Test ∫sin²(x) dx from 0 to π = π/2
+    @parameter
     def sin_squared[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
@@ -91,10 +97,11 @@ def test_quad_trigonometric():
     assert_true(result3.ier == 0)
 
 
-def test_quad_exponential():
+def test_quad_exponential() raises:
     """Test quad with exponential functions."""
 
     # Test ∫e^x dx from 0 to 1 = e - 1
+    @parameter
     def exponential[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
@@ -108,6 +115,7 @@ def test_quad_exponential():
     assert_true(result.ier == 0)
 
     # Test ∫e^(-x) dx from 0 to ∞ ≈ 1 (using large upper bound)
+    @parameter
     def exp_decay[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
@@ -122,10 +130,11 @@ def test_quad_exponential():
     assert_true(result2.ier == 0)
 
 
-def test_quad_edge_cases():
+def test_quad_edge_cases() raises:
     """Test quad with edge cases and boundary conditions."""
 
     # Test with identical limits (should return 0)
+    @parameter
     def constant_func[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
@@ -148,10 +157,11 @@ def test_quad_edge_cases():
     assert_almost_equal(result_const.integral, 15.0, atol=1e-15)
 
 
-def test_quad_with_parameters():
+def test_quad_with_parameters() raises:
     """Test quad with parameterized functions using args."""
 
     # Test ∫a*x dx with parameter a
+    @parameter
     def linear_param[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
@@ -169,11 +179,12 @@ def test_quad_with_parameters():
     assert_true(result.ier == 0)
 
 
-def test_quad_difficult_integrands():
+def test_quad_difficult_integrands() raises:
     """Test quad with more challenging integrands."""
 
     # Test Gaussian integral ∫e^(-x²) dx from -∞ to ∞ ≈ √π
     # Using finite bounds that approximate infinity
+    @parameter
     def gaussian[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
@@ -186,6 +197,7 @@ def test_quad_difficult_integrands():
     assert_true(result.ier == 0)
 
     # Test oscillatory function sin(x)/x near origin (needs careful handling)
+    @parameter
     def sinc_like[
         dtype: DType
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
@@ -260,5 +272,5 @@ def test_quad_difficult_integrands():
 #     assert_almost_equal(result2.integral, 0.0, atol=1e-6)
 
 
-def main():
+def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()

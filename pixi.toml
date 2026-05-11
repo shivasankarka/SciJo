@@ -11,26 +11,28 @@ preview = ["pixi-build"]
 
 [dependencies]
 mojo = ">=1.0.0b1,<2"
-# numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", branch = "pre-0.10"}
-numojo = { path = "../NuMojo"}
+numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", branch = "pre-0.10"}
 msl = {git = "https://github.com/shivasankarka/MojoScientificLibrary.git", branch = "main"}
 
 [feature.test.dependencies]
 python = ">=3.13,<3.14"
 scipy = ">=1.14"
+numpy = ">=2.4.3,<3"
 
 [feature.test.tasks]
-t = "clear && pixi run --environment test package && bash ./tests/test_all.sh"
-test = "pixi run --environment test package && bash ./tests/test_all.sh"
+# Package then run all tests inside the test environment (has Python/SciPy)
+package = "mojo package scijo && cp scijo.mojopkg tests/"
+tests = { depends-on = ["package"], cmd = "bash ./tests/test_all.sh" }
+t = { depends-on = ["package"], cmd = "clear && bash ./tests/test_all.sh" }
 
 [environments]
 test = ["test"]
 
 [tasks]
 format = "mojo format ./scijo && mojo format ./tests && mojo format ./benchmark"
-tests = "mojo package scijo && cp scijo.mojopkg tests/ && bash tests/test_all.sh"
 package = "mojo package scijo && cp scijo.mojopkg tests/"
-final = "pixi run format && mojo package scijo && cp scijo.mojopkg tests/ && bash tests/test_all.sh"
+tests = { depends-on = ["package"], cmd = "bash tests/test_all.sh" }
+final = { depends-on = ["package"], cmd = "mojo format ./scijo && mojo format ./tests && bash tests/test_all.sh" }
 build = "mojo build"
 
 [package]

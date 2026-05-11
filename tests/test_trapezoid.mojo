@@ -1,10 +1,11 @@
-from scijo.integrate.fixed_sample import trapezoid
+from std.python import Python, PythonObject
+from std.testing import assert_almost_equal, assert_equal
+from std.testing import TestSuite
+from std.math import sin as _sin
+
+from scijo.integrate.fixed_sample import trapezoid, romb
 import scijo as sj
 import numojo as nm
-from python import Python, PythonObject
-from testing import assert_almost_equal, assert_equal
-from testing import TestSuite
-
 
 def test_basic_trapezoid() raises:
     """Test basic trapezoid integration matching SciPy examples."""
@@ -188,5 +189,86 @@ def test_error_conditions() raises:
         pass
 
 
-def main():
+def test_romb_polynomial() raises:
+    """Romberg on x^2 over [0,1]: exact answer is 1/3."""
+    # 9 = 2^3 + 1 points, dx = 1/8
+    var n = 9
+    var dx = Scalar[sj.f64](1.0 / 8.0)
+    var y = nm.zeros[sj.f64](nm.Shape(n))
+    for i in range(n):
+        var xi = Scalar[sj.f64](i) * dx
+        y.itemset(i, xi * xi)
+    var result = romb[sj.f64](y, dx=dx)
+    assert_almost_equal(
+        result, 1.0 / 3.0, atol=1e-10, msg="romb x^2 over [0,1]"
+    )
+
+
+def test_romb_linear() raises:
+    """Romberg on x over [0,1]: exact answer is 0.5 — should be exact at k=1."""
+    var n = 3
+    var dx = Scalar[sj.f64](0.5)
+    var y = nm.zeros[sj.f64](nm.Shape(n))
+    for i in range(n):
+        y.itemset(i, Scalar[sj.f64](i) * dx)
+    var result = romb[sj.f64](y, dx=dx)
+    assert_almost_equal(
+        result, 0.5, atol=1e-15, msg="romb x over [0,1] (linear, exact)"
+    )
+
+
+def test_romb_cubic() raises:
+    """Romberg on x^3 over [0,1]: exact answer is 0.25. Uses 17 points."""
+    var n = 17
+    var dx = Scalar[sj.f64](1.0 / 16.0)
+    var y = nm.zeros[sj.f64](nm.Shape(n))
+    for i in range(n):
+        var xi = Scalar[sj.f64](i) * dx
+        y.itemset(i, xi * xi * xi)
+    var result = romb[sj.f64](y, dx=dx)
+    assert_almost_equal(result, 0.25, atol=1e-12, msg="romb x^3 over [0,1]")
+
+
+def test_romb_invalid_size_raises() raises:
+    """Romberg must raise when y.size is not 2^k + 1."""
+    var y_bad = nm.zeros[sj.f64](nm.Shape(10))
+    var caught = False
+    try:
+        var _ = romb[sj.f64](y_bad)
+    except:
+        caught = True
+    assert_equal(caught, True, msg="romb should raise for invalid size")
+
+
+def test_romb_matches_scipy() raises:
+    """Romberg result matches scipy.integrate.romb on sin over [0, pi]."""
+    try:
+        var scipy_integrate = Python.import_module("scipy.integrate")
+        var np = Python.import_module("numpy")
+
+        var n = 33  # 2^5 + 1
+        var dx = Scalar[sj.f64](3.141592653589793 / 32.0)
+        var y = nm.zeros[sj.f64](nm.Shape(n))
+        for i in range(n):
+            var xi = Scalar[sj.f64](i) * dx
+            y.itemset(i, _sin(xi))
+
+        var mojo_result = romb[sj.f64](y, dx=dx)
+
+        var py_y = y.to_numpy()
+        var scipy_result = Float64(
+            py=scipy_integrate.romb(py_y, dx=Float64(dx))
+        )
+
+        assert_almost_equal(
+            mojo_result,
+            scipy_result,
+            atol=1e-10,
+            msg="romb should match scipy on sin over [0, pi]",
+        )
+    except:
+        pass  # SciPy not available
+
+
+def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()

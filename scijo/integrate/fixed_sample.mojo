@@ -374,30 +374,34 @@ def simpson[
 # ===----------------------------------------------------------------------=== #
 
 
-# TODO: fix the loop implementation.
 def romb[
     dtype: DType
 ](y: NDArray[dtype], dx: Scalar[dtype] = 1.0, axis: Int = -1) raises -> Scalar[
     dtype
 ]:
-    """Integrates along the given axis using Romberg integration.
+    """Integrates along the given axis using Romberg integration with Richardson extrapolation.
 
-    Computes ∫ y(x) dx using evenly spaced points with spacing `dx` and
-    Richardson extrapolation for accelerated convergence.
+    Requires the input array to have ``2^k + 1`` points for some integer ``k ≥ 1``
+    (e.g. 3, 5, 9, 17, 33, 65, …).
+
+    The algorithm fills a Romberg tableau: each column applies one step of
+    Richardson extrapolation to cancel the leading error term, achieving
+    ``O(h^{2(k+1)})`` accuracy from k+1 trapezoidal estimates.
 
     Parameters:
         dtype: The floating-point data type.
 
     Args:
-        y: Input array to integrate. Must be 1-D.
+        y: Input array to integrate. Must be 1-D with ``2^k + 1`` elements.
         dx: The spacing between sample points. Defaults to 1.0.
         axis: The axis along which to integrate. Currently only 1-D is supported.
 
     Raises:
         Error: If y is not 1-D.
+        Error: If y.size is not of the form ``2^k + 1`` for integer k ≥ 1.
 
     Returns:
-        Definite integral approximated by Romberg integration.
+        Best Romberg estimate of the definite integral.
 
     Examples:
         ```mojo
@@ -405,11 +409,10 @@ def romb[
         from scijo.integrate import romb
         from scijo.prelude import *
 
-        var y = nm.linspace[f64](0.0, 10.0, 100) ** 2  # y = x^2 sampled at 100 points from 0 to 10
-        var area = romb(y, dx=0.1)
+        var y = nm.linspace[f64](0.0, 1.0, 9) ** 2  # 9 = 2^3 + 1 points
+        var area = romb(y, dx=0.125)                 # ≈ 0.333...
         ```
     """
-    comptime maxiter: Int = 10
     if y.ndim != 1:
         raise Error(
             NumojoError(
@@ -423,32 +426,59 @@ def romb[
             )
         )
 
-    var step: Scalar[dtype] = dx
-    var Rone: NDArray[dtype] = nm.zeros[dtype](NDArrayShape(maxiter))
-    var Rtwo: NDArray[dtype] = nm.zeros[dtype](NDArrayShape(maxiter))
+    var n = y.size
+    var n_minus_1 = n - 1
+    if n < 3 or (n_minus_1 & (n_minus_1 - 1)) != 0:
+        raise Error(
+            NumojoError(
+                category="value",
+                message=String(
+                    "y.size must be 2^k + 1 for integer k ≥ 1 (e.g. 3, 5, 9,"
+                    " 17, 33, …), got {}."
+                ).format(n),
+                location="romb(y, dx=1.0)",
+            )
+        )
 
-    var R1 = Rone.unsafe_ptr()
-    var R2 = Rtwo.unsafe_ptr()
+    # k = log2(n - 1): number of refinement levels
+    var k: Int = 0
+    var tmp = n_minus_1
+    while tmp > 1:
+        tmp >>= 1
+        k += 1
 
-    R1[0] = 0.5 * dx * (y.item(0) + y.item(y.size - 1))
+    # R[j] holds the current and previous row of the Romberg tableau.
+    # R_prev[j] = T_{i-1, j},  R_curr[j] = T_{i, j}
+    var R_prev = nm.zeros[dtype](nm.Shape(k + 1))
+    var R_curr = nm.zeros[dtype](nm.Shape(k + 1))
 
-    for i in range(1, maxiter):
-        step /= 2.0
-        var c: Scalar[dtype] = 0
-        var ep: Int = 2 * (i - 1)
-        for j in range(1, ep + 1):
-            c += y.item(Int(2 * j - 1))
-        R2[0] = step * c + 0.5 * R1[0]
+    R_prev.itemset(
+        0,
+        Scalar[dtype](0.5)
+        * dx
+        * (y.item(0) + y.item(n - 1))
+        * Scalar[dtype](n_minus_1),
+    )
 
-        for j in range(1, i + 1):
-            var const: Scalar[dtype] = Scalar[dtype](4.0) ** j
-            R2[j] = (const * R2[j - 1] - R1[j - 1]) / (const - 1.0)
+    for i in range(1, k + 1):
+        var stride: Int = n_minus_1 >> i  # = 2^(k-i)
+        var num_new: Int = 1 << (i - 1)  # = 2^(i-1) new interior points
 
-        if i > 1 and abs(R1[i - 1] - R2[i]) < Scalar[dtype](1e-6):
-            return R2[i]
+        # T_{i,0} = T_{i-1,0}/2 + h_i * sum of new interior points
+        var h_i: Scalar[dtype] = dx * Scalar[dtype](stride)
+        var s: Scalar[dtype] = 0.0
+        for j in range(1, 2 * num_new, 2):
+            s += y.item(j * stride)
+        R_curr.itemset(0, Scalar[dtype](0.5) * R_prev.item(0) + h_i * s)
 
-        var temp = R1
-        R1 = R2
-        R2 = temp
+        for m in range(1, i + 1):
+            var factor: Scalar[dtype] = Scalar[dtype](4.0) ** m
+            var val = (factor * R_curr.item(m - 1) - R_prev.item(m - 1)) / (
+                factor - Scalar[dtype](1.0)
+            )
+            R_curr.itemset(m, val)
 
-    return Rone.item(maxiter - 1)
+        for m in range(i + 1):
+            R_prev.itemset(m, R_curr.item(m))
+
+    return R_prev.item(k)
