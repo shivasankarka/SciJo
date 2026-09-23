@@ -65,7 +65,10 @@ def fftfreq[
         raise Error("Scijo [fftfreq]: n must be positive, got " + String(n))
 
     var result = NDArray[dtype](Shape(n))
-    var half = n // 2
+    # For odd n, the positive/zero block has (n+1)//2 entries: index n//2
+    # itself is the last positive frequency, not the first negative one
+    # (e.g. n=7 -> [0, 1, 2, 3, -3, -2, -1], not [0, 1, 2, -4, -3, -2, -1]).
+    var half = (n + 1) // 2
     var scale = Scalar[dtype](1.0) / (Scalar[dtype](n) * d)
 
     for i in range(half):
