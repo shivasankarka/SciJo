@@ -439,8 +439,6 @@ struct Akima1DInterpolator[dtype: DType = DType.float64](Copyable, Movable):
     ) raises:
         """Constructs the Akima interpolator from data points.
 
-        Falls back to cubic spline for fewer than 5 points.
-
         Args:
             x: Strictly increasing x-coordinates of the data points.
             y: Y-coordinates of the data points, same length as x.
@@ -461,34 +459,45 @@ struct Akima1DInterpolator[dtype: DType = DType.float64](Copyable, Movable):
                 / (x.unsafe_load(i + 1) - x.unsafe_load(i)),
             )
 
-        var t = NDArray[Self.dtype](Shape(n))
-        t.unsafe_store(0, slopes.unsafe_load(0))
-        if n > 1:
-            t.unsafe_store(n - 1, slopes.unsafe_load(n - 2))
-        if n > 2:
-            t.unsafe_store(
-                1, (slopes.unsafe_load(0) + slopes.unsafe_load(1)) * 0.5
-            )
-            t.unsafe_store(
-                n - 2,
-                (slopes.unsafe_load(n - 3) + slopes.unsafe_load(n - 2)) * 0.5,
-            )
+        if n == 2:
+            # Only one slope exists; the interpolant is just that line.
+            var t2 = NDArray[Self.dtype](Shape(2))
+            t2.unsafe_store(0, slopes.unsafe_load(0))
+            t2.unsafe_store(1, slopes.unsafe_load(0))
+            self._t = t2^
+            return
 
-        for i in range(2, n - 2):
-            var w1 = abs(slopes.unsafe_load(i + 1) - slopes.unsafe_load(i))
-            var w2 = abs(slopes.unsafe_load(i - 1) - slopes.unsafe_load(i - 2))
-            if w1 + w2 > 0:
+        # Extend the slope sequence by two quadratically-extrapolated
+        # "phantom" slopes on each side (Akima's original prescription),
+        # so the same weighted-average formula applies uniformly at every
+        # point, including the boundaries - matches
+        # `scipy.interpolate.Akima1DInterpolator` exactly, unlike treating
+        # the two boundary points and their neighbors as special cases.
+        var mm = NDArray[Self.dtype](Shape(n + 3))
+        for i in range(n - 1):
+            mm.unsafe_store(i + 2, slopes.unsafe_load(i))
+        mm.unsafe_store(1, 2.0 * slopes.unsafe_load(0) - slopes.unsafe_load(1))
+        mm.unsafe_store(0, 2.0 * mm.unsafe_load(1) - mm.unsafe_load(2))
+        mm.unsafe_store(
+            n + 1,
+            2.0 * slopes.unsafe_load(n - 2) - slopes.unsafe_load(n - 3),
+        )
+        mm.unsafe_store(n + 2, 2.0 * mm.unsafe_load(n + 1) - mm.unsafe_load(n))
+
+        var t = NDArray[Self.dtype](Shape(n))
+        for i in range(n):
+            var f1 = abs(mm.unsafe_load(i + 3) - mm.unsafe_load(i + 2))
+            var f2 = abs(mm.unsafe_load(i + 1) - mm.unsafe_load(i))
+            if f1 + f2 > 0:
                 t.unsafe_store(
                     i,
-                    (
-                        w1 * slopes.unsafe_load(i - 1)
-                        + w2 * slopes.unsafe_load(i)
-                    )
-                    / (w1 + w2),
+                    (f1 * mm.unsafe_load(i + 1) + f2 * mm.unsafe_load(i + 2))
+                    / (f1 + f2),
                 )
             else:
                 t.unsafe_store(
-                    i, (slopes.unsafe_load(i - 1) + slopes.unsafe_load(i)) * 0.5
+                    i,
+                    (mm.unsafe_load(i + 1) + mm.unsafe_load(i + 2)) * 0.5,
                 )
 
         self._t = t^
@@ -933,78 +942,11 @@ def _interp1d_akima_interpolate[
 ](xi: NDArray[dtype], x: NDArray[dtype], y: NDArray[dtype]) raises -> NDArray[
     dtype
 ]:
-    """Akima 1D interpolation with boundary clamping."""
-    var n = x.size
-    var result: NDArray[dtype] = NDArray[dtype](xi.shape)
-    var x_min: Scalar[dtype] = x.unsafe_load(0)
-    var x_max: Scalar[dtype] = x.unsafe_load(n - 1)
+    """Akima 1D interpolation with boundary clamping.
 
-    if n < 5:
-        return _interp1d_cubic_interpolate(xi, x, y)
-
-    var slopes = NDArray[dtype](Shape(n - 1))
-    for i in range(n - 1):
-        slopes.unsafe_store(
-            i,
-            (y.unsafe_load(i + 1) - y.unsafe_load(i))
-            / (x.unsafe_load(i + 1) - x.unsafe_load(i)),
-        )
-
-    var t = NDArray[dtype](Shape(n))
-    t.unsafe_store(0, slopes.unsafe_load(0))
-    t.unsafe_store(1, (slopes.unsafe_load(0) + slopes.unsafe_load(1)) * 0.5)
-    t.unsafe_store(
-        n - 2, (slopes.unsafe_load(n - 3) + slopes.unsafe_load(n - 2)) * 0.5
-    )
-    t.unsafe_store(n - 1, slopes.unsafe_load(n - 2))
-
-    for i in range(2, n - 2):
-        var w1 = abs(slopes.unsafe_load(i + 1) - slopes.unsafe_load(i))
-        var w2 = abs(slopes.unsafe_load(i - 1) - slopes.unsafe_load(i - 2))
-        if w1 + w2 > 0:
-            t.unsafe_store(
-                i,
-                (w1 * slopes.unsafe_load(i - 1) + w2 * slopes.unsafe_load(i))
-                / (w1 + w2),
-            )
-        else:
-            t.unsafe_store(
-                i, (slopes.unsafe_load(i - 1) + slopes.unsafe_load(i)) * 0.5
-            )
-
-    for i in range(xi.size):
-        var xi_val: Scalar[dtype] = xi.unsafe_load(i)
-        if xi_val <= x_min:
-            result.unsafe_store(i, y.unsafe_load(0))
-            continue
-        if xi_val >= x_max:
-            result.unsafe_store(i, y.unsafe_load(n - 1))
-            continue
-
-        var j: Int = _binary_search(x, xi_val) - 1
-        if j < 0:
-            j = 0
-        if j > n - 2:
-            j = n - 2
-
-        var h = x.unsafe_load(j + 1) - x.unsafe_load(j)
-        var s = (xi_val - x.unsafe_load(j)) / h
-        var s2 = s * s
-        var s3 = s2 * s
-
-        var h00 = 2.0 * s3 - 3.0 * s2 + 1.0
-        var h10 = s3 - 2.0 * s2 + s
-        var h01 = -2.0 * s3 + 3.0 * s2
-        var h11 = s3 - s2
-
-        result.unsafe_store(
-            i,
-            (
-                h00 * y.unsafe_load(j)
-                + h10 * h * t.unsafe_load(j)
-                + h01 * y.unsafe_load(j + 1)
-                + h11 * h * t.unsafe_load(j + 1)
-            ),
-        )
-
-    return result^
+    Delegates to `Akima1DInterpolator` so both entry points share one
+    (scipy-matching) implementation of the boundary-extended weighted-slope
+    formula.
+    """
+    var ak = Akima1DInterpolator[dtype](x, y)
+    return ak(xi)
