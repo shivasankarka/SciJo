@@ -85,8 +85,9 @@ minimization:
   - **`bisect`**: Bisection method
   - **`secant`**: Secant method (derivative-free)
   - **`brent`**: Brent's bracketed method
-- **`root`**: Multi-dimensional root finding via Newton's method (`f: R^n -> R^n`)
-  - Finite-difference Jacobian by default, or supply an analytic one: `root[f64, f, jac](x0)`
+- **`root`**: Multi-dimensional root finding (`f: R^n -> R^n`)
+  - `method="newton"` (default): finite-difference Jacobian, or supply an analytic one: `root[f64, f, jac](x0)`
+  - `method="broyden1"`: Broyden's quasi-Newton method, derivative-free (never forms a Jacobian)
 - **`minimize_scalar`**: Scalar function minimization
   - Brent's method, golden section search, bounded minimization
 - **`minimize`**: Multi-dimensional minimization via the Nelder-Mead simplex method (`f: R^n -> R`, derivative-free)
@@ -326,7 +327,6 @@ See the **[Manual»](docs/MANUAL.md)** for a full prose tour of every module, an
 
 ### Near Term
 - Eigenvalues/eigenvectors and SVD for `scijo.linalg` (unblocks matrix 2-norm/condition number and rank-deficient `pinv`/`lstsq`)
-- Additional `scijo.optimize.root` methods that don't require a Jacobian (e.g. Broyden's method)
 - Gradient-based `scijo.optimize.minimize` methods (e.g. BFGS, CG) alongside the current derivative-free Nelder-Mead
 
 ### Future

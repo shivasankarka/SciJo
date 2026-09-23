@@ -914,27 +914,41 @@ def main() raises:
     # in one Newton step here since the system is already linear:
     var r2 = root[nm.f64, f, jac](x0)
 
+    # Broyden's method - never forms a Jacobian at all, finite-difference
+    # or analytic; approximates the inverse Jacobian from successive steps:
+    var r3 = root[nm.f64, f, method="broyden1"](x0)
+
     print(r1.x, r1.success, r1.nit)
 ```
 
 `root` mirrors `scipy.optimize.root`'s frontend: `f` maps `R^n -> R^n` (as
 many equations as unknowns), and the result is the vector where all of
 them are simultaneously zero. Like `root_scalar`, `method` is a
-compile-time, keyword-only parameter - today the only supported value is
-`"newton"`. Unlike `root_scalar`, there is a single unified entry point
-`root` (no separately-callable `newton` function at this level - the
-scalar `newton` already has that name, and a multivariate one is only
-reachable through `root`).
+compile-time, keyword-only parameter, accepting `"newton"` (the default)
+or `"broyden1"`. Unlike `root_scalar`, there is a single unified entry
+point `root` (no separately-callable `newton`/`broyden1` function at this
+level - the scalar `newton` already has that name, and the multivariate
+solvers are only reachable through `root`).
 
-Whether `root[dtype, f]` or `root[dtype, f, jac]` is chosen matters for
-cost, not just convenience: every Newton iteration needs a Jacobian, and
-without one, `root` estimates it with `scijo.differentiate.jacobian` -
-`2n` extra function evaluations per iteration, for an `n`-dimensional
-problem. Supplying `jac` replaces that with one direct call. `f` and
-`jac(x)` are checked for shape at runtime: `f(x0)` must be the same length
-as `x0` (raises `Error` immediately if not, rather than trying to solve a
-non-square Jacobian), and `jac(x)` is expected to return an `(n, n)`
-matrix.
+For `method="newton"`, whether `root[dtype, f]` or `root[dtype, f, jac]`
+is chosen matters for cost, not just convenience: every Newton iteration
+needs a Jacobian, and without one, `root` estimates it with
+`scijo.differentiate.jacobian` - `2n` extra function evaluations per
+iteration, for an `n`-dimensional problem. Supplying `jac` replaces that
+with one direct call. `f` and `jac(x)` are checked for shape at runtime:
+`f(x0)` must be the same length as `x0` (raises `Error` immediately if
+not, rather than trying to solve a non-square Jacobian), and `jac(x)` is
+expected to return an `(n, n)` matrix.
+
+`method="broyden1"` (Broyden's "good" method) sidesteps the Jacobian
+question entirely: it maintains a running `n x n` approximation of the
+*inverse* Jacobian, starting at the identity and refined after every step
+by a rank-1 correction built from that step and the resulting change in
+`f` - so `f` is the only function ever evaluated, at the cost of usually
+needing more iterations than Newton's method (with a good Jacobian) to
+reach the same tolerance. It only takes the `root[dtype, f]` /
+`root[dtype, f, args=...]` overloads - there is no analytic-derivative
+variant to skip, so it never appears alongside `jac`.
 
 Convergence uses two independent checks per iteration, mirroring
 `root_scalar`'s `atol`/`rtol`: `||f(x)|| <= atol` (residual small enough)
@@ -1075,9 +1089,7 @@ written to take and return NuMojo's own types.
 This manual documents what exists. The README's roadmap tracks what does
 not; as of this writing, the notable gaps are:
 
-- **Optimization**: `scijo.optimize.root` covers multi-dimensional
-  root-finding with Newton's method only (no derivative-free method like
-  Broyden's yet), and `scijo.optimize.minimize` covers multi-dimensional
+- **Optimization**: `scijo.optimize.minimize` covers multi-dimensional
   minimization with the derivative-free Nelder-Mead method only (no
   gradient-based method like BFGS or CG yet).
 - **Differentiation**: higher-order Jacobians (e.g. a third-order tensor

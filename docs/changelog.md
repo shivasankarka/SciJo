@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on "Keep a Changelog" and follows Semantic Versioning.
 
 ## [Unreleased]
+### Added
+- **Broyden's method for `scijo.optimize.root`** (`method="broyden1"`):
+  derivative-free quasi-Newton root-finding for `f: R^n -> R^n`. Maintains a
+  running approximation of the inverse Jacobian, starting at the identity
+  and refined after every step by a rank-1 (Sherman-Morrison) correction, so
+  `f` is the only function ever evaluated - no finite-difference Jacobian
+  columns, no analytic derivative. `examples/root_examples.mojo` and
+  `tests/test_root.mojo` extended to cover it, including a comparison
+  against `scipy.optimize.root(method="broyden1")` on a linear system with
+  a single, unambiguous root.
+
 ### Fixed
 - **Test suite correctness audit**: several test files wrapped their entire
   body - including the actual `assert_*` comparisons against SciPy/NumPy -
