@@ -342,19 +342,21 @@ def main() raises:
 ```
 
 `method` (a compile-time, keyword-only parameter defaulting to `"qng"`)
-selects the backend algorithm, all from MSL's QUADPACK-derived routines:
+selects the algorithm, all built natively on the Gauss-Kronrod rules and
+adaptive-subdivision priority queue in `scijo.integrate.utility`
+(QUADPACK-style, no external backend):
 
 | `method` | What it does |
 | --- | --- |
-| `"qng"` | Non-adaptive Gauss-Kronrod-Patterson quadrature (10/21/43/87-point rules); the default. |
-| `"qag"` | Adaptive Gauss-Kronrod, refining subintervals until `limit` is reached or tolerance is met. `qag_rule=` selects the rule: `QAG_GK15`, `QAG_GK21` (default), `QAG_GK31`, `QAG_GK41`, `QAG_GK51`, `QAG_GK61` - larger numbers mean more points per subinterval and faster convergence on smooth integrands. |
-| `"qags"` | Adaptive integration plus Wynn epsilon extrapolation, for integrands with endpoint singularities or slow convergence. |
+| `"qng"` | Non-adaptive Gauss-Kronrod-Patterson cascade (21, then 43, then 87-point rules, stopping at the first that meets tolerance); the default. |
+| `"qag"` | Adaptive Gauss-Kronrod, refining subintervals until `limit` is reached or tolerance is met. `qag_rule=` selects the rule: `QAG_GK15`, `QAG_GK21` (default), `QAG_GK31`, `QAG_GK41`, `QAG_GK51`, `QAG_GK61`. Only 15-, 21-, 43-, and 87-point rules are tabulated, so `QAG_GK31`/`QAG_GK41` are served by the 43-point rule and `QAG_GK51`/`QAG_GK61` by the 87-point rule - both strictly more accurate than requested. |
+| `"qags"` | The same adaptive engine as `"qag"`, plus Wynn epsilon extrapolation on the running integral estimate, for integrands with endpoint singularities or slow convergence. |
 
 The return value is an `IntegralResult[dtype]` with fields `integral`,
-`abserr`, `nfev` and `ier` (SciJo does not currently populate `nfev`/`ier`
-from the backend - they read `0` on success). `limit <= 0` raises before any
-integration is attempted, and an unrecognised `method` string raises naming
-the three supported values.
+`abserr`, `nfev`, and `ier` (`0` on success, `1` if the requested tolerance
+wasn't met within `limit` subintervals or the `qng` cascade). `limit <= 0`
+raises before any integration is attempted, and an unrecognised `method`
+string raises naming the three supported values.
 
 ### Fixed-sample rules for discrete data
 

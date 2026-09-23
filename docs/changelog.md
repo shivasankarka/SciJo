@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on "Keep a Changelog" and follows Semantic Versioning.
 
 ## [Unreleased]
+### Changed
+- **Removed the MSL dependency**: `scijo.integrate.quad` (`qng`/`qag`/`qags`)
+  and `scijo.optimize.root_scalar`'s `bisect`/`brent`/`newton`/`secant` were
+  the last functions backed by the external MSL library; both are now native:
+  - `quad` is built on the Gauss-Kronrod rules and adaptive-subdivision
+    priority queue already present in `scijo.integrate.utility` (15/21/43/87
+    point rules, QUADPACK-style). `qng` runs the same accuracy cascade as
+    before; `qag` adaptively subdivides using the requested `qag_rule` (the
+    31/41/51/61-point requests are served by the next larger tabulated rule,
+    43 or 87); `qags` adds Wynn epsilon extrapolation on the running integral
+    estimate.
+  - `bisect`, `brent` (root-finding), `newton`, and `secant` in
+    `scijo.optimize.root_scalar` are now independent implementations of the
+    standard algorithms, matching the existing native `minimize_scalar`
+    solvers in style.
+  - Fixed a data-entry typo in `scijo.integrate.utility`'s 21-point
+    Gauss-Kronrod weight table (`0.0325816230796473` should have been
+    `0.0325581623079647` - a digit transposition), found while validating
+    the new `qag`/`qng` code against known integrals; this table backs both
+    `gk21_kronrod_weights`/`gk21_gauss_weights` and (via the shared
+    embedded-rule values) `gk43_gauss21_weights`.
+  - Fixed `minimize_scalar`'s `"Golden"` method: the interval-update branches
+    in `_golden_minimize` had `a`/`b` swapped, so golden-section search could
+    converge to the wrong point (or, for a bracket symmetric about the
+    minimum, discard the minimum from both candidate sub-intervals on the
+    first step). Found via the same validation pass, since `"Brent"` and
+    `"Bounded"` were unaffected.
+  - SciJo now depends only on NuMojo; `msl` is removed from `pixi.toml`.
 ### Added
 - **Hessian for vector-valued functions** (`scijo.differentiate`):
   - `hessian` overload for `f: R^n -> R^m` (a callback returning `NDArray`

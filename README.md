@@ -33,7 +33,7 @@ Accurate derivatives using finite difference methods:
 
 ### Integration (`scijo.integrate`)
 Numerical integration with adaptive algorithms:
-- **`quad`**: Adaptive quadrature via MSL/QUADPACK
+- **`quad`**: Adaptive quadrature via native Gauss-Kronrod rules (QUADPACK-style)
   - `method="qng"` - non-adaptive Gauss-Kronrod-Patterson (10, 21, 43, 87 point rules)
   - `method="qag"` - adaptive Gauss-Kronrod with configurable rule (`qag_rule=`)
   - `method="qags"` - adaptive + Wynn epsilon extrapolation
@@ -84,7 +84,7 @@ minimization:
   - **`newton`**: Newton-Raphson method
   - **`bisect`**: Bisection method
   - **`secant`**: Secant method (derivative-free)
-  - **`brent`**: Brent's bracketed method (MSL backend)
+  - **`brent`**: Brent's bracketed method
 - **`root`**: Multi-dimensional root finding via Newton's method (`f: R^n -> R^n`)
   - Finite-difference Jacobian by default, or supply an analytic one: `root[f64, f, jac](x0)`
 - **`minimize_scalar`**: Scalar function minimization
