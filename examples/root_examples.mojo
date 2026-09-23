@@ -1,6 +1,7 @@
 """
 A tour of `scijo.optimize.root`: multi-dimensional root-finding via
-Newton's method, with both a finite-difference and an analytic Jacobian.
+Newton's method (finite-difference or analytic Jacobian) and via Broyden's
+derivative-free quasi-Newton method.
 
 Run with (from the repository root, after `pixi run package`):
 
@@ -26,6 +27,7 @@ def main() raises:
     linear_system()
     nonlinear_system()
     analytic_jacobian()
+    broyden_no_jacobian()
 
 
 # ===----------------------------------------------------------------------=== #
@@ -83,4 +85,18 @@ def analytic_jacobian() raises:
     # An analytic Jacobian skips the finite-difference estimate every
     # iteration, and converges in a single Newton step on a linear system.
     var result = root[f64, f_linear, jac_linear](x0)
+    print(result)
+
+
+# ===----------------------------------------------------------------------=== #
+# Same linear system, via Broyden's method: no Jacobian ever formed
+# ===----------------------------------------------------------------------=== #
+
+
+def broyden_no_jacobian() raises:
+    var x0 = nm.fromstring[f64]("[0, 0]")
+    # method="broyden1": maintains a running approximation of the inverse
+    # Jacobian from successive steps instead, so `f` is the only function
+    # ever evaluated (no finite-difference columns, no analytic derivative).
+    var result = root[f64, f_linear, method="broyden1"](x0)
     print(result)
