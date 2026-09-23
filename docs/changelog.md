@@ -6,15 +6,60 @@ The format is based on "Keep a Changelog" and follows Semantic Versioning.
 
 ## [Unreleased]
 ### Added
-- **Broyden's method for `scijo.optimize.root`** (`method="broyden1"`):
-  derivative-free quasi-Newton root-finding for `f: R^n -> R^n`. Maintains a
-  running approximation of the inverse Jacobian, starting at the identity
-  and refined after every step by a rank-1 (Sherman-Morrison) correction, so
-  `f` is the only function ever evaluated - no finite-difference Jacobian
-  columns, no analytic derivative. `examples/root_examples.mojo` and
-  `tests/test_root.mojo` extended to cover it, including a comparison
-  against `scipy.optimize.root(method="broyden1")` on a linear system with
-  a single, unambiguous root.
+- **Linear algebra module** (`scijo.linalg`), built on NuMojo's linalg primitives (NuMojo `linalg_funcs` branch: LU/QR/Cholesky decompositions, `solve`/`lstsq`/`inv`):
+  - `lu` - pivoted LU decomposition, scipy-style `(P, L, U)` with `A == P @ L @ U`.
+  - `qr` - reduced QR decomposition (thin wrapper over NuMojo's Householder implementation).
+  - `cholesky` - Cholesky decomposition, with a `lower` flag for the lower/upper factor.
+  - `solve` - solve `Ax = b`, accepting a 1-D or 2-D right-hand side.
+  - `solve_triangular` - forward/back substitution for triangular systems.
+  - `inv` - matrix inverse (thin wrapper over NuMojo's `inv`).
+  - `pinv` - Moore-Penrose pseudo-inverse for full-rank matrices (via least-squares).
+  - `lstsq` - least-squares solution to `Ax = b` (thin wrapper over NuMojo's `lstsq`).
+  - `norm` - vector (`1`/`2`/`inf`) and matrix (`fro`/`1`/`inf`) norms.
+  - `det`, `trace` - re-exported from NuMojo.
+  - `matmul`, `dot`, `outer`, `kron`, `tensordot`, `cross`, `diagonal` - re-exported from NuMojo for convenience.
+  - Eigenvalues/eigenvectors and SVD are not yet implemented (tracked as a follow-up once available in NuMojo).
+  - `examples/linalg_examples.mojo` and `tests/test_linalg.mojo` covering the new module.
+- **Multi-dimensional root finding** (`scijo.optimize.root`), for `f: R^n -> R^n`, matching `scipy.optimize.root`'s frontend signature:
+  - `method="newton"` (default): `root[dtype, f](x0, ...)` estimates the Jacobian with `scijo.differentiate.jacobian` at every iteration; `root[dtype, f, jac](x0, ...)` takes an analytic Jacobian instead and skips that cost. Solves the Newton linear system at each step with `scijo.linalg.solve`.
+  - `method="broyden1"`: Broyden's "good" method, derivative-free - maintains a running approximation of the inverse Jacobian, starting at the identity and refined after every step by a rank-1 (Sherman-Morrison) correction, so `f` is the only function ever evaluated (no finite-difference Jacobian columns, no analytic derivative).
+  - `RootResultVector` - the vector-valued analog of `RootResult` (`x`, `fun`, `nit`, `nfev`, `success`, `message`, `method`).
+  - `examples/root_examples.mojo` and `tests/test_root.mojo` covering both methods, including a comparison against `scipy.optimize.root(method="broyden1")` on a linear system with a single, unambiguous root.
+- **Args-free callback overloads** for every callback-taking public function: `derivative`, `jacobian`, `hessian`, `quad`, `root_scalar`, `bisect`, `brent`, `secant`, `newton`, `root`, `minimize_scalar`. Each now has a `def(x) -> ...` overload alongside the existing `def(x, args) -> ...` one, so a callback that doesn't need extra parameters no longer has to carry an unused `args` argument - capture what you need from the enclosing scope instead. The `args`-taking overloads are unchanged and still the right tool for a function reused across call sites with different parameter values (a module-level `def` can't `capturing`-capture, since it has no enclosing scope).
+- **N-dimensional FFT** (`scijo.fft`):
+  - `fftn` / `ifftn` - forward/inverse FFT over one or more axes of an N-dimensional `ComplexNDArray`, matching `scipy.fft.fftn`/`ifftn`. Applies the existing 1-D Cooley-Tukey `fft`/`ifft` to every line along each requested axis; every transformed axis's length must be a power of 2.
+  - `fft2` / `ifft2` - convenience wrappers over `fftn`/`ifftn` defaulting to the last two axes, matching `scipy.fft.fft2`/`ifft2`.
+  - `examples/fft_examples.mojo` extended and `tests/test_fftn.mojo` added covering the new functions.
+- **Multi-dimensional minimization** (`scijo.optimize`):
+  - `minimize` - minimize a scalar-valued function of several variables (`f: R^n -> R`) via the Nelder-Mead simplex method, matching `scipy.optimize.minimize`'s frontend signature. Derivative-free (never evaluates a gradient or Hessian); convergence checked on both the simplex's point-to-point spread (`xatol`) and function-value spread (`fatol`), matching SciPy's own criteria.
+  - `OptimizeResultVector` - the vector-valued analog of `OptimizeResult` (`x`, `fun`, `nit`, `nfev`, `success`, `message`, `method`).
+  - `examples/minimize_examples.mojo` and `tests/test_minimize.mojo` covering the new function.
+- **Hessian for vector-valued functions** (`scijo.differentiate`):
+  - `hessian` overload for `f: R^n -> R^m` (a callback returning `NDArray`
+    instead of `Scalar`): applies the existing central-difference stencil
+    to every output component and stacks the results into an `(m, n, n)`
+    tensor, `H[k, i, j] = ∂²f_k/∂x_i∂x_j`. Args-taking and args-free
+    variants, matching the existing scalar-valued `hessian`.
+  - `examples/differentiate_examples.mojo` and `tests/test_differentiate.mojo`
+    extended to cover the new overloads.
+
+### Changed
+- **Removed the MSL dependency**: `scijo.integrate.quad` (`qng`/`qag`/`qags`)
+  and `scijo.optimize.root_scalar`'s `bisect`/`brent`/`newton`/`secant` were
+  the last functions backed by the external MSL library; both are now native:
+  - `quad` is built on the Gauss-Kronrod rules and adaptive-subdivision
+    priority queue already present in `scijo.integrate.utility` (15/21/43/87
+    point rules, QUADPACK-style). `qng` runs the same accuracy cascade as
+    before; `qag` adaptively subdivides using the requested `qag_rule` (the
+    31/41/51/61-point requests are served by the next larger tabulated rule,
+    43 or 87); `qags` adds Wynn epsilon extrapolation on the running integral
+    estimate.
+  - `bisect`, `brent` (root-finding), `newton`, and `secant` in
+    `scijo.optimize.root_scalar` are now independent implementations of the
+    standard algorithms, matching the existing native `minimize_scalar`
+    solvers in style.
+  - SciJo now depends only on NuMojo; `msl` is removed from `pixi.toml`.
+- Temporarily pinned the `numojo` dependency in `pixi.toml` to the `linalg_funcs` branch on `shivasankarka/NuMojo` (adds `qr`, `cholesky`, `lstsq` on top of NuMojo's existing `lu_decomposition`/`solve`/`inv`); revert to NuMojo's `main` once that branch merges upstream.
 
 ### Fixed
 - **Test suite correctness audit**: several test files wrapped their entire
@@ -60,7 +105,8 @@ The format is based on "Keep a Changelog" and follows Semantic Versioning.
   `a`/`b` assigned to the wrong side, so the search could converge to the
   wrong point outright (for a bracket symmetric about the minimum, the
   minimum was discarded from *both* candidate sub-intervals on the very
-  first step).
+  first step). Found while validating the native `root_scalar` solvers above,
+  since `"Brent"` and `"Bounded"` were unaffected.
 - **`Akima1DInterpolator`** (`scijo.interpolate`), and the functional
   `interp[..., type="akima"]` entry point (previously a second,
   independently-buggy copy of the same logic, now delegating to
@@ -72,75 +118,12 @@ The format is based on "Keep a Changelog" and follows Semantic Versioning.
   slopes and applying the same weighted formula everywhere. Verified against
   `scipy.interpolate.Akima1DInterpolator`'s derivative values at every knot
   for several data sets (up to a few `1e-15`).
-
-### Changed
-- **Removed the MSL dependency**: `scijo.integrate.quad` (`qng`/`qag`/`qags`)
-  and `scijo.optimize.root_scalar`'s `bisect`/`brent`/`newton`/`secant` were
-  the last functions backed by the external MSL library; both are now native:
-  - `quad` is built on the Gauss-Kronrod rules and adaptive-subdivision
-    priority queue already present in `scijo.integrate.utility` (15/21/43/87
-    point rules, QUADPACK-style). `qng` runs the same accuracy cascade as
-    before; `qag` adaptively subdivides using the requested `qag_rule` (the
-    31/41/51/61-point requests are served by the next larger tabulated rule,
-    43 or 87); `qags` adds Wynn epsilon extrapolation on the running integral
-    estimate.
-  - `bisect`, `brent` (root-finding), `newton`, and `secant` in
-    `scijo.optimize.root_scalar` are now independent implementations of the
-    standard algorithms, matching the existing native `minimize_scalar`
-    solvers in style.
-  - Fixed a data-entry typo in `scijo.integrate.utility`'s 21-point
-    Gauss-Kronrod weight table (`0.0325816230796473` should have been
-    `0.0325581623079647` - a digit transposition), found while validating
-    the new `qag`/`qng` code against known integrals; this table backs both
-    `gk21_kronrod_weights`/`gk21_gauss_weights` and (via the shared
-    embedded-rule values) `gk43_gauss21_weights`.
-  - Fixed `minimize_scalar`'s `"Golden"` method: the interval-update branches
-    in `_golden_minimize` had `a`/`b` swapped, so golden-section search could
-    converge to the wrong point (or, for a bracket symmetric about the
-    minimum, discard the minimum from both candidate sub-intervals on the
-    first step). Found via the same validation pass, since `"Brent"` and
-    `"Bounded"` were unaffected.
-  - SciJo now depends only on NuMojo; `msl` is removed from `pixi.toml`.
-### Added
-- **Hessian for vector-valued functions** (`scijo.differentiate`):
-  - `hessian` overload for `f: R^n -> R^m` (a callback returning `NDArray`
-    instead of `Scalar`): applies the existing central-difference stencil
-    to every output component and stacks the results into an `(m, n, n)`
-    tensor, `H[k, i, j] = ∂²f_k/∂x_i∂x_j`. Args-taking and args-free
-    variants, matching the existing scalar-valued `hessian`.
-  - `examples/differentiate_examples.mojo` and `tests/test_differentiate.mojo`
-    extended to cover the new overloads.
-- **Multi-dimensional minimization** (`scijo.optimize`):
-  - `minimize` - minimize a scalar-valued function of several variables (`f: R^n -> R`) via the Nelder-Mead simplex method, matching `scipy.optimize.minimize`'s frontend signature. Derivative-free (never evaluates a gradient or Hessian); convergence checked on both the simplex's point-to-point spread (`xatol`) and function-value spread (`fatol`), matching SciPy's own criteria.
-  - `OptimizeResultVector` - the vector-valued analog of `OptimizeResult` (`x`, `fun`, `nit`, `nfev`, `success`, `message`, `method`).
-- `examples/minimize_examples.mojo` and `tests/test_minimize.mojo` covering the new function.
-- **N-dimensional FFT** (`scijo.fft`):
-  - `fftn` / `ifftn` - forward/inverse FFT over one or more axes of an N-dimensional `ComplexNDArray`, matching `scipy.fft.fftn`/`ifftn`. Applies the existing 1-D Cooley-Tukey `fft`/`ifft` to every line along each requested axis; every transformed axis's length must be a power of 2.
-  - `fft2` / `ifft2` - convenience wrappers over `fftn`/`ifftn` defaulting to the last two axes, matching `scipy.fft.fft2`/`ifft2`.
-- `examples/fft_examples.mojo` extended and `tests/test_fftn.mojo` added covering the new functions.
-- **Args-free callback overloads** for every callback-taking public function: `derivative`, `jacobian`, `hessian`, `quad`, `root_scalar`, `bisect`, `brent`, `secant`, `newton`, `root`, `minimize_scalar`. Each now has a `def(x) -> ...` overload alongside the existing `def(x, args) -> ...` one, so a callback that doesn't need extra parameters no longer has to carry an unused `args` argument - capture what you need from the enclosing scope instead. The `args`-taking overloads are unchanged and still the right tool for a function reused across call sites with different parameter values (a module-level `def` can't `capturing`-capture, since it has no enclosing scope).
-- **Linear algebra module** (`scijo.linalg`), built on NuMojo's linalg primitives (NuMojo `linalg_funcs` branch: LU/QR/Cholesky decompositions, `solve`/`lstsq`/`inv`):
-  - `lu` - pivoted LU decomposition, scipy-style `(P, L, U)` with `A == P @ L @ U`.
-  - `qr` - reduced QR decomposition (thin wrapper over NuMojo's Householder implementation).
-  - `cholesky` - Cholesky decomposition, with a `lower` flag for the lower/upper factor.
-  - `solve` - solve `Ax = b`, accepting a 1-D or 2-D right-hand side.
-  - `solve_triangular` - forward/back substitution for triangular systems.
-  - `inv` - matrix inverse (thin wrapper over NuMojo's `inv`).
-  - `pinv` - Moore-Penrose pseudo-inverse for full-rank matrices (via least-squares).
-  - `lstsq` - least-squares solution to `Ax = b` (thin wrapper over NuMojo's `lstsq`).
-  - `norm` - vector (`1`/`2`/`inf`) and matrix (`fro`/`1`/`inf`) norms.
-  - `det`, `trace` - re-exported from NuMojo.
-  - `matmul`, `dot`, `outer`, `kron`, `tensordot`, `cross`, `diagonal` - re-exported from NuMojo for convenience.
-  - Eigenvalues/eigenvectors and SVD are not yet implemented (tracked as a follow-up once available in NuMojo).
-- `examples/linalg_examples.mojo` and `tests/test_linalg.mojo` covering the new module.
-- Temporarily pinned the `numojo` dependency in `pixi.toml` to the `linalg_funcs` branch on `shivasankarka/NuMojo` (adds `qr`, `cholesky`, `lstsq` on top of NuMojo's existing `lu_decomposition`/`solve`/`inv`); revert to NuMojo's `main` once that branch merges upstream.
-- **Multi-dimensional root finding** (`scijo.optimize`):
-  - `root` - find a root of a vector-valued function (`f: R^n -> R^n`) via Newton's method, matching `scipy.optimize.root`'s frontend signature.
-    - `root[dtype, f](x0, ...)` - finite-difference Jacobian, computed via `scijo.differentiate.jacobian` at every iteration.
-    - `root[dtype, f, jac](x0, ...)` - analytic-Jacobian overload, skipping the finite-difference cost.
-    - Both overloads take a `method` keyword (only `"newton"` is currently supported) and solve the Newton linear system at each step with `scijo.linalg.solve`.
-  - `RootResultVector` - the vector-valued analog of `RootResult` (`x`, `fun`, `nit`, `nfev`, `success`, `message`, `method`).
-- `examples/root_examples.mojo` and `tests/test_root.mojo` covering the new function.
+- Data-entry typo in `scijo.integrate.utility`'s 21-point Gauss-Kronrod
+  weight table (`0.0325816230796473` should have been `0.0325581623079647`
+  - a digit transposition), found while validating the native `quad`
+  above against known integrals; this table backs both
+  `gk21_kronrod_weights`/`gk21_gauss_weights` and (via the shared
+  embedded-rule values) `gk43_gauss21_weights`.
 
 ## [v0.2.0] - 2026-09-04
 ### Added
