@@ -383,9 +383,7 @@ def hessian[
         var f_pp = hess_func(xi_pp, args)
         var f_mm = hess_func(xi_mm, args)
         for k in range(m):
-            var diag = (
-                f_pp.load(k) - 2.0 * f0.load(k) + f_mm.load(k)
-            ) / h2
+            var diag = (f_pp.load(k) - 2.0 * f0.load(k) + f_mm.load(k)) / h2
             H.store(k * n * n + i * n + i, val=diag)
 
         for j in range(i + 1, n):
@@ -407,7 +405,10 @@ def hessian[
             var f_mm2 = hess_func(x_mm, args)
             for k in range(m):
                 var val = (
-                    f_pp2.load(k) - f_pm2.load(k) - f_mp2.load(k) + f_mm2.load(k)
+                    f_pp2.load(k)
+                    - f_pm2.load(k)
+                    - f_mp2.load(k)
+                    + f_mm2.load(k)
                 ) / (4.0 * h2)
                 H.store(k * n * n + i * n + j, val=val)
                 H.store(k * n * n + j * n + i, val=val)
@@ -417,9 +418,9 @@ def hessian[
 
 def hessian[
     dtype: DType,
-    hess_func: def[dtype: DType](
-        x: NDArray[dtype]
-    ) capturing raises -> NDArray[dtype],
+    hess_func: def[dtype: DType](x: NDArray[dtype]) capturing raises -> NDArray[
+        dtype
+    ],
 ](x: NDArray[dtype], step: Scalar[dtype] = 1e-5,) raises -> NDArray[dtype]:
     """Computes the Hessian tensor of a vector-valued function (args-free overload).
 

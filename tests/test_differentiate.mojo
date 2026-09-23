@@ -541,9 +541,7 @@ def test_hessian_vector_valued_args_free() raises:
     """Args-free overload matches the args-taking one for f(x) = x * x."""
 
     @parameter
-    def f[
-        dtype: DType
-    ](x: NDArray[dtype]) capturing raises -> NDArray[dtype]:
+    def f[dtype: DType](x: NDArray[dtype]) capturing raises -> NDArray[dtype]:
         return x * x
 
     var x = nm.fromstring[sj.f64]("[1.0, 2.0]")
