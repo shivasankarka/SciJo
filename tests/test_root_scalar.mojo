@@ -1,13 +1,22 @@
-from std.testing import assert_almost_equal, assert_equal
-from std.testing import TestSuite
+# ===----------------------------------------------------------------------=== #
+# Stdlib
+# ===----------------------------------------------------------------------=== #
 from std.math import sqrt
+from std.testing import (
+    assert_almost_equal,
+    assert_equal,
+    TestSuite,
+)
 
+# ===----------------------------------------------------------------------=== #
+# SciJo
+# ===----------------------------------------------------------------------=== #
 import scijo as sj
 from scijo.optimize.root_scalar import (
-    root_scalar,
-    newton,
     bisect,
     brent,
+    newton,
+    root_scalar,
     secant,
 )
 
@@ -86,13 +95,14 @@ def test_bisect_invalid_bracket_raises() raises:
     ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
         return x * x + 1.0
 
+    var raised = False
     try:
         var _ = bisect[sj.f64, g](None, (0.0, 1.0))
-        assert_equal(
-            True, False, msg="Expected bisect to raise on invalid bracket."
-        )
     except:
-        pass
+        raised = True
+    assert_equal(
+        raised, True, msg="Expected bisect to raise on invalid bracket."
+    )
 
 
 def test_root_results_fields() raises:

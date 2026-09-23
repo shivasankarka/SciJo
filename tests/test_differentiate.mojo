@@ -9,7 +9,6 @@ from std.math import (
 from std.testing import (
     assert_almost_equal,
     assert_equal,
-    assert_false,
     assert_true,
     TestSuite,
 )
@@ -372,13 +371,14 @@ def test_convergence_properties() raises:
 def test_error_conditions() raises:
     """Test error conditions and invalid parameters."""
 
+    var raised = False
     try:
         var _ = derivative[DType.float64, quadratic_function, step_direction=5](
             x0=1.0, args=None
         )
-        assert_false(True, "Invalid step direction should raise an error")
     except:
-        pass
+        raised = True
+    assert_true(raised, "Invalid step direction should raise an error")
 
 
 def test_step_size_parameters() raises:

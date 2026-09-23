@@ -1,11 +1,35 @@
-from std.python import Python, PythonObject
-from std.testing import assert_almost_equal, assert_true
-from std.testing import TestSuite
+# ===----------------------------------------------------------------------=== #
+# Stdlib
+# ===----------------------------------------------------------------------=== #
+from std.python import (
+    Python,
+    PythonObject,
+)
+from std.testing import (
+    assert_almost_equal,
+    assert_true,
+    TestSuite,
+)
 
+# ===----------------------------------------------------------------------=== #
+# External
+# ===----------------------------------------------------------------------=== #
 import numojo as nm
-from scijo.fft import fftn, ifftn, fft2, ifft2
-from numojo.core.complex import ComplexNDArray, ComplexSIMD
+from numojo.core.complex import (
+    ComplexNDArray,
+    ComplexSIMD,
+)
 from numojo.core.layout import NDArrayShape
+
+# ===----------------------------------------------------------------------=== #
+# SciJo
+# ===----------------------------------------------------------------------=== #
+from scijo.fft import (
+    fft2,
+    fftn,
+    ifft2,
+    ifftn,
+)
 
 
 def compare_complex_2d[
@@ -55,52 +79,61 @@ def _make_2d_arr() raises -> ComplexNDArray[nm.cf64]:
 
 
 def test_fftn_matches_numpy_fft2() raises:
+    var np: PythonObject
     try:
-        var np = Python.import_module("numpy")
-        var arr = _make_2d_arr()
-        var result = fftn[nm.cf64](arr)
-
-        var np_arr = np.arange(16, dtype=np.float64).reshape(4, 4)
-        var np_result = np.fft.fft2(np_arr)
-
-        compare_complex_2d[nm.cf64](
-            result, np_result, "fftn (all axes) matches numpy fft2"
-        )
+        np = Python.import_module("numpy")
     except:
         print("NumPy not available, skipping test_fftn_matches_numpy_fft2")
+        return
+
+    var arr = _make_2d_arr()
+    var result = fftn[nm.cf64](arr)
+
+    var np_arr = np.arange(16, dtype=np.float64).reshape(4, 4)
+    var np_result = np.fft.fft2(np_arr)
+
+    compare_complex_2d[nm.cf64](
+        result, np_result, "fftn (all axes) matches numpy fft2"
+    )
 
 
 def test_fft2_matches_numpy() raises:
+    var np: PythonObject
     try:
-        var np = Python.import_module("numpy")
-        var arr = _make_2d_arr()
-        var result = fft2[nm.cf64](arr)
-
-        var np_arr = np.arange(16, dtype=np.float64).reshape(4, 4)
-        var np_result = np.fft.fft2(np_arr)
-
-        compare_complex_2d[nm.cf64](result, np_result, "fft2 matches numpy")
+        np = Python.import_module("numpy")
     except:
         print("NumPy not available, skipping test_fft2_matches_numpy")
+        return
+
+    var arr = _make_2d_arr()
+    var result = fft2[nm.cf64](arr)
+
+    var np_arr = np.arange(16, dtype=np.float64).reshape(4, 4)
+    var np_result = np.fft.fft2(np_arr)
+
+    compare_complex_2d[nm.cf64](result, np_result, "fft2 matches numpy")
 
 
 def test_fftn_single_axis_matches_numpy() raises:
+    var np: PythonObject
     try:
-        var np = Python.import_module("numpy")
-        var arr = _make_2d_arr()
-        var axes_1: List[Int] = [1]
-        var result = fftn[nm.cf64](arr, axes=axes_1^)
-
-        var np_arr = np.arange(16, dtype=np.float64).reshape(4, 4)
-        var np_result = np.fft.fft(np_arr, axis=1)
-
-        compare_complex_2d[nm.cf64](
-            result, np_result, "fftn(axes=[1]) matches numpy fft(axis=1)"
-        )
+        np = Python.import_module("numpy")
     except:
         print(
             "NumPy not available, skipping test_fftn_single_axis_matches_numpy"
         )
+        return
+
+    var arr = _make_2d_arr()
+    var axes_1: List[Int] = [1]
+    var result = fftn[nm.cf64](arr, axes=axes_1^)
+
+    var np_arr = np.arange(16, dtype=np.float64).reshape(4, 4)
+    var np_result = np.fft.fft(np_arr, axis=1)
+
+    compare_complex_2d[nm.cf64](
+        result, np_result, "fftn(axes=[1]) matches numpy fft(axis=1)"
+    )
 
 
 def test_ifftn_roundtrip() raises:

@@ -2,23 +2,34 @@
 Tests for Interpolation Module.
 """
 
+# ===----------------------------------------------------------------------=== #
+# Stdlib
+# ===----------------------------------------------------------------------=== #
 from std.math import sin
-from std.testing import (
-    assert_true,
-    assert_false,
-    assert_equal,
-    assert_almost_equal,
+from std.python import (
+    Python,
+    PythonObject,
 )
-from std.testing import TestSuite
-from std.python import Python, PythonObject
+from std.testing import (
+    assert_almost_equal,
+    assert_true,
+    TestSuite,
+)
 
+# ===----------------------------------------------------------------------=== #
+# External
+# ===----------------------------------------------------------------------=== #
 import numojo as nm
+
+# ===----------------------------------------------------------------------=== #
+# SciJo
+# ===----------------------------------------------------------------------=== #
 from scijo.interpolate import (
-    LinearInterpolator,
-    interp1d,
-    interp,
-    CubicSpline,
     Akima1DInterpolator,
+    CubicSpline,
+    interp,
+    interp1d,
+    LinearInterpolator,
 )
 
 
@@ -74,276 +85,279 @@ def test_input_validation() raises:
 
 def test_bounds_handling() raises:
     """Test bounds error and fill value handling against SciPy."""
+    var np: PythonObject
+    var scipy_interpolate: PythonObject
     try:
-        var np = Python.import_module("numpy")
-        var scipy_interpolate = Python.import_module("scipy.interpolate")
-
-        var x = nm.arange[nm.f64](1, 5, 1)
-        var y = x * x
-
-        var interp_strict = LinearInterpolator(x, y, bounds_error=True)
-
-        var py_x = np.array(Python.list(1.0, 2.0, 3.0, 4.0))
-        var py_y = np.array(Python.list(1.0, 4.0, 9.0, 16.0))
-        var py_interp_strict = scipy_interpolate.interp1d(
-            py_x, py_y, kind="linear", bounds_error=True
-        )
-
-        var test_point = 2.5
-        var mojo_result = interp_strict(test_point)
-        var scipy_result = Float64(py=py_interp_strict(test_point))
-        assert_almost_equal(
-            mojo_result,
-            scipy_result,
-            atol=1e-10,
-            msg="Within bounds interpolation should match SciPy",
-        )
-
-        # Test bounds_error=True raises error for out of bounds
-        var caught_error = False
-        try:
-            var _ = interp_strict(0.5)
-        except:
-            caught_error = True
-        assert_true(caught_error, "Should raise error for point below range")
-
-        caught_error = False
-        try:
-            var _ = interp_strict(5.0)
-        except:
-            caught_error = True
-        assert_true(caught_error, "Should raise error for point above range")
-
-        # Test fill_value handling
-        var fill_val = Scalar[nm.f64](-999.0)
-        var interp_fill = LinearInterpolator(
-            x, y, bounds_error=False, fill_value=fill_val
-        )
-
-        var py_interp_fill = scipy_interpolate.interp1d(
-            py_x, py_y, kind="linear", bounds_error=False, fill_value=-999.0
-        )
-
-        var result_below = interp_fill(0.5)
-        var scipy_below = Float64(py=py_interp_fill(0.5))
-        assert_almost_equal(
-            result_below,
-            scipy_below,
-            atol=1e-10,
-            msg="Fill value below range should match SciPy",
-        )
-
-        var result_above = interp_fill(5.0)
-        var scipy_above = Float64(py=py_interp_fill(5.0))
-        assert_almost_equal(
-            result_above,
-            scipy_above,
-            atol=1e-10,
-            msg="Fill value above range should match SciPy",
-        )
-
+        np = Python.import_module("numpy")
+        scipy_interpolate = Python.import_module("scipy.interpolate")
     except:
         print("SciPy not available, skipping bounds handling test")
+        return
+
+    var x = nm.arange[nm.f64](1, 5, 1)
+    var y = x * x
+
+    var interp_strict = LinearInterpolator(x, y, bounds_error=True)
+
+    var py_x = np.array(Python.list(1.0, 2.0, 3.0, 4.0))
+    var py_y = np.array(Python.list(1.0, 4.0, 9.0, 16.0))
+    var py_interp_strict = scipy_interpolate.interp1d(
+        py_x, py_y, kind="linear", bounds_error=True
+    )
+
+    var test_point = 2.5
+    var mojo_result = interp_strict(test_point)
+    var scipy_result = Float64(py=py_interp_strict(test_point))
+    assert_almost_equal(
+        mojo_result,
+        scipy_result,
+        atol=1e-10,
+        msg="Within bounds interpolation should match SciPy",
+    )
+
+    # Test bounds_error=True raises error for out of bounds
+    var caught_error = False
+    try:
+        var _ = interp_strict(0.5)
+    except:
+        caught_error = True
+    assert_true(caught_error, "Should raise error for point below range")
+
+    caught_error = False
+    try:
+        var _ = interp_strict(5.0)
+    except:
+        caught_error = True
+    assert_true(caught_error, "Should raise error for point above range")
+
+    # Test fill_value handling
+    var fill_val = Scalar[nm.f64](-999.0)
+    var interp_fill = LinearInterpolator(
+        x, y, bounds_error=False, fill_value=fill_val
+    )
+
+    var py_interp_fill = scipy_interpolate.interp1d(
+        py_x, py_y, kind="linear", bounds_error=False, fill_value=-999.0
+    )
+
+    var result_below = interp_fill(0.5)
+    var scipy_below = Float64(py=py_interp_fill(0.5))
+    assert_almost_equal(
+        result_below,
+        scipy_below,
+        atol=1e-10,
+        msg="Fill value below range should match SciPy",
+    )
+
+    var result_above = interp_fill(5.0)
+    var scipy_above = Float64(py=py_interp_fill(5.0))
+    assert_almost_equal(
+        result_above,
+        scipy_above,
+        atol=1e-10,
+        msg="Fill value above range should match SciPy",
+    )
 
 
 def test_memory_access_consistency() raises:
     """Test that memory access is consistent and matches SciPy results."""
 
+    var np: PythonObject
+    var scipy_interpolate: PythonObject
     try:
-        var np = Python.import_module("numpy")
-        var scipy_interpolate = Python.import_module("scipy.interpolate")
-
-        var x = nm.linspace[nm.f64](0.0, 10.0, 11)
-        var y = x * x
-
-        var interp = LinearInterpolator(x, y)
-
-        var py_x = np.linspace(0.0, 10.0, 11)
-        var py_y = py_x**2
-        var py_interp = scipy_interpolate.interp1d(py_x, py_y, kind="linear")
-
-        # Test single value interpolation
-        var single_point = 5.5
-        var single_result = interp(single_point)
-        var scipy_single = Float64(py=py_interp(PythonObject(single_point)))
-        assert_almost_equal(
-            single_result,
-            scipy_single,
-            atol=1e-10,
-            msg="Single value interpolation should match SciPy",
-        )
-
-        # Test array interpolation with same point
-        var xi_array = nm.array[nm.f64]([5.5], [1])
-        var array_result = interp(xi_array)
-        assert_almost_equal(
-            array_result.item(0),
-            scipy_single,
-            atol=1e-10,
-            msg="Array interpolation with single point should match SciPy",
-        )
-
-        # Test that single and array methods give same results for multiple points
-        var test_points = nm.linspace[nm.f64](1.5, 8.5, 8)
-        var array_results = interp(test_points)
-
-        var py_test_points = np.linspace(1.5, 8.5, 8)
-        var py_array_results = py_interp(py_test_points)
-
-        for i in range(test_points.size):
-            var single_res = interp(test_points.item(i))
-            var array_res = array_results.item(i)
-            var scipy_res = Float64(py=py_array_results[i])
-
-            assert_almost_equal(
-                single_res,
-                array_res,
-                atol=1e-15,
-                msg=(
-                    "Single and array interpolation results should match"
-                    " exactly"
-                ),
-            )
-            assert_almost_equal(
-                array_res,
-                scipy_res,
-                atol=1e-10,
-                msg="Array interpolation should match SciPy",
-            )
-
+        np = Python.import_module("numpy")
+        scipy_interpolate = Python.import_module("scipy.interpolate")
     except:
         print("SciPy not available, skipping memory access consistency test")
+        return
+
+    var x = nm.linspace[nm.f64](0.0, 10.0, 11)
+    var y = x * x
+
+    var interp = LinearInterpolator(x, y)
+
+    var py_x = np.linspace(0.0, 10.0, 11)
+    var py_y = py_x**2
+    var py_interp = scipy_interpolate.interp1d(py_x, py_y, kind="linear")
+
+    # Test single value interpolation
+    var single_point = 5.5
+    var single_result = interp(single_point)
+    var scipy_single = Float64(py=py_interp(PythonObject(single_point)))
+    assert_almost_equal(
+        single_result,
+        scipy_single,
+        atol=1e-10,
+        msg="Single value interpolation should match SciPy",
+    )
+
+    # Test array interpolation with same point
+    var xi_array = nm.array[nm.f64]([5.5], [1])
+    var array_result = interp(xi_array)
+    assert_almost_equal(
+        array_result.item(0),
+        scipy_single,
+        atol=1e-10,
+        msg="Array interpolation with single point should match SciPy",
+    )
+
+    # Test that single and array methods give same results for multiple points
+    var test_points = nm.linspace[nm.f64](1.5, 8.5, 8)
+    var array_results = interp(test_points)
+
+    var py_test_points = np.linspace(1.5, 8.5, 8)
+    var py_array_results = py_interp(py_test_points)
+
+    for i in range(test_points.size):
+        var single_res = interp(test_points.item(i))
+        var array_res = array_results.item(i)
+        var scipy_res = Float64(py=py_array_results[i])
+
+        assert_almost_equal(
+            single_res,
+            array_res,
+            atol=1e-15,
+            msg="Single and array interpolation results should match exactly",
+        )
+        assert_almost_equal(
+            array_res,
+            scipy_res,
+            atol=1e-10,
+            msg="Array interpolation should match SciPy",
+        )
 
 
 def test_functional_interface() raises:
     """Test the functional interp interface against NumPy."""
+    var np: PythonObject
     try:
-        var np = Python.import_module("numpy")
-
-        var x = nm.arange[nm.f64](0, 5, 1)
-        var y = x * x
-        var xi = nm.linspace[nm.f64](0.5, 3.5, 4)
-
-        var yi_interp = interp[
-            nm.f64, type="linear", fill_method="interpolate"
-        ](xi, x, y)
-
-        var py_x = np.array(Python.list(0.0, 1.0, 2.0, 3.0, 4.0))
-        var py_y = np.array(Python.list(0.0, 1.0, 4.0, 9.0, 16.0))
-        var py_xi = np.array(Python.list(0.5, 1.5, 2.5, 3.5))
-        var py_yi = np.interp(py_xi, py_x, py_y)
-
-        for i in range(yi_interp.size):
-            var mojo_val = yi_interp.item(i)
-            var numpy_val = Float64(py=py_yi[i])
-            assert_almost_equal(
-                mojo_val,
-                numpy_val,
-                atol=1e-10,
-                msg="Functional interface should match NumPy",
-            )
-
-        # Test extrapolation behavior
-        var xi_extrap = nm.linspace[nm.f64](-0.5, 4.5, 6)
-        var yi_extrap = interp[
-            nm.f64, type="linear", fill_method="extrapolate"
-        ](xi_extrap, x, y)
-
-        var slope_below = (1.0 - 0.0) / (1.0 - 0.0)
-        var expected_below = 0.0 + slope_below * (-0.5 - 0.0)
-        assert_almost_equal(
-            yi_extrap.item(0),
-            expected_below,
-            atol=1e-10,
-            msg="Extrapolation below range should use correct slope",
-        )
-
-        # Test invalid parameters
-        var caught_error = False
-        try:
-            var _ = interp[nm.f64, type="invalid", fill_method="interpolate"](
-                xi, x, y
-            )
-        except:
-            caught_error = True
-        assert_true(
-            caught_error, "Should raise error for invalid interpolation type"
-        )
-
+        np = Python.import_module("numpy")
     except:
         print("NumPy not available, skipping functional interface test")
+        return
+
+    var x = nm.arange[nm.f64](0, 5, 1)
+    var y = x * x
+    var xi = nm.linspace[nm.f64](0.5, 3.5, 4)
+
+    var yi_interp = interp[nm.f64, type="linear", fill_method="interpolate"](
+        xi, x, y
+    )
+
+    var py_x = np.array(Python.list(0.0, 1.0, 2.0, 3.0, 4.0))
+    var py_y = np.array(Python.list(0.0, 1.0, 4.0, 9.0, 16.0))
+    var py_xi = np.array(Python.list(0.5, 1.5, 2.5, 3.5))
+    var py_yi = np.interp(py_xi, py_x, py_y)
+
+    for i in range(yi_interp.size):
+        var mojo_val = yi_interp.item(i)
+        var numpy_val = Float64(py=py_yi[i])
+        assert_almost_equal(
+            mojo_val,
+            numpy_val,
+            atol=1e-10,
+            msg="Functional interface should match NumPy",
+        )
+
+    # Test extrapolation behavior
+    var xi_extrap = nm.linspace[nm.f64](-0.5, 4.5, 6)
+    var yi_extrap = interp[nm.f64, type="linear", fill_method="extrapolate"](
+        xi_extrap, x, y
+    )
+
+    var slope_below = (1.0 - 0.0) / (1.0 - 0.0)
+    var expected_below = 0.0 + slope_below * (-0.5 - 0.0)
+    assert_almost_equal(
+        yi_extrap.item(0),
+        expected_below,
+        atol=1e-10,
+        msg="Extrapolation below range should use correct slope",
+    )
+
+    # Test invalid parameters
+    var caught_error = False
+    try:
+        var _ = interp[nm.f64, type="invalid", fill_method="interpolate"](
+            xi, x, y
+        )
+    except:
+        caught_error = True
+    assert_true(
+        caught_error, "Should raise error for invalid interpolation type"
+    )
 
 
 def test_cubic_functional_interface() raises:
     """Test cubic functional interpolation against SciPy natural cubic spline.
     """
+    var np: PythonObject
+    var scipy_interpolate: PythonObject
     try:
-        var np = Python.import_module("numpy")
-        var scipy_interpolate = Python.import_module("scipy.interpolate")
-
-        var x = nm.linspace[nm.f64](0.0, 10.0, 11)
-        var y = nm.zeros[nm.f64](x.shape)
-        for i in range(x.size):
-            y.itemset(i, sin(x.item(i)))
-        var xi = nm.linspace[nm.f64](0.5, 9.5, 18)
-
-        var yi_cubic = interp[nm.f64, type="cubic", fill_method="interpolate"](
-            xi, x, y
-        )
-
-        var py_x = np.linspace(0.0, 10.0, 11)
-        var py_y = np.sin(py_x)
-        var py_xi = np.linspace(0.5, 9.5, 18)
-        var py_cs = scipy_interpolate.CubicSpline(py_x, py_y, bc_type="natural")
-        var py_yi = py_cs(py_xi)
-
-        for i in range(yi_cubic.size):
-            assert_almost_equal(
-                yi_cubic.item(i),
-                Float64(py=py_yi[i]),
-                atol=1e-6,
-                msg=(
-                    "Cubic interpolation should match SciPy natural cubic"
-                    " spline"
-                ),
-            )
-
+        np = Python.import_module("numpy")
+        scipy_interpolate = Python.import_module("scipy.interpolate")
     except:
         print("SciPy not available, skipping cubic interpolation test")
+        return
+
+    var x = nm.linspace[nm.f64](0.0, 10.0, 11)
+    var y = nm.zeros[nm.f64](x.shape)
+    for i in range(x.size):
+        y.itemset(i, sin(x.item(i)))
+    var xi = nm.linspace[nm.f64](0.5, 9.5, 18)
+
+    var yi_cubic = interp[nm.f64, type="cubic", fill_method="interpolate"](
+        xi, x, y
+    )
+
+    var py_x = np.linspace(0.0, 10.0, 11)
+    var py_y = np.sin(py_x)
+    var py_xi = np.linspace(0.5, 9.5, 18)
+    var py_cs = scipy_interpolate.CubicSpline(py_x, py_y, bc_type="natural")
+    var py_yi = py_cs(py_xi)
+
+    for i in range(yi_cubic.size):
+        assert_almost_equal(
+            yi_cubic.item(i),
+            Float64(py=py_yi[i]),
+            atol=1e-6,
+            msg="Cubic interpolation should match SciPy natural cubic spline",
+        )
 
 
 def test_akima_functional_interface() raises:
     """Test akima functional interpolation against SciPy Akima1DInterpolator."""
+    var np: PythonObject
+    var scipy_interpolate: PythonObject
     try:
-        var np = Python.import_module("numpy")
-        var scipy_interpolate = Python.import_module("scipy.interpolate")
-
-        var x = nm.linspace[nm.f64](0.0, 10.0, 11)
-        var y = nm.zeros[nm.f64](x.shape)
-        for i in range(x.size):
-            y.itemset(i, sin(x.item(i)))
-        var xi = nm.linspace[nm.f64](0.5, 9.5, 18)
-
-        var yi_akima = interp[nm.f64, type="akima", fill_method="interpolate"](
-            xi, x, y
-        )
-
-        var py_x = np.linspace(0.0, 10.0, 11)
-        var py_y = np.sin(py_x)
-        var py_xi = np.linspace(0.5, 9.5, 18)
-        var py_akima = scipy_interpolate.Akima1DInterpolator(py_x, py_y)
-        var py_yi = py_akima(py_xi)
-
-        for i in range(yi_akima.size):
-            assert_almost_equal(
-                yi_akima.item(i),
-                Float64(py=py_yi[i]),
-                atol=2e-2,
-                msg="Akima interpolation should be close to SciPy Akima",
-            )
-
+        np = Python.import_module("numpy")
+        scipy_interpolate = Python.import_module("scipy.interpolate")
     except:
         print("SciPy not available, skipping akima interpolation test")
+        return
+
+    var x = nm.linspace[nm.f64](0.0, 10.0, 11)
+    var y = nm.zeros[nm.f64](x.shape)
+    for i in range(x.size):
+        y.itemset(i, sin(x.item(i)))
+    var xi = nm.linspace[nm.f64](0.5, 9.5, 18)
+
+    var yi_akima = interp[nm.f64, type="akima", fill_method="interpolate"](
+        xi, x, y
+    )
+
+    var py_x = np.linspace(0.0, 10.0, 11)
+    var py_y = np.sin(py_x)
+    var py_xi = np.linspace(0.5, 9.5, 18)
+    var py_akima = scipy_interpolate.Akima1DInterpolator(py_x, py_y)
+    var py_yi = py_akima(py_xi)
+
+    for i in range(yi_akima.size):
+        assert_almost_equal(
+            yi_akima.item(i),
+            Float64(py=py_yi[i]),
+            atol=2e-2,
+            msg="Akima interpolation should be close to SciPy Akima",
+        )
 
 
 def test_edge_cases() raises:
@@ -632,123 +646,127 @@ def test_performance_comparison() raises:
 def test_cubic_spline_struct() raises:
     """Test CubicSpline callable struct against scipy.interpolate.CubicSpline.
     """
+    var np: PythonObject
+    var scipy_interpolate: PythonObject
     try:
-        var np = Python.import_module("numpy")
-        var scipy_interpolate = Python.import_module("scipy.interpolate")
-
-        var x = nm.linspace[nm.f64](0.0, 10.0, 11)
-        var y = nm.zeros[nm.f64](x.shape)
-        for i in range(x.size):
-            y.itemset(i, sin(x.item(i)))
-
-        var cs = CubicSpline(x, y)
-
-        var py_x = np.linspace(0.0, 10.0, 11)
-        var py_y = np.sin(py_x)
-        var py_cs = scipy_interpolate.CubicSpline(py_x, py_y, bc_type="natural")
-
-        # Test array call
-        var xi = nm.linspace[nm.f64](0.5, 9.5, 18)
-        var yi = cs(xi)
-        var py_xi = np.linspace(0.5, 9.5, 18)
-        var py_yi = py_cs(py_xi)
-
-        for i in range(yi.size):
-            assert_almost_equal(
-                yi.item(i),
-                Float64(py=py_yi[i]),
-                atol=1e-6,
-                msg="CubicSpline array call should match SciPy",
-            )
-
-        # Test scalar call
-        var xi_s = Scalar[nm.f64](3.7)
-        var yi_s = cs(xi_s)
-        var py_yi_s = Float64(py=py_cs(3.7))
-        assert_almost_equal(
-            yi_s,
-            py_yi_s,
-            atol=1e-6,
-            msg="CubicSpline scalar call should match SciPy",
-        )
-
-        # Test boundary clamping
-        assert_almost_equal(
-            cs(Scalar[nm.f64](0.0)),
-            sin(0.0),
-            atol=1e-12,
-            msg="CubicSpline at left boundary",
-        )
-        assert_almost_equal(
-            cs(Scalar[nm.f64](10.0)),
-            sin(10.0),
-            atol=1e-12,
-            msg="CubicSpline at right boundary",
-        )
-
+        np = Python.import_module("numpy")
+        scipy_interpolate = Python.import_module("scipy.interpolate")
     except:
         print("SciPy not available, skipping CubicSpline struct test")
+        return
+
+    var x = nm.linspace[nm.f64](0.0, 10.0, 11)
+    var y = nm.zeros[nm.f64](x.shape)
+    for i in range(x.size):
+        y.itemset(i, sin(x.item(i)))
+
+    var cs = CubicSpline(x, y)
+
+    var py_x = np.linspace(0.0, 10.0, 11)
+    var py_y = np.sin(py_x)
+    var py_cs = scipy_interpolate.CubicSpline(py_x, py_y, bc_type="natural")
+
+    # Test array call
+    var xi = nm.linspace[nm.f64](0.5, 9.5, 18)
+    var yi = cs(xi)
+    var py_xi = np.linspace(0.5, 9.5, 18)
+    var py_yi = py_cs(py_xi)
+
+    for i in range(yi.size):
+        assert_almost_equal(
+            yi.item(i),
+            Float64(py=py_yi[i]),
+            atol=1e-6,
+            msg="CubicSpline array call should match SciPy",
+        )
+
+    # Test scalar call
+    var xi_s = Scalar[nm.f64](3.7)
+    var yi_s = cs(xi_s)
+    var py_yi_s = Float64(py=py_cs(3.7))
+    assert_almost_equal(
+        yi_s,
+        py_yi_s,
+        atol=1e-6,
+        msg="CubicSpline scalar call should match SciPy",
+    )
+
+    # Test boundary clamping
+    assert_almost_equal(
+        cs(Scalar[nm.f64](0.0)),
+        sin(0.0),
+        atol=1e-12,
+        msg="CubicSpline at left boundary",
+    )
+    assert_almost_equal(
+        cs(Scalar[nm.f64](10.0)),
+        sin(10.0),
+        atol=1e-12,
+        msg="CubicSpline at right boundary",
+    )
 
 
 def test_akima1d_interpolator_struct() raises:
     """Test Akima1DInterpolator callable struct against scipy.interpolate.Akima1DInterpolator.
     """
+    var np: PythonObject
+    var scipy_interpolate: PythonObject
     try:
-        var np = Python.import_module("numpy")
-        var scipy_interpolate = Python.import_module("scipy.interpolate")
-
-        var x = nm.linspace[nm.f64](0.0, 10.0, 11)
-        var y = nm.zeros[nm.f64](x.shape)
-        for i in range(x.size):
-            y.itemset(i, sin(x.item(i)))
-
-        var ak = Akima1DInterpolator(x, y)
-
-        var py_x = np.linspace(0.0, 10.0, 11)
-        var py_y = np.sin(py_x)
-        var py_ak = scipy_interpolate.Akima1DInterpolator(py_x, py_y)
-
-        # Test array call
-        var xi = nm.linspace[nm.f64](0.5, 9.5, 18)
-        var yi = ak(xi)
-        var py_xi = np.linspace(0.5, 9.5, 18)
-        var py_yi = py_ak(py_xi)
-
-        for i in range(yi.size):
-            assert_almost_equal(
-                yi.item(i),
-                Float64(py=py_yi[i]),
-                atol=2e-2,
-                msg="Akima1DInterpolator array call should be close to SciPy",
-            )
-
-        # Test scalar call
-        var xi_s = Scalar[nm.f64](3.7)
-        var yi_s = ak(xi_s)
-        var py_yi_s = Float64(py=py_ak(3.7))
-        assert_almost_equal(
-            yi_s,
-            py_yi_s,
-            atol=2e-2,
-            msg="Akima1DInterpolator scalar call should be close to SciPy",
-        )
-
-        # Test boundary clamping
-        assert_almost_equal(
-            ak(Scalar[nm.f64](0.0)),
-            sin(0.0),
-            atol=1e-12,
-            msg="Akima1DInterpolator at left boundary",
-        )
-        assert_almost_equal(
-            ak(Scalar[nm.f64](10.0)),
-            sin(10.0),
-            atol=1e-12,
-            msg="Akima1DInterpolator at right boundary",
-        )
-
+        np = Python.import_module("numpy")
+        scipy_interpolate = Python.import_module("scipy.interpolate")
     except:
         print("SciPy not available, skipping Akima1DInterpolator struct test")
+        return
+
+    var x = nm.linspace[nm.f64](0.0, 10.0, 11)
+    var y = nm.zeros[nm.f64](x.shape)
+    for i in range(x.size):
+        y.itemset(i, sin(x.item(i)))
+
+    var ak = Akima1DInterpolator(x, y)
+
+    var py_x = np.linspace(0.0, 10.0, 11)
+    var py_y = np.sin(py_x)
+    var py_ak = scipy_interpolate.Akima1DInterpolator(py_x, py_y)
+
+    # Test array call
+    var xi = nm.linspace[nm.f64](0.5, 9.5, 18)
+    var yi = ak(xi)
+    var py_xi = np.linspace(0.5, 9.5, 18)
+    var py_yi = py_ak(py_xi)
+
+    for i in range(yi.size):
+        assert_almost_equal(
+            yi.item(i),
+            Float64(py=py_yi[i]),
+            atol=2e-2,
+            msg="Akima1DInterpolator array call should be close to SciPy",
+        )
+
+    # Test scalar call
+    var xi_s = Scalar[nm.f64](3.7)
+    var yi_s = ak(xi_s)
+    var py_yi_s = Float64(py=py_ak(3.7))
+    assert_almost_equal(
+        yi_s,
+        py_yi_s,
+        atol=2e-2,
+        msg="Akima1DInterpolator scalar call should be close to SciPy",
+    )
+
+    # Test boundary clamping
+    assert_almost_equal(
+        ak(Scalar[nm.f64](0.0)),
+        sin(0.0),
+        atol=1e-12,
+        msg="Akima1DInterpolator at left boundary",
+    )
+    assert_almost_equal(
+        ak(Scalar[nm.f64](10.0)),
+        sin(10.0),
+        atol=1e-12,
+        msg="Akima1DInterpolator at right boundary",
+    )
 
 
 def test_cubic_spline_at_knots() raises:
@@ -781,71 +799,77 @@ def test_cubic_spline_n2() raises:
 
 def test_akima_monotone_linear() raises:
     """Akima on perfectly linear data should reproduce the line exactly."""
+    var np: PythonObject
+    var scipy_interpolate: PythonObject
     try:
-        var np = Python.import_module("numpy")
-        var scipy_interpolate = Python.import_module("scipy.interpolate")
-
-        var x = nm.array[nm.f64]([0.0, 1.0, 2.0, 3.0, 4.0, 5.0], [6])
-        var y = nm.array[nm.f64]([0.0, 1.0, 2.0, 3.0, 4.0, 5.0], [6])
-        var ak = Akima1DInterpolator(x, y)
-
-        var py_x = np.array(Python.list(0.0, 1.0, 2.0, 3.0, 4.0, 5.0))
-        var py_y = np.array(Python.list(0.0, 1.0, 2.0, 3.0, 4.0, 5.0))
-        var py_ak = scipy_interpolate.Akima1DInterpolator(py_x, py_y)
-
-        var xi = nm.linspace[nm.f64](0.1, 4.9, 10)
-        var yi = ak(xi)
-        var py_xi = np.linspace(0.1, 4.9, 10)
-        var py_yi = py_ak(py_xi)
-
-        for i in range(yi.size):
-            assert_almost_equal(
-                yi.item(i),
-                Float64(py=py_yi[i]),
-                atol=1e-10,
-                msg="Akima on linear data should match SciPy",
-            )
+        np = Python.import_module("numpy")
+        scipy_interpolate = Python.import_module("scipy.interpolate")
     except:
         print("SciPy not available, skipping akima monotone linear test")
+        return
+
+    var x = nm.array[nm.f64]([0.0, 1.0, 2.0, 3.0, 4.0, 5.0], [6])
+    var y = nm.array[nm.f64]([0.0, 1.0, 2.0, 3.0, 4.0, 5.0], [6])
+    var ak = Akima1DInterpolator(x, y)
+
+    var py_x = np.array(Python.list(0.0, 1.0, 2.0, 3.0, 4.0, 5.0))
+    var py_y = np.array(Python.list(0.0, 1.0, 2.0, 3.0, 4.0, 5.0))
+    var py_ak = scipy_interpolate.Akima1DInterpolator(py_x, py_y)
+
+    var xi = nm.linspace[nm.f64](0.1, 4.9, 10)
+    var yi = ak(xi)
+    var py_xi = np.linspace(0.1, 4.9, 10)
+    var py_yi = py_ak(py_xi)
+
+    for i in range(yi.size):
+        assert_almost_equal(
+            yi.item(i),
+            Float64(py=py_yi[i]),
+            atol=1e-10,
+            msg="Akima on linear data should match SciPy",
+        )
 
 
 def test_akima_outlier_isolation() raises:
     """Akima should localise the effect of an outlier spike."""
+    var np: PythonObject
+    var scipy_interpolate: PythonObject
     try:
-        var np = Python.import_module("numpy")
-        var scipy_interpolate = Python.import_module("scipy.interpolate")
-
-        var x = nm.array[nm.f64]([0.0, 1.0, 2.0, 3.0, 4.0, 5.0], [6])
-        var y = nm.array[nm.f64]([0.0, 1.0, 2.0, 100.0, 4.0, 5.0], [6])
-        var ak = Akima1DInterpolator(x, y)
-
-        var py_x = np.array(Python.list(0.0, 1.0, 2.0, 3.0, 4.0, 5.0))
-        var py_y = np.array(Python.list(0.0, 1.0, 2.0, 100.0, 4.0, 5.0))
-        var py_ak = scipy_interpolate.Akima1DInterpolator(py_x, py_y)
-
-        # Point far from outlier should be unaffected (near x=1.5)
-        var xi_far = nm.array[nm.f64]([1.5], [1])
-        var yi_far = ak(xi_far)
-        var py_yi_far = Float64(py=py_ak(np.array(Python.list(1.5)))[0])
-        assert_almost_equal(
-            yi_far.item(0),
-            py_yi_far,
-            atol=1e-10,
-            msg="Akima: region far from outlier should match SciPy",
-        )
-
-        # Point near the outlier (x=2.5) — just match SciPy's value
-        var xi_near = nm.array[nm.f64]([2.5], [1])
-        var yi_near = ak(xi_near)
-        var py_yi_near = Float64(py=py_ak(np.array(Python.list(2.5)))[0])
-        assert_almost_equal(
-            yi_near.item(0),
-            py_yi_near,
-            atol=1.0,
-            msg="Akima: near-outlier region should be within 1.0 of SciPy",
-        )
+        np = Python.import_module("numpy")
+        scipy_interpolate = Python.import_module("scipy.interpolate")
     except:
         print("SciPy not available, skipping akima outlier isolation test")
+        return
+
+    var x = nm.array[nm.f64]([0.0, 1.0, 2.0, 3.0, 4.0, 5.0], [6])
+    var y = nm.array[nm.f64]([0.0, 1.0, 2.0, 100.0, 4.0, 5.0], [6])
+    var ak = Akima1DInterpolator(x, y)
+
+    var py_x = np.array(Python.list(0.0, 1.0, 2.0, 3.0, 4.0, 5.0))
+    var py_y = np.array(Python.list(0.0, 1.0, 2.0, 100.0, 4.0, 5.0))
+    var py_ak = scipy_interpolate.Akima1DInterpolator(py_x, py_y)
+
+    # Point far from outlier should be unaffected (near x=1.5)
+    var xi_far = nm.array[nm.f64]([1.5], [1])
+    var yi_far = ak(xi_far)
+    var py_yi_far = Float64(py=py_ak(np.array(Python.list(1.5)))[0])
+    assert_almost_equal(
+        yi_far.item(0),
+        py_yi_far,
+        atol=1e-10,
+        msg="Akima: region far from outlier should match SciPy",
+    )
+
+    # Point near the outlier (x=2.5) — just match SciPy's value
+    var xi_near = nm.array[nm.f64]([2.5], [1])
+    var yi_near = ak(xi_near)
+    var py_yi_near = Float64(py=py_ak(np.array(Python.list(2.5)))[0])
+    assert_almost_equal(
+        yi_near.item(0),
+        py_yi_near,
+        atol=1.0,
+        msg="Akima: near-outlier region should be within 1.0 of SciPy",
+    )
 
 
 def test_akima_no_overshoot_step() raises:
@@ -867,66 +891,72 @@ def test_akima_no_overshoot_step() raises:
 
 def test_akima_n4_fallback() raises:
     """Akima with n=4 falls back gracefully (cubic spline path)."""
+    var np: PythonObject
+    var scipy_interpolate: PythonObject
     try:
-        var np = Python.import_module("numpy")
-        var scipy_interpolate = Python.import_module("scipy.interpolate")
-
-        var x = nm.array[nm.f64]([0.0, 1.0, 2.0, 3.0], [4])
-        var y = nm.array[nm.f64]([0.0, 1.0, 4.0, 9.0], [4])
-        var ak = Akima1DInterpolator(x, y)
-
-        var py_x = np.array(Python.list(0.0, 1.0, 2.0, 3.0))
-        var py_y = np.array(Python.list(0.0, 1.0, 4.0, 9.0))
-        var py_ak = scipy_interpolate.Akima1DInterpolator(py_x, py_y)
-
-        var xi = nm.array[nm.f64]([0.5, 1.5, 2.5], [3])
-        var yi = ak(xi)
-        var py_xi = np.array(Python.list(0.5, 1.5, 2.5))
-        var py_yi = py_ak(py_xi)
-
-        for i in range(yi.size):
-            assert_almost_equal(
-                yi.item(i),
-                Float64(py=py_yi[i]),
-                atol=5e-2,
-                msg="Akima n=4 fallback should be close to SciPy",
-            )
+        np = Python.import_module("numpy")
+        scipy_interpolate = Python.import_module("scipy.interpolate")
     except:
         print("SciPy not available, skipping akima n=4 fallback test")
+        return
+
+    var x = nm.array[nm.f64]([0.0, 1.0, 2.0, 3.0], [4])
+    var y = nm.array[nm.f64]([0.0, 1.0, 4.0, 9.0], [4])
+    var ak = Akima1DInterpolator(x, y)
+
+    var py_x = np.array(Python.list(0.0, 1.0, 2.0, 3.0))
+    var py_y = np.array(Python.list(0.0, 1.0, 4.0, 9.0))
+    var py_ak = scipy_interpolate.Akima1DInterpolator(py_x, py_y)
+
+    var xi = nm.array[nm.f64]([0.5, 1.5, 2.5], [3])
+    var yi = ak(xi)
+    var py_xi = np.array(Python.list(0.5, 1.5, 2.5))
+    var py_yi = py_ak(py_xi)
+
+    for i in range(yi.size):
+        assert_almost_equal(
+            yi.item(i),
+            Float64(py=py_yi[i]),
+            atol=5e-2,
+            msg="Akima n=4 fallback should be close to SciPy",
+        )
 
 
 def test_akima_sparse_knots() raises:
     """Akima with sparse knots: values should be reasonable (not wildly wrong).
     """
+    var np: PythonObject
+    var scipy_interpolate: PythonObject
     try:
-        var np = Python.import_module("numpy")
-        var scipy_interpolate = Python.import_module("scipy.interpolate")
-
-        var x = nm.array[nm.f64]([0.0, 5.0, 10.0, 15.0, 20.0], [5])
-        var y = nm.zeros[nm.f64](x.shape)
-        for i in range(x.size):
-            y.itemset(i, sin(x.item(i)))
-
-        var ak = Akima1DInterpolator(x, y)
-
-        var py_x = np.array(Python.list(0.0, 5.0, 10.0, 15.0, 20.0))
-        var py_y = np.sin(py_x)
-        var py_ak = scipy_interpolate.Akima1DInterpolator(py_x, py_y)
-
-        var xi = nm.array[nm.f64]([2.5, 7.5, 12.5, 17.5], [4])
-        var yi = ak(xi)
-        var py_xi = np.array(Python.list(2.5, 7.5, 12.5, 17.5))
-        var py_yi = py_ak(py_xi)
-
-        for i in range(yi.size):
-            assert_almost_equal(
-                yi.item(i),
-                Float64(py=py_yi[i]),
-                atol=2e-2,
-                msg="Akima sparse knots should match SciPy",
-            )
+        np = Python.import_module("numpy")
+        scipy_interpolate = Python.import_module("scipy.interpolate")
     except:
         print("SciPy not available, skipping akima sparse knots test")
+        return
+
+    var x = nm.array[nm.f64]([0.0, 5.0, 10.0, 15.0, 20.0], [5])
+    var y = nm.zeros[nm.f64](x.shape)
+    for i in range(x.size):
+        y.itemset(i, sin(x.item(i)))
+
+    var ak = Akima1DInterpolator(x, y)
+
+    var py_x = np.array(Python.list(0.0, 5.0, 10.0, 15.0, 20.0))
+    var py_y = np.sin(py_x)
+    var py_ak = scipy_interpolate.Akima1DInterpolator(py_x, py_y)
+
+    var xi = nm.array[nm.f64]([2.5, 7.5, 12.5, 17.5], [4])
+    var yi = ak(xi)
+    var py_xi = np.array(Python.list(2.5, 7.5, 12.5, 17.5))
+    var py_yi = py_ak(py_xi)
+
+    for i in range(yi.size):
+        assert_almost_equal(
+            yi.item(i),
+            Float64(py=py_yi[i]),
+            atol=2e-2,
+            msg="Akima sparse knots should match SciPy",
+        )
 
 
 def main() raises:
