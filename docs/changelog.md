@@ -5,6 +5,63 @@ All notable changes to this project will be documented in this file.
 The format is based on "Keep a Changelog" and follows Semantic Versioning.
 
 ## [Unreleased]
+### Fixed
+- **Test suite correctness audit**: several test files wrapped their entire
+  body - including the actual `assert_*` comparisons against SciPy/NumPy -
+  in a single bare `try: ... except: print("SciPy not available, skipping
+  ...")`. A genuine assertion failure inside that block was indistinguishable
+  from a missing import and was silently swallowed, so the test still
+  reported PASS. Restructured every such function (`test_fft.mojo`,
+  `test_fftn.mojo`, `test_interpolate.mojo`, `test_trapezoid.mojo`) so only
+  the import call is protected (with an early `return` on failure) and the
+  assertions run unprotected. Two "expect this to raise" tests
+  (`test_differentiate.mojo::test_error_conditions`,
+  `test_root_scalar.mojo::test_bisect_invalid_bracket_raises`) had the same
+  flaw in miniature - a failing `assert_false`/`assert_equal` placed *inside*
+  the `try` was itself caught by the following bare `except: pass` - fixed to
+  the standard raised-flag-checked-after-the-try pattern already used
+  elsewhere in the suite. Restructuring surfaced four real bugs that had been
+  masked this way (see below); a fifth (`test_trapezoid.mojo`'s
+  `test_scipy_compatibility`) turned out to be a bug in the test itself
+  (`python.list(...)` called on the `numpy` module object, which has no such
+  attribute - fixed to `Python.list(...)`).
+- **`fftfreq`** (`scijo.fft`): wrong split point between positive and
+  negative frequencies for odd `n` (used `n // 2` for both parities; the
+  positive/zero block needs `(n + 1) // 2` entries, since index `n // 2`
+  itself is the last positive frequency, not the first negative one - e.g.
+  `fftfreq(7)` returned `[0, 1, 2, -4, -3, -2, -1]` instead of
+  `[0, 1, 2, 3, -3, -2, -1]`). `fftshift`/`ifftshift` inherited this via their
+  own odd-`n` tests, which reused `fftfreq`.
+- **`cumulative_simpson`** and **`simpson`** (`scijo.integrate`): the
+  even-length fallback for the last, unpaired interval used a plain
+  trapezoid estimate instead of the correct sub-panel integral of the
+  quadratic interpolant through the last three points, undercounting that
+  interval's curvature (e.g. `simpson([1,4,1,4], dx=1)` returned `8.5`
+  instead of scipy's `8.0`). Fixed both the `dx`- and `x`-based `simpson`
+  overloads; the `x`-based (non-uniform spacing) overload additionally had
+  the main-loop panel formula silently assume the two intervals within each
+  Simpson panel were equal length, which is not guaranteed for arbitrary
+  `x` - replaced with the general unequal-spacing formula, verified against
+  `scipy.integrate.simpson` for several non-uniform cases including spacing
+  that varies within a single panel.
+- **Golden-section search** (`scijo.optimize.minimize_scalar`,
+  `method="Golden"`): the interval-update branches in `_golden_minimize` had
+  `a`/`b` assigned to the wrong side, so the search could converge to the
+  wrong point outright (for a bracket symmetric about the minimum, the
+  minimum was discarded from *both* candidate sub-intervals on the very
+  first step).
+- **`Akima1DInterpolator`** (`scijo.interpolate`), and the functional
+  `interp[..., type="akima"]` entry point (previously a second,
+  independently-buggy copy of the same logic, now delegating to
+  `Akima1DInterpolator`): the weighted-slope formula was only applied to
+  interior points; the two points nearest each boundary used ad hoc
+  formulas (the raw edge slope, and a plain average of the two nearest
+  slopes) instead of Akima's actual boundary rule - extending the slope
+  sequence at each end with two quadratically-extrapolated "phantom"
+  slopes and applying the same weighted formula everywhere. Verified against
+  `scipy.interpolate.Akima1DInterpolator`'s derivative values at every knot
+  for several data sets (up to a few `1e-15`).
+
 ### Changed
 - **Removed the MSL dependency**: `scijo.integrate.quad` (`qng`/`qag`/`qags`)
   and `scijo.optimize.root_scalar`'s `bisect`/`brent`/`newton`/`secant` were
