@@ -4,8 +4,8 @@
 # ===----------------------------------------------------------------------=== #
 """Linear System Solvers (`scijo.linalg.solving`)
 =================================================
-SciPy-style wrappers for solving linear systems, matrix inversion, and
-least-squares problems, built on top of NuMojo's linear algebra primitives.
+Wrappers for solving linear systems, matrix inversion, and least-squares
+problems, built on top of NuMojo's linear algebra primitives.
 
 Examples
 --------
@@ -48,7 +48,7 @@ def solve[
     """Solve the linear system `Ax = b`.
 
     Thin wrapper around `numojo.linalg.solve` that additionally accepts a
-    1-D right-hand side, matching `scipy.linalg.solve`.
+    1-D right-hand side.
 
     Parameters:
         dtype: Data type of the solution.
@@ -91,9 +91,9 @@ def pinv[
     """Compute the Moore-Penrose pseudo-inverse of a matrix.
 
     Computed from the SVD as `V @ diag(1/s) @ U.T`, with singular values
-    at or below `rcond` times the largest treated as zero, matching
-    `scipy.linalg.pinv`. Unlike a least-squares-based pseudo-inverse,
-    this handles rank-deficient input correctly.
+    at or below `rcond` times the largest treated as zero. Unlike a
+    least-squares-based pseudo-inverse, this handles rank-deficient input
+    correctly.
 
     Parameters:
         dtype: Data type of the pseudo-inverse.
@@ -162,9 +162,9 @@ def solve_triangular[
     """Solve the triangular system `Ax = b`.
 
     Uses forward substitution when `lower=True` and back substitution
-    when `lower=False`, matching `scipy.linalg.solve_triangular`. Unlike
-    `solve`, this does not go through LU decomposition, so it is both
-    faster and applicable when `A` is only known to be triangular.
+    when `lower=False`. Unlike `solve`, this does not go through LU
+    decomposition, so it is both faster and applicable when `A` is only
+    known to be triangular.
 
     Parameters:
         dtype: Data type of the solution.

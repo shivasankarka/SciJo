@@ -4,7 +4,8 @@
 # ===----------------------------------------------------------------------=== #
 """Scalar Root-Finding (`scijo.optimize.root_scalar`)
 =====================================================
-Scalar root-finding routines with SciPy-like frontend signatures.
+Scalar root-finding routines: bisection, Brent's method, secant, and
+Newton's method.
 """
 
 # ===----------------------------------------------------------------------=== #
@@ -17,7 +18,7 @@ def root_scalar[
     dtype: DType,
     f: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing -> Scalar[dtype],
+    ) capturing thin -> Scalar[dtype] where dtype.is_floating_point(),
     *,
     method: String = "bisect",
 ](
@@ -28,7 +29,7 @@ def root_scalar[
     atol: Scalar[dtype] = 1e-8,
     rtol: Scalar[dtype] = 1e-8,
     maxiter: Int = 100,
-) raises -> RootResult[dtype]:
+) raises -> RootResult[dtype] where dtype.is_floating_point():
     """Finds a root of a scalar function (bisect or secant overload).
 
     Parameters:
@@ -94,7 +95,7 @@ def root_scalar[
 
 def root_scalar[
     dtype: DType,
-    f: def[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype],
+    f: def[dtype: DType](x: Scalar[dtype]) capturing thin -> Scalar[dtype] where dtype.is_floating_point(),
     *,
     method: String = "bisect",
 ](
@@ -104,7 +105,7 @@ def root_scalar[
     atol: Scalar[dtype] = 1e-8,
     rtol: Scalar[dtype] = 1e-8,
     maxiter: Int = 100,
-) raises -> RootResult[dtype]:
+) raises -> RootResult[dtype] where dtype.is_floating_point():
     """Finds a root of a scalar function (args-free bisect/secant overload).
 
     For functions that do not need `args`: `f` takes only `x`, so extra
@@ -140,7 +141,7 @@ def root_scalar[
         dtype2: DType
     ](
         x: Scalar[dtype2], args: Optional[List[Scalar[dtype2]]]
-    ) capturing -> Scalar[dtype2]:
+    ) capturing -> Scalar[dtype2] where dtype2.is_floating_point():
         return f(x)
 
     return root_scalar[dtype, _with_args, method=method](
@@ -152,10 +153,10 @@ def root_scalar[
     dtype: DType,
     f: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing -> Scalar[dtype],
+    ) capturing thin -> Scalar[dtype] where dtype.is_floating_point(),
     fprime: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing -> Scalar[dtype],
+    ) capturing thin -> Scalar[dtype] where dtype.is_floating_point(),
     *,
     method: String = "newton",
 ](
@@ -166,7 +167,7 @@ def root_scalar[
     atol: Scalar[dtype] = 1e-8,
     rtol: Scalar[dtype] = 1e-8,
     maxiter: Int = 100,
-) raises -> RootResult[dtype]:
+) raises -> RootResult[dtype] where dtype.is_floating_point():
     """Finds a root of a scalar function (newton-enabled overload).
 
     Parameters:
@@ -229,8 +230,8 @@ def root_scalar[
 
 def root_scalar[
     dtype: DType,
-    f: def[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype],
-    fprime: def[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype],
+    f: def[dtype: DType](x: Scalar[dtype]) capturing thin -> Scalar[dtype] where dtype.is_floating_point(),
+    fprime: def[dtype: DType](x: Scalar[dtype]) capturing thin -> Scalar[dtype] where dtype.is_floating_point(),
     *,
     method: String = "newton",
 ](
@@ -240,7 +241,7 @@ def root_scalar[
     atol: Scalar[dtype] = 1e-8,
     rtol: Scalar[dtype] = 1e-8,
     maxiter: Int = 100,
-) raises -> RootResult[dtype]:
+) raises -> RootResult[dtype] where dtype.is_floating_point():
     """Finds a root of a scalar function (args-free newton-enabled overload).
 
     For functions that do not need `args`: `f` and `fprime` take only `x`,
@@ -276,14 +277,14 @@ def root_scalar[
         dtype2: DType
     ](
         x: Scalar[dtype2], args: Optional[List[Scalar[dtype2]]]
-    ) capturing -> Scalar[dtype2]:
+    ) capturing -> Scalar[dtype2] where dtype2.is_floating_point():
         return f(x)
 
     def _fprime_with_args[
         dtype2: DType
     ](
         x: Scalar[dtype2], args: Optional[List[Scalar[dtype2]]]
-    ) capturing -> Scalar[dtype2]:
+    ) capturing -> Scalar[dtype2] where dtype2.is_floating_point():
         return fprime(x)
 
     return root_scalar[dtype, _f_with_args, _fprime_with_args, method=method](
@@ -295,17 +296,17 @@ def newton[
     dtype: DType,
     f: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing -> Scalar[dtype],
+    ) capturing thin -> Scalar[dtype] where dtype.is_floating_point(),
     fprime: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing -> Scalar[dtype],
+    ) capturing thin -> Scalar[dtype] where dtype.is_floating_point(),
 ](
     args: Optional[List[Scalar[dtype]]],
     x0: Optional[Scalar[dtype]] = None,
     atol: Scalar[dtype] = 1e-8,
     rtol: Scalar[dtype] = 1e-8,
     maxiter: Int = 100,
-) raises -> RootResult[dtype]:
+) raises -> RootResult[dtype] where dtype.is_floating_point():
     """Finds a root using Newton-Raphson.
 
     Parameters:
@@ -381,14 +382,14 @@ def bisect[
     dtype: DType,
     f: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing -> Scalar[dtype],
+    ) capturing thin -> Scalar[dtype] where dtype.is_floating_point(),
 ](
     args: Optional[List[Scalar[dtype]]],
     bracket: Tuple[Scalar[dtype], Scalar[dtype]],
     atol: Scalar[dtype] = 1e-8,
     rtol: Scalar[dtype] = 1e-8,
     maxiter: Int = 100,
-) raises -> RootResult[dtype]:
+) raises -> RootResult[dtype] where dtype.is_floating_point():
     """Finds a root using bisection.
 
     Parameters:
@@ -468,13 +469,13 @@ def bisect[
 
 def bisect[
     dtype: DType,
-    f: def[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype],
+    f: def[dtype: DType](x: Scalar[dtype]) capturing thin -> Scalar[dtype] where dtype.is_floating_point(),
 ](
     bracket: Tuple[Scalar[dtype], Scalar[dtype]],
     atol: Scalar[dtype] = 1e-8,
     rtol: Scalar[dtype] = 1e-8,
     maxiter: Int = 100,
-) raises -> RootResult[dtype]:
+) raises -> RootResult[dtype] where dtype.is_floating_point():
     """Finds a root using bisection (args-free overload).
 
     For functions that do not need `args`: `f` takes only `x`, so extra
@@ -501,7 +502,7 @@ def bisect[
         dtype2: DType
     ](
         x: Scalar[dtype2], args: Optional[List[Scalar[dtype2]]]
-    ) capturing -> Scalar[dtype2]:
+    ) capturing -> Scalar[dtype2] where dtype2.is_floating_point():
         return f(x)
 
     return bisect[dtype, _with_args](None, bracket, atol, rtol, maxiter)
@@ -511,14 +512,14 @@ def brent[
     dtype: DType,
     f: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing -> Scalar[dtype],
+    ) capturing thin -> Scalar[dtype] where dtype.is_floating_point(),
 ](
     args: Optional[List[Scalar[dtype]]],
     bracket: Tuple[Scalar[dtype], Scalar[dtype]],
     atol: Scalar[dtype] = 1e-8,
     rtol: Scalar[dtype] = 1e-8,
     maxiter: Int = 100,
-) raises -> RootResult[dtype]:
+) raises -> RootResult[dtype] where dtype.is_floating_point():
     """Finds a root using Brent's method.
 
     Parameters:
@@ -659,13 +660,13 @@ def brent[
 
 def brent[
     dtype: DType,
-    f: def[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype],
+    f: def[dtype: DType](x: Scalar[dtype]) capturing thin -> Scalar[dtype] where dtype.is_floating_point(),
 ](
     bracket: Tuple[Scalar[dtype], Scalar[dtype]],
     atol: Scalar[dtype] = 1e-8,
     rtol: Scalar[dtype] = 1e-8,
     maxiter: Int = 100,
-) raises -> RootResult[dtype]:
+) raises -> RootResult[dtype] where dtype.is_floating_point():
     """Finds a root using Brent's method (args-free overload).
 
     For functions that do not need `args`: `f` takes only `x`, so extra
@@ -692,7 +693,7 @@ def brent[
         dtype2: DType
     ](
         x: Scalar[dtype2], args: Optional[List[Scalar[dtype2]]]
-    ) capturing -> Scalar[dtype2]:
+    ) capturing -> Scalar[dtype2] where dtype2.is_floating_point():
         return f(x)
 
     return brent[dtype, _with_args](None, bracket, atol, rtol, maxiter)
@@ -702,7 +703,7 @@ def secant[
     dtype: DType,
     f: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing -> Scalar[dtype],
+    ) capturing thin -> Scalar[dtype] where dtype.is_floating_point(),
 ](
     args: Optional[List[Scalar[dtype]]],
     x0: Scalar[dtype],
@@ -710,7 +711,7 @@ def secant[
     atol: Scalar[dtype] = 1e-8,
     rtol: Scalar[dtype] = 1e-8,
     maxiter: Int = 100,
-) raises -> RootResult[dtype]:
+) raises -> RootResult[dtype] where dtype.is_floating_point():
     """Finds a root using the secant method.
 
     Parameters:
@@ -795,14 +796,14 @@ def secant[
 
 def secant[
     dtype: DType,
-    f: def[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype],
+    f: def[dtype: DType](x: Scalar[dtype]) capturing thin -> Scalar[dtype] where dtype.is_floating_point(),
 ](
     x0: Scalar[dtype],
     x1: Scalar[dtype],
     atol: Scalar[dtype] = 1e-8,
     rtol: Scalar[dtype] = 1e-8,
     maxiter: Int = 100,
-) raises -> RootResult[dtype]:
+) raises -> RootResult[dtype] where dtype.is_floating_point():
     """Finds a root using the secant method (args-free overload).
 
     For functions that do not need `args`: `f` takes only `x`, so extra
@@ -830,7 +831,7 @@ def secant[
         dtype2: DType
     ](
         x: Scalar[dtype2], args: Optional[List[Scalar[dtype2]]]
-    ) capturing -> Scalar[dtype2]:
+    ) capturing -> Scalar[dtype2] where dtype2.is_floating_point():
         return f(x)
 
     return secant[dtype, _with_args](None, x0, x1, atol, rtol, maxiter)
@@ -838,14 +839,14 @@ def secant[
 
 def newton[
     dtype: DType,
-    f: def[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype],
-    fprime: def[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype],
+    f: def[dtype: DType](x: Scalar[dtype]) capturing thin -> Scalar[dtype] where dtype.is_floating_point(),
+    fprime: def[dtype: DType](x: Scalar[dtype]) capturing thin -> Scalar[dtype] where dtype.is_floating_point(),
 ](
     x0: Optional[Scalar[dtype]] = None,
     atol: Scalar[dtype] = 1e-8,
     rtol: Scalar[dtype] = 1e-8,
     maxiter: Int = 100,
-) raises -> RootResult[dtype]:
+) raises -> RootResult[dtype] where dtype.is_floating_point():
     """Finds a root using Newton-Raphson (args-free overload).
 
     For functions that do not need `args`: `f` and `fprime` take only `x`,
@@ -876,14 +877,14 @@ def newton[
         dtype2: DType
     ](
         x: Scalar[dtype2], args: Optional[List[Scalar[dtype2]]]
-    ) capturing -> Scalar[dtype2]:
+    ) capturing -> Scalar[dtype2] where dtype2.is_floating_point():
         return f(x)
 
     def _fprime_with_args[
         dtype2: DType
     ](
         x: Scalar[dtype2], args: Optional[List[Scalar[dtype2]]]
-    ) capturing -> Scalar[dtype2]:
+    ) capturing -> Scalar[dtype2] where dtype2.is_floating_point():
         return fprime(x)
 
     return newton[dtype, _f_with_args, _fprime_with_args](

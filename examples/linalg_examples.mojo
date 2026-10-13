@@ -1,7 +1,8 @@
 """
 A tour of `scijo.linalg`: matrix decompositions (`lu`, `qr`, `cholesky`),
-linear system solvers (`solve`, `solve_triangular`, `inv`, `pinv`,
-`lstsq`), and norms (`norm`, `det`, `trace`).
+eigenvalues/SVD (`eigh`, `eigvalsh`, `svd`, `svdvals`, `matrix_rank`,
+`cond`), linear system solvers (`solve`, `solve_triangular`, `inv`,
+`pinv`, `lstsq`), and norms (`norm`, `det`, `trace`).
 
 Run with (from the repository root, after `pixi run package`):
 
@@ -20,16 +21,22 @@ import numojo as nm
 # ===----------------------------------------------------------------------=== #
 from scijo.linalg import (
     cholesky,
+    cond,
     det,
+    eigh,
+    eigvalsh,
     inv,
     lstsq,
     lu,
     matmul,
+    matrix_rank,
     norm,
     pinv,
     qr,
     solve,
     solve_triangular,
+    svd,
+    svdvals,
     trace,
 )
 from scijo.prelude import *
@@ -37,6 +44,7 @@ from scijo.prelude import *
 
 def main() raises:
     decompositions()
+    eigenvalues_and_svd()
     solving()
     norms_and_scalars()
 
@@ -67,6 +75,31 @@ def decompositions() raises:
     var L2 = cholesky(C)
     print("C == L @ L.T:")
     print(matmul(L2, nm.transpose(L2)))
+
+
+# ===----------------------------------------------------------------------=== #
+# Eigenvalues and SVD
+# ===----------------------------------------------------------------------=== #
+
+
+def eigenvalues_and_svd() raises:
+    var A = nm.fromstring[f64]("[[2, 1], [1, 2]]")
+    var w_v = eigh(A)
+    print("eigh(A) eigenvalues:")
+    print(w_v[0])
+    print("eigh(A) eigenvectors (columns):")
+    print(w_v[1])
+    print("eigvalsh(A):")
+    print(eigvalsh(A))
+
+    var B = nm.fromstring[f64]("[[1, 2], [3, 4], [5, 6]]")
+    var usvt = svd(B)
+    print("svd(B) singular values:")
+    print(usvt[1])
+    print("svdvals(B):")
+    print(svdvals(B))
+    print("cond(B):", cond(B))
+    print("matrix_rank(B):", matrix_rank(B))
 
 
 # ===----------------------------------------------------------------------=== #

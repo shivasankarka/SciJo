@@ -132,13 +132,13 @@ def _brent_minimize[
     dtype: DType,
     f: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing -> Scalar[dtype],
+    ) capturing thin -> Scalar[dtype] where dtype.is_floating_point(),
 ](
     args: Optional[List[Scalar[dtype]]],
     bracket: Tuple[Scalar[dtype], Scalar[dtype]],
     tol: Scalar[dtype],
     maxiter: Int,
-) raises -> OptimizeResult[dtype]:
+) raises -> OptimizeResult[dtype] where dtype.is_floating_point():
     var a: Scalar[dtype] = bracket[0]
     var b: Scalar[dtype] = bracket[1]
 
@@ -272,13 +272,13 @@ def _golden_minimize[
     dtype: DType,
     f: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing -> Scalar[dtype],
+    ) capturing thin -> Scalar[dtype] where dtype.is_floating_point(),
 ](
     args: Optional[List[Scalar[dtype]]],
     bounds: Tuple[Scalar[dtype], Scalar[dtype]],
     tol: Scalar[dtype],
     maxiter: Int,
-) raises -> OptimizeResult[dtype]:
+) raises -> OptimizeResult[dtype] where dtype.is_floating_point():
     var a: Scalar[dtype] = bounds[0]
     var b: Scalar[dtype] = bounds[1]
 
@@ -340,13 +340,13 @@ def _bounded_minimize[
     dtype: DType,
     f: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing -> Scalar[dtype],
+    ) capturing thin -> Scalar[dtype] where dtype.is_floating_point(),
 ](
     args: Optional[List[Scalar[dtype]]],
     bounds: Tuple[Scalar[dtype], Scalar[dtype]],
     tol: Scalar[dtype],
     maxiter: Int,
-) raises -> OptimizeResult[dtype]:
+) raises -> OptimizeResult[dtype] where dtype.is_floating_point():
     var a: Scalar[dtype] = bounds[0]
     var b: Scalar[dtype] = bounds[1]
 
@@ -455,7 +455,7 @@ def minimize_scalar[
     dtype: DType,
     f: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing -> Scalar[dtype],
+    ) capturing thin -> Scalar[dtype] where dtype.is_floating_point(),
     *,
     method: String = "Brent",
 ](
@@ -464,7 +464,7 @@ def minimize_scalar[
     args: Optional[List[Scalar[dtype]]] = None,
     atol: Scalar[dtype] = 1e-8,
     maxiter: Int = 500,
-) raises -> OptimizeResult[dtype]:
+) raises -> OptimizeResult[dtype] where dtype.is_floating_point():
     """Minimize a scalar function using the specified method.
 
     Parameters:
@@ -540,7 +540,7 @@ def minimize_scalar[
 
 def minimize_scalar[
     dtype: DType,
-    f: def[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype],
+    f: def[dtype: DType](x: Scalar[dtype]) capturing thin -> Scalar[dtype] where dtype.is_floating_point(),
     *,
     method: String = "Brent",
 ](
@@ -548,7 +548,7 @@ def minimize_scalar[
     bounds: Optional[Tuple[Scalar[dtype], Scalar[dtype]]] = None,
     atol: Scalar[dtype] = 1e-8,
     maxiter: Int = 500,
-) raises -> OptimizeResult[dtype]:
+) raises -> OptimizeResult[dtype] where dtype.is_floating_point():
     """Minimize a scalar function using the specified method (args-free overload).
 
     For functions that do not need `args`: `f` takes only `x`, so extra
@@ -597,7 +597,7 @@ def minimize_scalar[
         dtype2: DType
     ](
         x: Scalar[dtype2], args: Optional[List[Scalar[dtype2]]]
-    ) capturing -> Scalar[dtype2]:
+    ) capturing -> Scalar[dtype2] where dtype2.is_floating_point():
         return f(x)
 
     return minimize_scalar[dtype, _with_args, method=method](

@@ -4,8 +4,7 @@
 # ===----------------------------------------------------------------------=== #
 """Multi-Dimensional Minimization (`scijo.optimize.minimize`)
 =============================================================
-Minimization for scalar-valued functions of several variables, matching
-`scipy.optimize.minimize`'s frontend signature.
+Minimization for scalar-valued functions of several variables.
 """
 
 # ===----------------------------------------------------------------------=== #
@@ -34,7 +33,7 @@ def minimize[
     dtype: DType,
     f: def[dtype: DType](
         x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing raises -> Scalar[dtype],
+    ) capturing raises thin -> Scalar[dtype] where dtype.is_floating_point(),
     *,
     method: String = "Nelder-Mead",
 ](
@@ -44,12 +43,12 @@ def minimize[
     fatol: Scalar[dtype] = 1e-4,
     maxiter: Int = 1000,
     initial_step: Scalar[dtype] = 0.05,
-) raises -> OptimizeResultVector[dtype]:
+) raises -> OptimizeResultVector[dtype] where dtype.is_floating_point():
     """Minimizes a scalar-valued function of several variables.
 
     `f` must map `R^n -> R`. Uses the Nelder-Mead simplex algorithm, which
     is derivative-free: it only ever evaluates `f`, never a gradient or
-    Hessian, matching `scipy.optimize.minimize(..., method="Nelder-Mead")`.
+    Hessian.
 
     Parameters:
         dtype: The floating-point data type.
@@ -104,7 +103,7 @@ def minimize[
 
 def minimize[
     dtype: DType,
-    f: def[dtype: DType](x: NDArray[dtype]) capturing raises -> Scalar[dtype],
+    f: def[dtype: DType](x: NDArray[dtype]) capturing raises thin -> Scalar[dtype] where dtype.is_floating_point(),
     *,
     method: String = "Nelder-Mead",
 ](
@@ -113,7 +112,7 @@ def minimize[
     fatol: Scalar[dtype] = 1e-4,
     maxiter: Int = 1000,
     initial_step: Scalar[dtype] = 0.05,
-) raises -> OptimizeResultVector[dtype]:
+) raises -> OptimizeResultVector[dtype] where dtype.is_floating_point():
     """Minimizes a scalar-valued function of several variables (args-free overload).
 
     For functions that do not need `args`: `f` takes only `x`, so extra
@@ -147,7 +146,7 @@ def minimize[
         dtype2: DType
     ](
         x: NDArray[dtype2], args: Optional[List[Scalar[dtype2]]]
-    ) capturing raises -> Scalar[dtype2]:
+    ) capturing raises -> Scalar[dtype2] where dtype2.is_floating_point():
         return f(x)
 
     return minimize[dtype, _with_args, method=method](
@@ -176,7 +175,7 @@ def _nelder_mead[
     dtype: DType,
     f: def[dtype: DType](
         x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing raises -> Scalar[dtype],
+    ) capturing raises thin -> Scalar[dtype] where dtype.is_floating_point(),
 ](
     x0: NDArray[dtype],
     args: Optional[List[Scalar[dtype]]],
@@ -184,7 +183,7 @@ def _nelder_mead[
     fatol: Scalar[dtype],
     maxiter: Int,
     initial_step: Scalar[dtype],
-) raises -> OptimizeResultVector[dtype]:
+) raises -> OptimizeResultVector[dtype] where dtype.is_floating_point():
     """Nelder-Mead simplex minimization."""
     var n = x0.size
     if n == 0:

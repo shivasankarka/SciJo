@@ -7,8 +7,7 @@
 Forward and inverse FFT over one or more axes of an N-dimensional complex
 array, built on top of the 1-D Cooley-Tukey `fft`/`ifft` in
 `scijo.fft.fastfourier`. Each requested axis is transformed independently by
-applying the 1-D transform to every line along that axis, matching
-`scipy.fft.fftn`/`ifftn`/`fft2`/`ifft2`.
+applying the 1-D transform to every line along that axis.
 
 Constraints
 -----------
@@ -157,7 +156,7 @@ def fftn[
     """Computes the N-dimensional Fast Fourier Transform.
 
     Applies the 1-D Cooley-Tukey `fft` independently along each of the
-    requested axes, matching `scipy.fft.fftn`.
+    requested axes.
 
     Parameters:
         cdtype: The data type of the complex elements (ComplexDType).
@@ -205,8 +204,7 @@ def ifftn[
     """Computes the N-dimensional Inverse Fast Fourier Transform.
 
     Applies the unnormalized inverse 1-D `fft` independently along each of
-    the requested axes and then normalizes by the product of their lengths,
-    matching `scipy.fft.ifftn`.
+    the requested axes and then normalizes by the product of their lengths.
 
     Parameters:
         cdtype: The data type of the complex elements (ComplexDType).
@@ -267,8 +265,7 @@ def fft2[
 ) raises -> ComplexNDArray[cdtype] where cdtype.dtype.is_floating_point():
     """Computes the 2-dimensional Fast Fourier Transform.
 
-    Convenience wrapper over `fftn` that transforms exactly two axes,
-    matching `scipy.fft.fft2`.
+    Convenience wrapper over `fftn` that transforms exactly two axes.
 
     Parameters:
         cdtype: The data type of the complex elements (ComplexDType).
@@ -308,8 +305,7 @@ def ifft2[
 ) raises -> ComplexNDArray[cdtype] where cdtype.dtype.is_floating_point():
     """Computes the 2-dimensional Inverse Fast Fourier Transform.
 
-    Convenience wrapper over `ifftn` that transforms exactly two axes,
-    matching `scipy.fft.ifft2`.
+    Convenience wrapper over `ifftn` that transforms exactly two axes.
 
     Parameters:
         cdtype: The data type of the complex elements (ComplexDType).

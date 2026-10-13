@@ -4,10 +4,9 @@
 # ===----------------------------------------------------------------------=== #
 """Linalg Module (`scijo.linalg`)
 =================================
-SciPy-style linear algebra: matrix decompositions, linear system solvers,
-and norms. Built on top of NuMojo's linear algebra primitives
-(`numojo.linalg`), with a `scipy.linalg`-compatible surface (e.g.
-1-D right-hand sides, `(P, L, U) = lu(A)`, string-valued `ord` for `norm`).
+Linear algebra: matrix decompositions, eigenvalue/SVD problems, linear
+system solvers, and norms. Built on top of NuMojo's linear algebra
+primitives (`numojo.linalg`).
 
 Available Functions
 --------------------
@@ -47,8 +46,8 @@ Examples
 Not Yet Implemented
 --------------------
 The general (non-symmetric) eigenvalue problem, where eigenvalues may be
-complex (`scipy.linalg.eig`/`eigvals`), is not yet available and is
-tracked as future work. `eigh`/`eigvalsh` cover the symmetric case.
+complex, is not yet available and is tracked as future work.
+`eigh`/`eigvalsh` cover the symmetric case.
 """
 
 # ===----------------------------------------------------------------------=== #

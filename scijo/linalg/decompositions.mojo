@@ -4,8 +4,8 @@
 # ===----------------------------------------------------------------------=== #
 """Matrix Decompositions (`scijo.linalg.decompositions`)
 ========================================================
-SciPy-style matrix decomposition wrappers built on top of NuMojo's linear
-algebra primitives.
+Matrix decomposition wrappers built on top of NuMojo's linear algebra
+primitives.
 
 Examples
 --------
@@ -42,9 +42,9 @@ def lu[
 ]:
     """Compute the pivoted LU decomposition of a square matrix.
 
-    Matches `scipy.linalg.lu`: returns `(P, L, U)` such that
-    `A == P @ L @ U`, where `P` is a permutation matrix, `L` is unit
-    lower triangular, and `U` is upper triangular.
+    Returns `(P, L, U)` such that `A == P @ L @ U`, where `P` is a
+    permutation matrix, `L` is unit lower triangular, and `U` is upper
+    triangular.
 
     Parameters:
         dtype: Data type of the input and output matrices.
@@ -120,8 +120,7 @@ def cholesky[
         A: Symmetric positive-definite matrix of shape `(n, n)`.
         lower: If `True` (default), return the lower-triangular factor `L`
             such that `A == L @ L.T`. If `False`, return the
-            upper-triangular factor `U == L.T` such that `A == U.T @ U`,
-            matching `scipy.linalg.cholesky`'s default `lower=False`.
+            upper-triangular factor `U == L.T` such that `A == U.T @ U`.
 
     Returns:
         The Cholesky factor, lower- or upper-triangular per `lower`.

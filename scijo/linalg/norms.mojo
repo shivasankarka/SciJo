@@ -4,7 +4,7 @@
 # ===----------------------------------------------------------------------=== #
 """Norms (`scijo.linalg.norms`)
 ===============================
-SciPy-style vector/matrix norms.
+Vector and matrix norms.
 
 Examples
 --------
@@ -28,20 +28,25 @@ from std.math import sqrt
 from numojo.core.error import NumojoError
 from numojo.core.ndarray import NDArray
 
+# ===----------------------------------------------------------------------=== #
+# SciJo
+# ===----------------------------------------------------------------------=== #
+from scijo.linalg.svd import svdvals as _svdvals
+
 
 def norm[
     dtype: DType
 ](x: NDArray[dtype], ord: String = "") raises -> Scalar[dtype]:
-    """Compute a vector or matrix norm, matching `scipy.linalg.norm`.
+    """Compute a vector or matrix norm.
 
     For a 1-D `x`, supported `ord` values are `"1"` (sum of absolute
     values), `"2"` or `""` (Euclidean norm, default), and `"inf"`
     (maximum absolute value).
 
     For a 2-D `x`, supported `ord` values are `"fro"` or `""`
-    (Frobenius norm, default), `"1"` (maximum absolute column sum), and
-    `"inf"` (maximum absolute row sum). The induced 2-norm (largest
-    singular value) is not yet supported, as it requires an SVD.
+    (Frobenius norm, default), `"1"` (maximum absolute column sum),
+    `"inf"` (maximum absolute row sum), and `"2"` (the induced 2-norm,
+    i.e. the largest singular value, via `svdvals`).
 
     Parameters:
         dtype: Data type of the input array and the returned norm.
@@ -115,13 +120,21 @@ def norm[
                 if row_sum > best:
                     best = row_sum
             return best
+        elif ord == "2":
+            var s = _svdvals[dtype](x)
+            var largest: Scalar[dtype] = 0
+            for i in range(len(s)):
+                var v = s.load(i)
+                if v > largest:
+                    largest = v
+            return largest
         else:
             raise Error(
                 NumojoError(
                     category="value",
                     message="Unsupported ord '"
                     + ord
-                    + "' for a matrix; use 'fro', '1', or 'inf'.",
+                    + "' for a matrix; use 'fro', '1', '2', or 'inf'.",
                     location="norm",
                 )
             )

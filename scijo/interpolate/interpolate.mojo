@@ -41,7 +41,7 @@ from scijo.interpolate.utility import (
 
 
 struct LinearInterpolator[dtype: DType = DType.float64](Copyable, Movable):
-    """A callable linear interpolation object similar to scipy.interpolate.interp1d.
+    """A callable linear interpolation object.
 
     Stores the interpolation data (x, y) and provides a callable interface that
     can interpolate single values or arrays of values using binary search.
@@ -210,7 +210,7 @@ struct LinearInterpolator[dtype: DType = DType.float64](Copyable, Movable):
 struct CubicSpline[dtype: DType = DType.float64, bc_type: String = "natural"](
     Copyable, Movable
 ):
-    """A callable natural cubic spline interpolator, matching scipy.interpolate.CubicSpline.
+    """A callable natural cubic spline interpolator.
 
     Constructs a piecewise cubic polynomial that passes through all data points
     with continuous first and second derivatives. Only `bc_type="natural"` is
@@ -410,7 +410,7 @@ struct CubicSpline[dtype: DType = DType.float64, bc_type: String = "natural"](
 
 
 struct Akima1DInterpolator[dtype: DType = DType.float64](Copyable, Movable):
-    """A callable Akima piecewise cubic interpolator, matching scipy.interpolate.Akima1DInterpolator.
+    """A callable Akima piecewise cubic interpolator.
 
     Uses locally-weighted slopes to build a piecewise cubic Hermite polynomial
     that avoids spurious oscillations near outliers.
@@ -470,9 +470,8 @@ struct Akima1DInterpolator[dtype: DType = DType.float64](Copyable, Movable):
         # Extend the slope sequence by two quadratically-extrapolated
         # "phantom" slopes on each side (Akima's original prescription),
         # so the same weighted-average formula applies uniformly at every
-        # point, including the boundaries - matches
-        # `scipy.interpolate.Akima1DInterpolator` exactly, unlike treating
-        # the two boundary points and their neighbors as special cases.
+        # point, including the boundaries, rather than treating the two
+        # boundary points and their neighbors as special cases.
         var mm = NDArray[Self.dtype](Shape(n + 3))
         for i in range(n - 1):
             mm.unsafe_store(i + 2, slopes.unsafe_load(i))
@@ -945,8 +944,7 @@ def _interp1d_akima_interpolate[
     """Akima 1D interpolation with boundary clamping.
 
     Delegates to `Akima1DInterpolator` so both entry points share one
-    (scipy-matching) implementation of the boundary-extended weighted-slope
-    formula.
+    implementation of the boundary-extended weighted-slope formula.
     """
     var ak = Akima1DInterpolator[dtype](x, y)
     return ak(xi)

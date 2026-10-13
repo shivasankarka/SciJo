@@ -272,7 +272,7 @@ def simpson[
     if y.size % 2 == 0:
         # One interval left over: integrate it as the second half of the
         # quadratic interpolant through the last three points, not a plain
-        # trapezoid over the last interval - matches scipy.integrate.simpson.
+        # trapezoid over the last interval.
         var y0 = y.item(y.size - 3)
         var y1 = y.item(y.size - 2)
         var y2 = y.item(y.size - 1)
@@ -295,8 +295,7 @@ def simpson[
     Computes ∫ y(x) dx along the parametric curve defined by `x` and `y`,
     supporting non-uniform spacing. For arrays with an even number of
     points, the last interval is integrated as the second half of the
-    quadratic interpolant through the final three points, matching
-    `scipy.integrate.simpson`'s even-length fallback.
+    quadratic interpolant through the final three points.
 
     Parameters:
         dtype: The floating-point data type.
@@ -385,9 +384,8 @@ def simpson[
 
     if y.size % 2 == 0:
         # One interval left over: integrate it as the second half of the
-        # quadratic interpolant through the last three points (matching
-        # scipy.integrate.simpson's even-length fallback), generalized to
-        # unequal spacing between the last three x values.
+        # quadratic interpolant through the last three points, generalized
+        # to unequal spacing between the last three x values.
         var h0 = x.item(x.size - 2) - x.item(x.size - 3)
         var h1 = x.item(x.size - 1) - x.item(x.size - 2)
         var y0 = y.item(y.size - 3)
@@ -528,8 +526,7 @@ def cumulative_trapezoid[
 ) raises -> NDArray[dtype] where dtype.is_floating_point():
     """Cumulatively integrates y using the composite trapezoidal rule.
 
-    Returns an array of the running integral, matching
-    `scipy.integrate.cumulative_trapezoid`. The output has length ``n-1``
+    Returns an array of the running integral. The output has length ``n-1``
     when `initial` is None, or length ``n`` when an `initial` value is given
     (prepended as the first element).
 
@@ -599,7 +596,7 @@ def cumulative_trapezoid[
     """Cumulatively integrates y(x) using the composite trapezoidal rule.
 
     Non-uniform spacing version — spacing is taken from successive differences
-    in `x`. Matches `scipy.integrate.cumulative_trapezoid`.
+    in `x`.
 
     Parameters:
         dtype: The floating-point data type.
@@ -688,13 +685,11 @@ def cumulative_simpson[
 
     Each output element i (0-based, before prepending `initial`) is the
     integral over ``y[0..2i+2]`` using composite Simpson's rule applied to
-    each consecutive triple ``(y[2i], y[2i+1], y[2i+2])``. Matches
-    `scipy.integrate.cumulative_simpson` for even-length inputs.
+    each consecutive triple ``(y[2i], y[2i+1], y[2i+2])``.
 
     Requires an odd number of samples (even number of intervals). For an
     even number of samples, the last interval is integrated as the second
-    half of the quadratic interpolant through the final three points,
-    matching `scipy.integrate.cumulative_simpson`'s even-length fallback.
+    half of the quadratic interpolant through the final three points.
 
     Parameters:
         dtype: The floating-point data type.
@@ -721,7 +716,6 @@ def cumulative_simpson[
 
         var y = nm.array[f64]([1.0, 4.0, 1.0, 4.0, 1.0])
         var cum = cumulative_simpson(y, dx=1.0, initial=0.0)
-        # matches scipy.integrate.cumulative_simpson
         ```
     """
     if y.ndim != 1:
@@ -763,7 +757,7 @@ def cumulative_simpson[
     if i == n - 2:
         # One interval left over (n even): integrate it as the second half
         # of the quadratic interpolant through the last three points, not
-        # a plain trapezoid - matches scipy's even-length fallback.
+        # a plain trapezoid.
         var y0 = y.unsafe_load(i - 1)
         var y1 = y.unsafe_load(i)
         var y2 = y.unsafe_load(i + 1)

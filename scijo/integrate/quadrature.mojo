@@ -4,14 +4,12 @@
 # ===----------------------------------------------------------------------=== #
 """Quadrature Integration (`scijo.integrate.quadrature`)
 ========================================================
-General-purpose numerical integration using a SciPy-like frontend signature.
-This module exposes `quad`, dispatching to QNG, QAG, or QAGS quadrature, all
-built on the Gauss-Kronrod rules and adaptive-subdivision priority queue in
+General-purpose numerical integration. This module exposes `quad`,
+dispatching to QNG, QAG, or QAGS quadrature, all built on the
+Gauss-Kronrod rules and adaptive-subdivision priority queue in
 `scijo.integrate.utility`.
 
 References:
-    - SciPy quad documentation:
-      https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.quad.html
     - Netlib QUADPACK: https://www.netlib.org/quadpack/
 """
 
@@ -514,7 +512,7 @@ def quad[
     dtype: DType,
     integrand_func: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing -> Scalar[dtype],
+    ) capturing thin -> Scalar[dtype] where dtype.is_floating_point(),
     *,
     method: String = "qng",
     qag_rule: Int = 2,

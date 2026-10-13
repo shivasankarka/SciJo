@@ -4,8 +4,8 @@
 # ===----------------------------------------------------------------------=== #
 """Multi-Dimensional Root-Finding (`scijo.optimize.root`)
 =========================================================
-Root-finding for vector-valued functions, matching `scipy.optimize.root`'s
-frontend signature.
+Root-finding for vector-valued functions: Newton's method (with a
+finite-difference or analytic Jacobian) and Broyden's method.
 """
 
 # ===----------------------------------------------------------------------=== #
@@ -28,7 +28,7 @@ def root[
     dtype: DType,
     f: def[dtype: DType](
         x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing raises -> NDArray[dtype],
+    ) capturing raises thin -> NDArray[dtype] where dtype.is_floating_point(),
     *,
     method: String = "newton",
 ](
@@ -38,7 +38,7 @@ def root[
     rtol: Scalar[dtype] = 1e-8,
     maxiter: Int = 100,
     fd_step: Scalar[dtype] = 1e-6,
-) raises -> RootResultVector[dtype]:
+) raises -> RootResultVector[dtype] where dtype.is_floating_point():
     """Finds a root of a vector-valued function (finite-difference overload).
 
     `f` must map `R^n -> R^n` (as many outputs as inputs), so that the
@@ -88,10 +88,10 @@ def root[
     dtype: DType,
     f: def[dtype: DType](
         x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing raises -> NDArray[dtype],
+    ) capturing raises thin -> NDArray[dtype] where dtype.is_floating_point(),
     jac: def[dtype: DType](
         x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing raises -> NDArray[dtype],
+    ) capturing raises thin -> NDArray[dtype] where dtype.is_floating_point(),
     *,
     method: String = "newton",
 ](
@@ -100,7 +100,7 @@ def root[
     atol: Scalar[dtype] = 1e-8,
     rtol: Scalar[dtype] = 1e-8,
     maxiter: Int = 100,
-) raises -> RootResultVector[dtype]:
+) raises -> RootResultVector[dtype] where dtype.is_floating_point():
     """Finds a root of a vector-valued function (analytic-Jacobian overload).
 
     Parameters:
@@ -131,7 +131,7 @@ def root[
 
 def root[
     dtype: DType,
-    f: def[dtype: DType](x: NDArray[dtype]) capturing raises -> NDArray[dtype],
+    f: def[dtype: DType](x: NDArray[dtype]) capturing raises thin -> NDArray[dtype] where dtype.is_floating_point(),
     *,
     method: String = "newton",
 ](
@@ -140,7 +140,7 @@ def root[
     rtol: Scalar[dtype] = 1e-8,
     maxiter: Int = 100,
     fd_step: Scalar[dtype] = 1e-6,
-) raises -> RootResultVector[dtype]:
+) raises -> RootResultVector[dtype] where dtype.is_floating_point():
     """Finds a root of a vector-valued function (args-free finite-difference overload).
 
     For functions that do not need `args`: `f` takes only `x`, so extra
@@ -174,7 +174,7 @@ def root[
         dtype2: DType
     ](
         x: NDArray[dtype2], args: Optional[List[Scalar[dtype2]]]
-    ) capturing raises -> NDArray[dtype2]:
+    ) capturing raises -> NDArray[dtype2] where dtype2.is_floating_point():
         return f(x)
 
     return root[dtype, _with_args, method=method](
@@ -184,7 +184,7 @@ def root[
 
 def root[
     dtype: DType,
-    f: def[dtype: DType](x: NDArray[dtype]) capturing raises -> NDArray[dtype],
+    f: def[dtype: DType](x: NDArray[dtype]) capturing raises thin -> NDArray[dtype] where dtype.is_floating_point(),
     jac: def[dtype: DType](x: NDArray[dtype]) capturing raises -> NDArray[
         dtype
     ],
@@ -195,7 +195,7 @@ def root[
     atol: Scalar[dtype] = 1e-8,
     rtol: Scalar[dtype] = 1e-8,
     maxiter: Int = 100,
-) raises -> RootResultVector[dtype]:
+) raises -> RootResultVector[dtype] where dtype.is_floating_point():
     """Finds a root of a vector-valued function (args-free analytic-Jacobian overload).
 
     For functions that do not need `args`: `f` and `jac` take only `x`, so
@@ -228,14 +228,14 @@ def root[
         dtype2: DType
     ](
         x: NDArray[dtype2], args: Optional[List[Scalar[dtype2]]]
-    ) capturing raises -> NDArray[dtype2]:
+    ) capturing raises -> NDArray[dtype2] where dtype2.is_floating_point():
         return f(x)
 
     def _jac_with_args[
         dtype2: DType
     ](
         x: NDArray[dtype2], args: Optional[List[Scalar[dtype2]]]
-    ) capturing raises -> NDArray[dtype2]:
+    ) capturing raises -> NDArray[dtype2] where dtype2.is_floating_point():
         return jac(x)
 
     return root[dtype, _f_with_args, _jac_with_args, method=method](
@@ -247,7 +247,7 @@ def _newton_fd[
     dtype: DType,
     f: def[dtype: DType](
         x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing raises -> NDArray[dtype],
+    ) capturing raises thin -> NDArray[dtype] where dtype.is_floating_point(),
 ](
     x0: NDArray[dtype],
     args: Optional[List[Scalar[dtype]]],
@@ -255,7 +255,7 @@ def _newton_fd[
     rtol: Scalar[dtype],
     maxiter: Int,
     fd_step: Scalar[dtype],
-) raises -> RootResultVector[dtype]:
+) raises -> RootResultVector[dtype] where dtype.is_floating_point():
     """Multivariate Newton's method with a finite-difference Jacobian."""
     var x = x0.copy()
     var n = len(x)
@@ -306,17 +306,17 @@ def _newton_jac[
     dtype: DType,
     f: def[dtype: DType](
         x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing raises -> NDArray[dtype],
+    ) capturing raises thin -> NDArray[dtype] where dtype.is_floating_point(),
     jac: def[dtype: DType](
         x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing raises -> NDArray[dtype],
+    ) capturing raises thin -> NDArray[dtype] where dtype.is_floating_point(),
 ](
     x0: NDArray[dtype],
     args: Optional[List[Scalar[dtype]]],
     atol: Scalar[dtype],
     rtol: Scalar[dtype],
     maxiter: Int,
-) raises -> RootResultVector[dtype]:
+) raises -> RootResultVector[dtype] where dtype.is_floating_point():
     """Multivariate Newton's method with an analytic Jacobian."""
     var x = x0.copy()
     var n = len(x)
@@ -366,14 +366,14 @@ def _broyden1[
     dtype: DType,
     f: def[dtype: DType](
         x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing raises -> NDArray[dtype],
+    ) capturing raises thin -> NDArray[dtype] where dtype.is_floating_point(),
 ](
     x0: NDArray[dtype],
     args: Optional[List[Scalar[dtype]]],
     atol: Scalar[dtype],
     rtol: Scalar[dtype],
     maxiter: Int,
-) raises -> RootResultVector[dtype]:
+) raises -> RootResultVector[dtype] where dtype.is_floating_point():
     """Broyden's "good" method: quasi-Newton root-finding without a Jacobian.
 
     Maintains a running approximation `H` of the inverse Jacobian, starting
