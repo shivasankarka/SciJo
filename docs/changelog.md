@@ -18,8 +18,15 @@ The format is based on "Keep a Changelog" and follows Semantic Versioning.
   - `norm` - vector (`1`/`2`/`inf`) and matrix (`fro`/`1`/`inf`) norms.
   - `det`, `trace` - re-exported from NuMojo.
   - `matmul`, `dot`, `outer`, `kron`, `tensordot`, `cross`, `diagonal` - re-exported from NuMojo for convenience.
-  - Eigenvalues/eigenvectors and SVD are not yet implemented (tracked as a follow-up once available in NuMojo).
+  - The general (non-symmetric) eigenvalue problem, where eigenvalues may be complex, is not yet implemented (tracked as future work).
   - `examples/linalg_examples.mojo` and `tests/test_linalg.mojo` covering the new module.
+- **Eigenvalues and SVD** (`scijo.linalg`):
+  - `eigh` / `eigvalsh` - eigenvalues and eigenvectors of a real symmetric matrix, via the classic cyclic Jacobi eigenvalue algorithm, iterating to a convergence tolerance (not a fixed sweep count).
+  - `svd` / `svdvals` - singular value decomposition via one-sided Jacobi column orthogonalization, supporting rectangular matrices.
+  - `matrix_rank`, `cond` - built on `svdvals`.
+  - `norm`'s matrix `ord="2"` (induced 2-norm / largest singular value) is now implemented, using `svdvals`.
+  - `pinv` rewritten on top of `svd`: now a proper rank-revealing Moore-Penrose pseudo-inverse (`V @ diag(1/s) @ U.T`, zeroing singular values below `rcond` times the largest), rather than full-rank-only.
+  - `examples/linalg_examples.mojo` and `tests/test_linalg.mojo` extended to cover the new functions, including comparisons against NumPy's `eigh`/`svd`.
 - **Multi-dimensional root finding** (`scijo.optimize.root`), for `f: R^n -> R^n`, matching `scipy.optimize.root`'s frontend signature:
   - `method="newton"` (default): `root[dtype, f](x0, ...)` estimates the Jacobian with `scijo.differentiate.jacobian` at every iteration; `root[dtype, f, jac](x0, ...)` takes an analytic Jacobian instead and skips that cost. Solves the Newton linear system at each step with `scijo.linalg.solve`.
   - `method="broyden1"`: Broyden's "good" method, derivative-free - maintains a running approximation of the inverse Jacobian, starting at the identity and refined after every step by a rank-1 (Sherman-Morrison) correction, so `f` is the only function ever evaluated (no finite-difference Jacobian columns, no analytic derivative).
@@ -209,6 +216,19 @@ The format is based on "Keep a Changelog" and follows Semantic Versioning.
   list-literal form; the Integration sample's import path was corrected from
   `scijo.integrate.quad` to `scijo.integrate`. All six samples now compile and
   run as written.
+- Fixed callback-taking public functions (`derivative`, `jacobian`, `hessian`,
+  `root_scalar` and its individual solvers, `minimize_scalar`, `root`) so a
+  callback that itself requires `where dtype.is_floating_point()` (e.g. one
+  that calls `sin`/`cos`/`exp`) can be passed to them. Previously their
+  generic callback-parameter type lacked that constraint, so the
+  supplied-closure's type and the expected parameter type disagreed and the
+  call failed to type-check, even though the constraint holds trivially once
+  the outer `dtype` is fixed to a concrete floating-point type.
+- Removed stray "matching `scipy.X`"-style references scattered through
+  docstrings and module headers across `scijo/`; genuinely useful
+  attributions (e.g. the CODATA data source, the Akima/Simpson algorithmic
+  rationale) were kept, reworded to describe behavior directly rather than
+  by comparison.
 
 ### Removed
 - No removals in this release.
