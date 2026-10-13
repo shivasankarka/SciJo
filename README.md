@@ -70,12 +70,13 @@ Access fundamental physical constants from CODATA 2022:
 - Compatible with `scipy.constants` structure
 
 ### Linear Algebra (`scijo.linalg`)
-SciPy-style linear algebra, built on NuMojo's linalg primitives:
+Linear algebra, built on NuMojo's linalg primitives:
 - **Decompositions**: `lu` (pivoted, `A == P @ L @ U`), `qr` (reduced, Householder), `cholesky` (lower/upper)
-- **Solvers**: `solve`, `solve_triangular`, `inv`, `pinv`, `lstsq` — all accept 1-D or 2-D right-hand sides
-- **Norms**: `norm` (vector `1`/`2`/`inf`, matrix `fro`/`1`/`inf`), `det`, `trace`
+- **Eigenvalues/SVD**: `eigh`/`eigvalsh` (symmetric, via cyclic Jacobi), `svd`/`svdvals` (via one-sided Jacobi), `matrix_rank`, `cond`
+- **Solvers**: `solve`, `solve_triangular`, `inv`, `pinv` (SVD-based, rank-deficient OK), `lstsq` — all accept 1-D or 2-D right-hand sides
+- **Norms**: `norm` (vector `1`/`2`/`inf`, matrix `fro`/`1`/`2`/`inf`), `det`, `trace`
 - Re-exports `matmul`, `dot`, `outer`, `kron`, `tensordot`, `cross`, `diagonal` from NuMojo for convenience
-- Eigenvalues/SVD (and anything derived from them, like matrix 2-norm or rank-deficient `pinv`/`lstsq`) are not yet available
+- The general (non-symmetric) eigenvalue problem (`eig`/`eigvals`, possibly complex eigenvalues) is not yet available
 
 ### Optimization (`scijo.optimize`)
 Scalar and multi-dimensional root-finding, and scalar and multi-dimensional
@@ -304,7 +305,7 @@ def main() raises:
 
 ### Linear Algebra
 ```mojo
-from scijo.linalg import solve, lu, matmul
+from scijo.linalg import eigh, solve, lu, matmul
 import numojo as nm
 
 def main() raises:
@@ -317,6 +318,9 @@ def main() raises:
     var L = PLU[1].copy()
     var U = PLU[2].copy()
     print("A == P @ L @ U:", matmul(P, matmul(L, U)))
+
+    var w_v = eigh(A)
+    print("eigenvalues:", w_v[0])
 ```
 
 See the **[Manual»](docs/MANUAL.md)** for a full prose tour of every module, and
@@ -326,8 +330,8 @@ See the **[Manual»](docs/MANUAL.md)** for a full prose tour of every module, an
 ## Roadmap
 
 ### Near Term
-- Eigenvalues/eigenvectors and SVD for `scijo.linalg` (unblocks matrix 2-norm/condition number and rank-deficient `pinv`/`lstsq`)
 - Gradient-based `scijo.optimize.minimize` methods (e.g. BFGS, CG) alongside the current derivative-free Nelder-Mead
+- The general (non-symmetric) eigenvalue problem for `scijo.linalg.eig`/`eigvals`, where eigenvalues may be complex
 
 ### Future
 - **Optimization**: Curve fitting
@@ -347,6 +351,13 @@ Priority areas:
 ## License
 
 Distributed under the Apache 2.0 License with LLVM Exceptions. See [LICENSE](LICENSE) for more information.
+
+## Acknowledgements
+
+SciJo's API is directly inspired by [SciPy](https://scipy.org), and its test
+suite validates numerical results against SciPy and NumPy throughout. Many
+thanks to the SciPy and NumPy maintainers and communities for decades of
+work on the algorithms, APIs, and documentation that SciJo draws on.
 
 ## Citation
 Feel free to cite SciJo in your work, helps with visibility :)

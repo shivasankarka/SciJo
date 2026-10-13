@@ -40,6 +40,7 @@ not an enumeration of every signature.
     - [Temperature and optics helpers](#temperature-and-optics-helpers)
   - [Linear Algebra (`scijo.linalg`)](#linear-algebra-scijolinalg)
     - [Decompositions](#decompositions)
+    - [Eigenvalues and SVD](#eigenvalues-and-svd)
     - [Solving](#solving)
     - [Norms, determinant, trace](#norms-determinant-trace)
   - [Optimization (`scijo.optimize`)](#optimization-scijooptimize)
@@ -754,6 +755,40 @@ directly, matching `scipy.linalg.lu`. `qr` and `cholesky` are thin
 wrappers with no behavior change, offered here so the whole module has one
 import path.
 
+### Eigenvalues and SVD
+
+```mojo
+from scijo.linalg import eigh, eigvalsh, svd, svdvals, matrix_rank, cond
+import numojo as nm
+
+def main() raises:
+    var A = nm.fromstring[nm.f64]("[[2, 1], [1, 2]]")
+    var w_v = eigh(A)           # (eigenvalues ascending, eigenvectors as columns)
+    var w = eigvalsh(A)         # eigenvalues only
+
+    var B = nm.fromstring[nm.f64]("[[1, 2], [3, 4], [5, 6]]")
+    var usvt = svd(B)           # (U, s, Vt), s descending, A == U @ diag(s) @ Vt
+    var s = svdvals(B)          # singular values only
+    var rank = matrix_rank(B)
+    var c = cond(B)             # 2-norm condition number: smax / smin
+```
+
+`eigh`/`eigvalsh` cover the symmetric (Hermitian, for real input) case,
+via the classic cyclic Jacobi eigenvalue algorithm: it iterates full
+sweeps until the off-diagonal norm falls below `tol` (not a fixed sweep
+count), so it keeps working on matrices that need more than the usual
+handful of sweeps. `lower` selects which triangle of `A` is read; the
+matrix is treated as symmetric regardless of what the other triangle
+holds. The general (non-symmetric) eigenvalue problem, where eigenvalues
+may be complex, is not yet available.
+
+`svd`/`svdvals` use one-sided Jacobi column orthogonalization, which
+works directly on `A` (`m >= n`, or transposed when `m < n`) rather than
+forming `A.T @ A` and calling an eigensolver on it - the latter squares
+the condition number and loses up to half the significant digits of the
+small singular values. `matrix_rank` and `cond` are both built on
+`svdvals`.
+
 ### Solving
 
 ```mojo
@@ -773,7 +808,7 @@ def main() raises:
     var Tall = nm.fromstring[nm.f64]("[[1, 1], [1, 2], [1, 3]]")
     var target = nm.fromstring[nm.f64]("[6, 0, 0]")
     var coeffs = lstsq(Tall, target)      # least-squares fit
-    var Tall_pinv = pinv(Tall)            # Moore-Penrose pseudo-inverse
+    var Tall_pinv = pinv(Tall)            # Moore-Penrose pseudo-inverse, via SVD
 ```
 
 `solve` and `solve_triangular` both accept a 1-D `b` (shape `(m,)`) and
@@ -785,10 +820,11 @@ triangular (e.g. `R` from a QR decomposition) and it runs forward or back
 substitution directly, which is both cheaper and correct in cases where
 `solve` would be wasteful.
 
-`pinv` and `lstsq` only support full-rank matrices - `pinv` is computed as
-`lstsq(A, I)`, and NuMojo's `lstsq` does not yet handle a rank-deficient
-`A`. A future SVD in NuMojo would let both handle that case with a proper
-Moore-Penrose pseudo-inverse.
+`pinv` is computed from the SVD as `V @ diag(1/s) @ U.T`, with singular
+values at or below `rcond` times the largest treated as zero, so it
+handles rank-deficient input correctly. `lstsq` still only supports
+full-rank matrices, since it goes through NuMojo's own `lstsq`, which
+does not yet handle a rank-deficient `A`.
 
 ### Norms, determinant, trace
 
@@ -806,6 +842,7 @@ def main() raises:
     print(norm(A))               # Frobenius norm (default for a matrix)
     print(norm(A, ord="1"))      # max absolute column sum
     print(norm(A, ord="inf"))    # max absolute row sum
+    print(norm(A, ord="2"))      # induced 2-norm (largest singular value), via svdvals
     print(det(A))
     print(trace(A))              # returns a length-1 NDArray, not a bare scalar
 ```
@@ -813,11 +850,9 @@ def main() raises:
 `norm`'s `ord` is a runtime `String`, not a Python-style `None`/number/`inf`
 value, because Mojo has no convenient sentinel for "unset or infinity" in
 one parameter. The default (`ord=""`) picks the Euclidean norm for a 1-D
-array and the Frobenius norm for a 2-D array, matching `scipy.linalg.norm`'s
-default. The matrix 2-norm (largest singular value, needed for e.g. a
-condition number) is not implemented, since it requires an SVD - see the
-Appendix below. `trace` is re-exported from NuMojo as-is and returns a
-length-1 `NDArray`, unlike `det`, which returns a bare `Scalar`.
+array and the Frobenius norm for a 2-D array. `trace` is re-exported from
+NuMojo as-is and returns a length-1 `NDArray`, unlike `det`, which
+returns a bare `Scalar`.
 
 ---
 
@@ -1094,11 +1129,11 @@ not; as of this writing, the notable gaps are:
   gradient-based method like BFGS or CG yet).
 - **Differentiation**: higher-order Jacobians (e.g. a third-order tensor
   of second derivatives of a vector-valued function's Jacobian itself).
-- **Linear algebra**: eigenvalues/eigenvectors and SVD, and anything
-  derived from them - the matrix 2-norm/condition number, and a
-  rank-deficient `pinv`/`lstsq`. Everything else in `scijo.linalg`
-  (LU, QR, Cholesky, `solve`, `solve_triangular`, `inv`, vector/most
-  matrix norms) is implemented.
+- **Linear algebra**: the general (non-symmetric) eigenvalue problem,
+  where eigenvalues may be complex (`eig`/`eigvals`), and a
+  rank-deficient `lstsq`. Everything else in `scijo.linalg` - LU, QR,
+  Cholesky, `eigh`/`eigvalsh`, `svd`/`svdvals`, `matrix_rank`, `cond`,
+  `solve`, `solve_triangular`, `inv`, `pinv`, and norms - is implemented.
 - **Signal processing and sparse matrices** are listed as future
   directions but have no code in the repository yet.
 
