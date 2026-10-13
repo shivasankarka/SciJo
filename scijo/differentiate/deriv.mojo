@@ -196,7 +196,6 @@ def derivative[
         ```
     """
 
-    @parameter
     def _with_args[
         dtype2: DType
     ](

@@ -136,7 +136,6 @@ def root_scalar[
         Error: If an unsupported method is requested.
     """
 
-    @parameter
     def _with_args[
         dtype2: DType
     ](
@@ -273,7 +272,6 @@ def root_scalar[
         Error: If an unsupported method is requested.
     """
 
-    @parameter
     def _f_with_args[
         dtype2: DType
     ](
@@ -281,7 +279,6 @@ def root_scalar[
     ) capturing -> Scalar[dtype2]:
         return f(x)
 
-    @parameter
     def _fprime_with_args[
         dtype2: DType
     ](
@@ -500,7 +497,6 @@ def bisect[
         RootResult[dtype] containing convergence and diagnostic fields.
     """
 
-    @parameter
     def _with_args[
         dtype2: DType
     ](
@@ -692,7 +688,6 @@ def brent[
         RootResult[dtype] containing convergence and diagnostic fields.
     """
 
-    @parameter
     def _with_args[
         dtype2: DType
     ](
@@ -831,7 +826,6 @@ def secant[
         RootResult[dtype] containing convergence and diagnostic fields.
     """
 
-    @parameter
     def _with_args[
         dtype2: DType
     ](
@@ -878,7 +872,6 @@ def newton[
         Error: If `x0` is not provided.
     """
 
-    @parameter
     def _f_with_args[
         dtype2: DType
     ](
@@ -886,7 +879,6 @@ def newton[
     ) capturing -> Scalar[dtype2]:
         return f(x)
 
-    @parameter
     def _fprime_with_args[
         dtype2: DType
     ](

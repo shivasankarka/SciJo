@@ -143,7 +143,6 @@ def minimize[
         Error: If an unsupported method is requested.
     """
 
-    @parameter
     def _with_args[
         dtype2: DType
     ](

@@ -14,10 +14,16 @@ Available Functions
 - `lu`                — Pivoted LU decomposition, `A == P @ L @ U`.
 - `qr`                — Reduced QR decomposition.
 - `cholesky`           — Cholesky decomposition of a positive-definite matrix.
+- `eigh`               — Eigenvalues/eigenvectors of a symmetric matrix.
+- `eigvalsh`           — Eigenvalues of a symmetric matrix.
+- `svd`                — Singular value decomposition, `A == U @ diag(s) @ Vt`.
+- `svdvals`            — Singular values only.
+- `matrix_rank`        — Estimated rank, via SVD.
+- `cond`               — 2-norm condition number, via SVD.
 - `solve`              — Solve `Ax = b` for a square, non-singular `A`.
 - `solve_triangular`   — Solve `Ax = b` for triangular `A`.
 - `inv`                — Matrix inverse.
-- `pinv`               — Moore-Penrose pseudo-inverse (full-rank only).
+- `pinv`               — Moore-Penrose pseudo-inverse, via SVD (rank-deficient OK).
 - `lstsq`              — Least-squares solution to `Ax = b`.
 - `norm`               — Vector/matrix norms.
 - `det`                — Determinant.
@@ -40,9 +46,9 @@ Examples
 
 Not Yet Implemented
 --------------------
-Eigenvalues/eigenvectors, SVD, and anything derived from them (matrix
-2-norm/condition number, rank-deficient `pinv`/`lstsq`) are not yet
-available in NuMojo's linalg primitives and are tracked as future work.
+The general (non-symmetric) eigenvalue problem, where eigenvalues may be
+complex (`scipy.linalg.eig`/`eigvals`), is not yet available and is
+tracked as future work. `eigh`/`eigvalsh` cover the symmetric case.
 """
 
 # ===----------------------------------------------------------------------=== #
@@ -70,6 +76,10 @@ from .decompositions import (
     lu,
     qr,
 )
+from .eigen import (
+    eigh,
+    eigvalsh,
+)
 from .norms import norm
 from .solving import (
     inv,
@@ -77,4 +87,10 @@ from .solving import (
     pinv,
     solve,
     solve_triangular,
+)
+from .svd import (
+    cond,
+    matrix_rank,
+    svd,
+    svdvals,
 )

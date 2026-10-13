@@ -14,8 +14,9 @@ format = "mojo format ./scijo && mojo format ./tests && mojo format ./benchmark"
 package = "mojo precompile scijo && cp scijo.mojoc tests/"
 
 [dependencies]
-mojo = ">=1.0.0,<2"
-numojo = { git = "https://github.com/shivasankarka/NuMojo.git", branch = "linalg_funcs"}
+mojo = ">=1.1.0,<2"
+# numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", branch = "pre-0.11"}
+numojo = {path="../numojo"}
 
 [package]
 name = "scijo"
@@ -28,21 +29,21 @@ backend = { name = "pixi-build-mojo", version = "0.*"}
 name = "scijo"
 
 [package.host-dependencies]
-mojo = "==1.0.0"
-numojo = { git = "https://github.com/shivasankarka/NuMojo.git", branch = "linalg_funcs"}
+mojo = "==1.1.0"
+numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", branch = "pre-0.11"}
 
 [package.build-dependencies]
-mojo = "==1.0.0"
-numojo = { git = "https://github.com/shivasankarka/NuMojo.git", branch = "linalg_funcs"}
+mojo = "==1.1.0"
+numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", branch = "pre-0.11"}
 
 [package.run-dependencies]
-mojo = "==1.0.0"
-numojo = { git = "https://github.com/shivasankarka/NuMojo.git", branch = "linalg_funcs"}
+mojo = "==1.1.0"
+numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", branch = "pre-0.11"}
 
 [feature.test.dependencies]
-python = ">=3.14.6,<3.15"
-scipy = ">=1.18.0,<2"
-numpy = ">=2.5.1,<3"
+python = ">=3.15.0,<3.16"
+scipy = ">=1.18.1,<2"
+numpy = ">=2.5.4,<3"
 
 [feature.test.tasks]
 package = "mojo precompile scijo && cp scijo.mojoc tests/"

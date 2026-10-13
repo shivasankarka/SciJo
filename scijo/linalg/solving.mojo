@@ -27,14 +27,19 @@ from numojo.core.indexing.item import Item
 from numojo.core.ndarray import NDArray
 from numojo.core.type_aliases import Shape
 from numojo.routines.creation import (
-    eye,
     full,
+    zeros,
 )
 from numojo.routines.linalg.solving import (
     inv as _inv,
     lstsq as _lstsq,
     solve as _solve,
 )
+
+# ===----------------------------------------------------------------------=== #
+# SciJo
+# ===----------------------------------------------------------------------=== #
+from scijo.linalg.svd import svd as _svd
 
 
 def solve[
@@ -80,24 +85,52 @@ def inv[dtype: DType](A: NDArray[dtype]) raises -> NDArray[dtype]:
     return _inv(A)
 
 
-def pinv[dtype: DType](A: NDArray[dtype]) raises -> NDArray[dtype]:
-    """Compute the Moore-Penrose pseudo-inverse of a full-rank matrix.
+def pinv[
+    dtype: DType
+](A: NDArray[dtype], rcond: Scalar[dtype] = 1e-15) raises -> NDArray[dtype]:
+    """Compute the Moore-Penrose pseudo-inverse of a matrix.
 
-    Computed as the least-squares solution to `A @ X = I`, matching
-    `scipy.linalg.pinv` for full column- or row-rank input. Rank-deficient
-    matrices are not currently supported (see `numojo.linalg.lstsq`).
+    Computed from the SVD as `V @ diag(1/s) @ U.T`, with singular values
+    at or below `rcond` times the largest treated as zero, matching
+    `scipy.linalg.pinv`. Unlike a least-squares-based pseudo-inverse,
+    this handles rank-deficient input correctly.
 
     Parameters:
         dtype: Data type of the pseudo-inverse.
 
     Args:
-        A: Matrix of shape `(m, n)`, of full column or row rank.
+        A: Matrix of shape `(m, n)`.
+        rcond: Relative threshold (as a fraction of the largest singular
+            value) below which a singular value is treated as zero.
 
     Returns:
         The pseudo-inverse of `A`, of shape `(n, m)`.
     """
     var m = A.shape[0]
-    return _lstsq(A, eye[dtype](m, m))
+    var n = A.shape[1]
+    var result = _svd[dtype](A)
+    var U = result[0].copy()
+    var s = result[1].copy()
+    var Vt = result[2].copy()
+    var k = len(s)
+
+    var largest: Scalar[dtype] = 0.0
+    for i in range(k):
+        var v = s.load(i)
+        if v > largest:
+            largest = v
+    var threshold = largest * rcond
+
+    var out = zeros[dtype](Shape(n, m))
+    for i in range(n):
+        for j in range(m):
+            var acc: Scalar[dtype] = 0.0
+            for p in range(k):
+                var sv = s.load(p)
+                if sv > threshold:
+                    acc += Vt.item(p, i) * U.item(j, p) / sv
+            out.store(i * m + j, val=acc)
+    return out^
 
 
 def lstsq[

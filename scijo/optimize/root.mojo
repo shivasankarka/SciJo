@@ -170,7 +170,6 @@ def root[
         Error: If an unsupported method is requested.
     """
 
-    @parameter
     def _with_args[
         dtype2: DType
     ](
@@ -225,7 +224,6 @@ def root[
         Error: If an unsupported method is requested.
     """
 
-    @parameter
     def _f_with_args[
         dtype2: DType
     ](
@@ -233,7 +231,6 @@ def root[
     ) capturing raises -> NDArray[dtype2]:
         return f(x)
 
-    @parameter
     def _jac_with_args[
         dtype2: DType
     ](

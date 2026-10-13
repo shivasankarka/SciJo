@@ -574,8 +574,7 @@ def quad[
         hi = tmp
         sign = -1
 
-    @parameter
-    def wrapped_fn(x: Scalar[dtype]) -> Scalar[dtype]:
+    def wrapped_fn(x: Scalar[dtype]) capturing -> Scalar[dtype]:
         return integrand_func(x, args)
 
     comptime if method == "qng":
@@ -658,7 +657,6 @@ def quad[
         Error: If an unsupported integration method is requested or if `limit <= 0`.
     """
 
-    @parameter
     def _with_args[
         dtype2: DType
     ](

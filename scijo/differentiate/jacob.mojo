@@ -88,8 +88,7 @@ def jacobian[
     var jacob: NDArray[dtype] = zeros[dtype](Shape(m, n))
     var errors = List[String]()
 
-    @parameter
-    def closure(j: Int):
+    def closure(j: Int) {x, mut jacob, step, args, m, n, mut errors}:
         try:
             var x_plus = x.copy()
             var x_minus = x.copy()
@@ -105,7 +104,7 @@ def jacobian[
         except e:
             errors.append("column " + String(j) + ": " + String(e))
 
-    parallelize[closure](n, num_workers=n)
+    parallelize(closure, n, num_workers=n)
 
     if len(errors) > 0:
         raise Error("SciJo [jacobian]: " + errors[0])
@@ -156,7 +155,6 @@ def jacobian[
         ```
     """
 
-    @parameter
     def _with_args[
         dtype2: DType
     ](
@@ -308,7 +306,6 @@ def hessian[
         ```
     """
 
-    @parameter
     def _with_args[
         dtype2: DType
     ](
@@ -460,7 +457,6 @@ def hessian[
         ```
     """
 
-    @parameter
     def _with_args[
         dtype2: DType
     ](
