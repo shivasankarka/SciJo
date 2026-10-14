@@ -38,9 +38,12 @@ The format is based on "Keep a Changelog" and follows Semantic Versioning.
   - `fft2` / `ifft2` - convenience wrappers over `fftn`/`ifftn` defaulting to the last two axes, matching `scipy.fft.fft2`/`ifft2`.
   - `examples/fft_examples.mojo` extended and `tests/test_fftn.mojo` added covering the new functions.
 - **Multi-dimensional minimization** (`scijo.optimize`):
-  - `minimize` - minimize a scalar-valued function of several variables (`f: R^n -> R`) via the Nelder-Mead simplex method, matching `scipy.optimize.minimize`'s frontend signature. Derivative-free (never evaluates a gradient or Hessian); convergence checked on both the simplex's point-to-point spread (`xatol`) and function-value spread (`fatol`), matching SciPy's own criteria.
+  - `minimize` - minimize a scalar-valued function of several variables (`f: R^n -> R`), matching `scipy.optimize.minimize`'s frontend signature. Three methods:
+    - `method="Nelder-Mead"` (default): derivative-free simplex method. Never evaluates a gradient or Hessian; convergence checked on both the simplex's point-to-point spread (`xatol`) and function-value spread (`fatol`), matching SciPy's own criteria.
+    - `method="BFGS"`: quasi-Newton method maintaining a running inverse-Hessian approximation (BFGS secant update) and a backtracking line search satisfying the Armijo condition. Gradient estimated with central finite differences (`fd_step`); converges once `||grad f(x)|| <= gtol`.
+    - `method="CG"`: nonlinear conjugate gradient (Polak-Ribiere, with periodic restarts), same gradient/line-search machinery as BFGS but O(n) memory per iteration instead of O(n^2).
   - `OptimizeResultVector` - the vector-valued analog of `OptimizeResult` (`x`, `fun`, `nit`, `nfev`, `success`, `message`, `method`).
-  - `examples/minimize_examples.mojo` and `tests/test_minimize.mojo` covering the new function.
+  - `examples/minimize_examples.mojo` and `tests/test_minimize.mojo` covering all three methods.
 - **Hessian for vector-valued functions** (`scijo.differentiate`):
   - `hessian` overload for `f: R^n -> R^m` (a callback returning `NDArray`
     instead of `Scalar`): applies the existing central-difference stencil
@@ -69,6 +72,7 @@ The format is based on "Keep a Changelog" and follows Semantic Versioning.
 - Temporarily pinned the `numojo` dependency in `pixi.toml` to the `linalg_funcs` branch on `shivasankarka/NuMojo` (adds `qr`, `cholesky`, `lstsq` on top of NuMojo's existing `lu_decomposition`/`solve`/`inv`); revert to NuMojo's `main` once that branch merges upstream.
 
 ### Fixed
+- **Closure-capture miscompile with generic callback parameters**, across every public callback-taking function (`scijo.differentiate.derivative`/`jacobian`/`hessian`, `scijo.integrate.quad`, `scijo.optimize.root_scalar`/`minimize_scalar`/`root`/`minimize`): a closure capturing outer-scope runtime state, passed as a generic `capturing`-effect closure-type parameter and called from inside the receiving generic function (or a further generic helper it forwards to), was silently computing garbage (e.g. a Jacobian of all zeros, or a BFGS gradient of NaN) on the current Mojo toolchain - no error raised. Closures that only read their own `args` parameter (the common, recommended pattern) were unaffected; this only bit a closure that actually captured a variable from its enclosing scope. Fixed everywhere by declaring those closure-type parameters with the parameterized `capturing[_]` effect instead of bare `capturing` (ordering: `raises thin capturing[_] -> ReturnType where ...`, or `raises capturing[_] -> ReturnType` where no `where`-constraint is needed), which lets the compiler track the closure's origin per call site instead of miscomputing it.
 - **Test suite correctness audit**: several test files wrapped their entire
   body - including the actual `assert_*` comparisons against SciPy/NumPy -
   in a single bare `try: ... except: print("SciPy not available, skipping

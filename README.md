@@ -91,7 +91,9 @@ minimization:
   - `method="broyden1"`: Broyden's quasi-Newton method, derivative-free (never forms a Jacobian)
 - **`minimize_scalar`**: Scalar function minimization
   - Brent's method, golden section search, bounded minimization
-- **`minimize`**: Multi-dimensional minimization via the Nelder-Mead simplex method (`f: R^n -> R`, derivative-free)
+- **`minimize`**: Multi-dimensional minimization (`f: R^n -> R`)
+  - `method="Nelder-Mead"` (default): derivative-free simplex method
+  - `method="BFGS"` / `method="CG"`: gradient-based, with the gradient estimated via finite differences
 
 ## Installation
 
@@ -301,6 +303,10 @@ def main() raises:
     var x0 = nm.fromstring[nm.f64]("[-1.2, 1.0]")
     var result = minimize[nm.f64, rosenbrock](x0, maxiter=2000)
     print("Minimum at:", result.x)
+
+    # Or a gradient-based method (gradient estimated via finite differences):
+    var result_bfgs = minimize[nm.f64, rosenbrock, method="BFGS"](x0)
+    print("Minimum at:", result_bfgs.x)
 ```
 
 ### Linear Algebra
@@ -330,7 +336,7 @@ See the **[Manual»](docs/MANUAL.md)** for a full prose tour of every module, an
 ## Roadmap
 
 ### Near Term
-- Gradient-based `scijo.optimize.minimize` methods (e.g. BFGS, CG) alongside the current derivative-free Nelder-Mead
+- An analytic-gradient overload for `scijo.optimize.minimize`'s BFGS/CG methods (finite differences only today)
 - The general (non-symmetric) eigenvalue problem for `scijo.linalg.eig`/`eigvals`, where eigenvalues may be complex
 
 ### Future

@@ -1032,22 +1032,33 @@ def main() raises:
 `minimize` mirrors `scipy.optimize.minimize`'s frontend: `f` maps
 `R^n -> R` (a scalar-valued function of several variables), and the result
 is the point where it is (locally) smallest. Like `root`, `method` is a
-compile-time, keyword-only parameter - today the only supported value is
-`"Nelder-Mead"`, the derivative-free simplex method. It never evaluates a
-gradient or Hessian, only `f` itself, which makes it the right default when
-`f` is not (easily) differentiable, at the cost of typically needing more
-function evaluations than a gradient-based method would for a smooth,
-well-scaled problem.
+compile-time, keyword-only parameter, with three supported values:
 
-The algorithm maintains a simplex of `n + 1` points (`n` = `len(x0)`),
-built by perturbing `x0` by `initial_step * x0[i]` along each coordinate
-(default `initial_step=0.05`; a small fixed step if `x0[i] == 0`), and
-repeatedly reflects, expands, or contracts it around the worst point,
-shrinking the whole simplex toward the best point when none of those help.
-Convergence is checked the way SciPy checks it: both the simplex's
-point-to-point spread (`xatol`, default `1e-4`) and its function-value
-spread (`fatol`, default `1e-4`) must fall below tolerance, matching
-`scipy.optimize.minimize(..., method="Nelder-Mead")`'s own criteria.
+- `"Nelder-Mead"` (the default), the derivative-free simplex method. It
+  never evaluates a gradient or Hessian, only `f` itself, which makes it
+  the right default when `f` is not (easily) differentiable, at the cost
+  of typically needing more function evaluations than a gradient-based
+  method would for a smooth, well-scaled problem. The algorithm maintains
+  a simplex of `n + 1` points (`n` = `len(x0)`), built by perturbing `x0`
+  by `initial_step * x0[i]` along each coordinate (default
+  `initial_step=0.05`; a small fixed step if `x0[i] == 0`), and repeatedly
+  reflects, expands, or contracts it around the worst point, shrinking the
+  whole simplex toward the best point when none of those help. Convergence
+  is checked the way SciPy checks it: both the simplex's point-to-point
+  spread (`xatol`, default `1e-4`) and its function-value spread (`fatol`,
+  default `1e-4`) must fall below tolerance.
+- `"BFGS"`, a quasi-Newton method that maintains a running approximation
+  of the inverse Hessian (updated at every step via the BFGS secant
+  formula) and a backtracking line search satisfying the Armijo
+  sufficient-decrease condition. The gradient is estimated with central
+  finite differences (`fd_step`, default matching SciPy's own
+  `sqrt(machine epsilon)`); there is no overload accepting an analytic
+  gradient yet. Converges once `||grad f(x)|| <= gtol` (default `1e-5`).
+- `"CG"`, nonlinear conjugate gradient (Polak-Ribiere, with periodic
+  restarts along steepest descent), using the same finite-difference
+  gradient and line search as `"BFGS"` but O(n) memory per iteration
+  instead of O(n^2), so it scales better to large `n` at the cost of
+  usually needing more iterations to reach the same tolerance.
 
 `minimize` returns `OptimizeResultVector[dtype]`: `x` (the minimizer),
 `fun` (the objective value there), `nit`, `nfev`, `success`, `message`, and
@@ -1125,8 +1136,8 @@ This manual documents what exists. The README's roadmap tracks what does
 not; as of this writing, the notable gaps are:
 
 - **Optimization**: `scijo.optimize.minimize` covers multi-dimensional
-  minimization with the derivative-free Nelder-Mead method only (no
-  gradient-based method like BFGS or CG yet).
+  minimization with Nelder-Mead, BFGS, and CG; there is no overload of
+  BFGS/CG accepting an analytic gradient yet (finite differences only).
 - **Differentiation**: higher-order Jacobians (e.g. a third-order tensor
   of second derivatives of a vector-valued function's Jacobian itself).
 - **Linear algebra**: the general (non-symmetric) eigenvalue problem,
