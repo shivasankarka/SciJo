@@ -33,7 +33,7 @@ def derivative[
     dtype: DType,
     deriv_func: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing thin -> Scalar[dtype] where dtype.is_floating_point(),
+    ) thin capturing[_] -> Scalar[dtype] where dtype.is_floating_point(),
     *,
     step_direction: Int = 0,
 ](
@@ -140,7 +140,7 @@ def derivative[
 
 def derivative[
     dtype: DType,
-    deriv_func: def[dtype: DType](x: Scalar[dtype]) capturing thin -> Scalar[dtype] where dtype.is_floating_point(),
+    deriv_func: def[dtype: DType](x: Scalar[dtype]) thin capturing[_] -> Scalar[dtype] where dtype.is_floating_point(),
     *,
     step_direction: Int = 0,
 ](
@@ -222,7 +222,7 @@ def _derivative_central_difference[
     dtype: DType,
     deriv_func: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing thin -> Scalar[dtype] where dtype.is_floating_point(),
+    ) thin capturing[_] -> Scalar[dtype] where dtype.is_floating_point(),
 ](
     x0: Scalar[dtype],
     args: Optional[List[Scalar[dtype]]],
@@ -371,7 +371,7 @@ def _derivative_forward_difference[
     dtype: DType,
     deriv_func: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing thin -> Scalar[dtype] where dtype.is_floating_point(),
+    ) thin capturing[_] -> Scalar[dtype] where dtype.is_floating_point(),
 ](
     x0: Scalar[dtype],
     args: Optional[List[Scalar[dtype]]],
@@ -521,7 +521,7 @@ def _derivative_backward_difference[
     dtype: DType,
     deriv_func: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing thin -> Scalar[dtype] where dtype.is_floating_point(),
+    ) thin capturing[_] -> Scalar[dtype] where dtype.is_floating_point(),
 ](
     x0: Scalar[dtype],
     args: Optional[List[Scalar[dtype]]],

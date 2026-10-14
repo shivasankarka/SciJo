@@ -128,7 +128,7 @@ def _rescale_error[
 
 def _gk_eval[
     dtype: DType,
-    fn_: def(x: Scalar[dtype]) capturing -> Scalar[dtype],
+    fn_: def(x: Scalar[dtype]) capturing[_] -> Scalar[dtype],
 ](
     nodes: List[Float64],
     kw: List[Float64],
@@ -188,7 +188,7 @@ def _gk_eval[
 
 def _qk15[
     dtype: DType,
-    fn_: def(x: Scalar[dtype]) capturing -> Scalar[dtype],
+    fn_: def(x: Scalar[dtype]) capturing[_] -> Scalar[dtype],
 ](a: Scalar[dtype], b: Scalar[dtype]) raises -> _GKResult[
     dtype
 ] where dtype.is_floating_point():
@@ -213,7 +213,7 @@ def _qk15[
 
 def _qk21[
     dtype: DType,
-    fn_: def(x: Scalar[dtype]) capturing -> Scalar[dtype],
+    fn_: def(x: Scalar[dtype]) capturing[_] -> Scalar[dtype],
 ](a: Scalar[dtype], b: Scalar[dtype]) raises -> _GKResult[
     dtype
 ] where dtype.is_floating_point():
@@ -239,7 +239,7 @@ def _qk21[
 
 def _qk43[
     dtype: DType,
-    fn_: def(x: Scalar[dtype]) capturing -> Scalar[dtype],
+    fn_: def(x: Scalar[dtype]) capturing[_] -> Scalar[dtype],
 ](a: Scalar[dtype], b: Scalar[dtype]) raises -> _GKResult[
     dtype
 ] where dtype.is_floating_point():
@@ -262,7 +262,7 @@ def _qk43[
 
 def _qk87[
     dtype: DType,
-    fn_: def(x: Scalar[dtype]) capturing -> Scalar[dtype],
+    fn_: def(x: Scalar[dtype]) capturing[_] -> Scalar[dtype],
 ](a: Scalar[dtype], b: Scalar[dtype]) raises -> _GKResult[
     dtype
 ] where dtype.is_floating_point():
@@ -285,7 +285,7 @@ def _qk87[
 
 def _qk_dispatch[
     dtype: DType,
-    fn_: def(x: Scalar[dtype]) capturing -> Scalar[dtype],
+    fn_: def(x: Scalar[dtype]) capturing[_] -> Scalar[dtype],
 ](rule: Int, a: Scalar[dtype], b: Scalar[dtype]) raises -> _GKResult[
     dtype
 ] where dtype.is_floating_point():
@@ -314,7 +314,7 @@ def _qk_dispatch[
 
 def _qng_impl[
     dtype: DType,
-    fn_: def(x: Scalar[dtype]) capturing -> Scalar[dtype],
+    fn_: def(x: Scalar[dtype]) capturing[_] -> Scalar[dtype],
 ](
     a: Scalar[dtype],
     b: Scalar[dtype],
@@ -356,7 +356,7 @@ def _qng_impl[
 
 def _qag_impl[
     dtype: DType,
-    fn_: def(x: Scalar[dtype]) capturing -> Scalar[dtype],
+    fn_: def(x: Scalar[dtype]) capturing[_] -> Scalar[dtype],
 ](
     a: Scalar[dtype],
     b: Scalar[dtype],
@@ -512,7 +512,7 @@ def quad[
     dtype: DType,
     integrand_func: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing thin -> Scalar[dtype] where dtype.is_floating_point(),
+    ) thin capturing[_] -> Scalar[dtype] where dtype.is_floating_point(),
     *,
     method: String = "qng",
     qag_rule: Int = 2,
@@ -613,9 +613,9 @@ def quad[
 
 def quad[
     dtype: DType,
-    integrand_func: def[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[
-        dtype
-    ],
+    integrand_func: def[dtype: DType](
+        x: Scalar[dtype]
+    ) capturing[_] -> Scalar[dtype],
     *,
     method: String = "qng",
     qag_rule: Int = 2,
