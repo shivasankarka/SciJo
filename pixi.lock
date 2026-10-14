@@ -71,7 +71,7 @@ environments:
       - conda: https://conda.modular.com/max/linux-64/mojo-compiler-1.1.0-release.conda
       - conda: https://conda.modular.com/max/noarch/mblack-26.6.0-release.conda
       - conda: https://conda.modular.com/max/noarch/mojo-python-1.1.0-release.conda
-      - conda_source: numojo[d77fde25] @ ../numojo
+      - conda_source: numojo[452e7362] @ ../numojo
       osx-arm64:
       - conda: https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_2.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.2.25-hbd8a1cb_0.conda
@@ -118,7 +118,7 @@ environments:
       - conda: https://conda.modular.com/max/osx-arm64/max-core-26.6.0-release.conda
       - conda: https://conda.modular.com/max/osx-arm64/mojo-1.1.0-release.conda
       - conda: https://conda.modular.com/max/osx-arm64/mojo-compiler-1.1.0-release.conda
-      - conda_source: numojo[ebb4f29f] @ ../numojo
+      - conda_source: numojo[b89302db] @ ../numojo
   test:
     channels:
     - url: https://conda.modular.com/max/
@@ -184,7 +184,7 @@ environments:
       - conda: https://conda.modular.com/max/linux-64/mojo-compiler-1.1.0-release.conda
       - conda: https://conda.modular.com/max/noarch/mblack-26.6.0-release.conda
       - conda: https://conda.modular.com/max/noarch/mojo-python-1.1.0-release.conda
-      - conda_source: numojo[d77fde25] @ ../numojo
+      - conda_source: numojo[452e7362] @ ../numojo
       osx-arm64:
       - conda: https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_2.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.2.25-hbd8a1cb_0.conda
@@ -240,7 +240,7 @@ environments:
       - conda: https://conda.modular.com/max/osx-arm64/max-core-26.6.0-release.conda
       - conda: https://conda.modular.com/max/osx-arm64/mojo-1.1.0-release.conda
       - conda: https://conda.modular.com/max/osx-arm64/mojo-compiler-1.1.0-release.conda
-      - conda_source: numojo[ebb4f29f] @ ../numojo
+      - conda_source: numojo[b89302db] @ ../numojo
 packages:
 - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
   build_number: 20
@@ -2214,12 +2214,12 @@ packages:
   run_exports: {}
   size: 62368467
   timestamp: 1789083852431
-- conda_source: numojo[d77fde25] @ ../numojo
+- conda_source: numojo[452e7362] @ ../numojo
   variants:
     target_platform: linux-64
   depends:
-  - mojo >=1.1.0,<2
-  - max-core >=26.5.0,<27
+  - mojo ==1.1.0
+  - max-core ==26.6.0
   build_packages:
   - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
   - conda: https://conda.anaconda.org/conda-forge/linux-64/bzip2-1.0.8-hda65f42_10.conda
@@ -2320,12 +2320,12 @@ packages:
   - conda: https://conda.modular.com/max/linux-64/mojo-compiler-1.1.0-release.conda
   - conda: https://conda.modular.com/max/noarch/mblack-26.6.0-release.conda
   - conda: https://conda.modular.com/max/noarch/mojo-python-1.1.0-release.conda
-- conda_source: numojo[ebb4f29f] @ ../numojo
+- conda_source: numojo[b89302db] @ ../numojo
   variants:
     target_platform: osx-arm64
   depends:
-  - mojo >=1.1.0,<2
-  - max-core >=26.5.0,<27
+  - mojo ==1.1.0
+  - max-core ==26.6.0
   build_packages:
   - conda: https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_3.conda
   - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.7.22-hbd8a1cb_0.conda

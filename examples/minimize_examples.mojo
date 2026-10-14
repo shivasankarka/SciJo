@@ -1,7 +1,8 @@
 """
 A tour of `scijo.optimize.minimize`: multi-dimensional minimization of a
-scalar-valued function of several variables via the Nelder-Mead simplex
-method.
+scalar-valued function of several variables via the derivative-free
+Nelder-Mead simplex method, or the gradient-based BFGS and CG methods
+(gradients estimated with finite differences).
 
 Run with (from the repository root, after `pixi run package`):
 
@@ -26,6 +27,7 @@ def main() raises:
     quadratic_bowl()
     rosenbrock_example()
     with_args_example()
+    bfgs_vs_cg_example()
 
 
 # ===----------------------------------------------------------------------=== #
@@ -99,3 +101,23 @@ def with_args_example() raises:
     var arglist: List[Scalar[f64]] = [2.0]
     var result = minimize[f64, scaled_sphere](x0, args=arglist^)
     print("With args=[2.0]:", result.x, " fun =", result.fun)
+
+
+# ===----------------------------------------------------------------------=== #
+# BFGS vs. CG on Rosenbrock's function
+# ===----------------------------------------------------------------------=== #
+
+
+def bfgs_vs_cg_example() raises:
+    print()
+    print("=" * 80)
+    print("MINIMIZE: Rosenbrock's function via BFGS and CG")
+    print("=" * 80)
+
+    var x0 = nm.fromstring[f64]("[-1.2, 1.0]")
+
+    var r_bfgs = minimize[f64, rosenbrock, method="BFGS"](x0, maxiter=200)
+    print("BFGS:", r_bfgs.x, " fun =", r_bfgs.fun, " nit =", r_bfgs.nit)
+
+    var r_cg = minimize[f64, rosenbrock, method="CG"](x0, maxiter=2000)
+    print("CG:  ", r_cg.x, " fun =", r_cg.fun, " nit =", r_cg.nit)
