@@ -33,10 +33,9 @@ def test_quad_basic_polynomials() raises:
     """
 
     # Test ∫x dx from 0 to 1 = 1/2
-    @parameter
     def linear[
         dtype: DType
-    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
         return x
 
     var result = quad[sj.f64, linear](0.0, 1.0)
@@ -44,10 +43,9 @@ def test_quad_basic_polynomials() raises:
     assert_true(result.ier == 0)  # Success
 
     # Test ∫x² dx from 0 to 2 = 8/3
-    @parameter
     def quadratic[
         dtype: DType
-    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
         return x * x
 
     var result2 = quad[sj.f64, quadratic](0.0, 2.0)
@@ -55,10 +53,9 @@ def test_quad_basic_polynomials() raises:
     assert_true(result2.ier == 0)
 
     # Test ∫x³ dx from 0 to 3 = 81/4
-    @parameter
     def cubic[
         dtype: DType
-    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
         return x * x * x
 
     var result3 = quad[sj.f64, cubic](0.0, 3.0)
@@ -70,10 +67,9 @@ def test_quad_trigonometric() raises:
     """Test quad with trigonometric functions."""
 
     # Test ∫sin(x) dx from 0 to π = 2
-    @parameter
     def sine[
         dtype: DType
-    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
         dtype
     ] where dtype.is_floating_point():
         return sin(x)
@@ -83,10 +79,9 @@ def test_quad_trigonometric() raises:
     assert_true(result.ier == 0)
 
     # Test ∫cos(x) dx from 0 to π/2 = 1
-    @parameter
     def cosine[
         dtype: DType
-    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
         dtype
     ] where dtype.is_floating_point():
         return cos(x)
@@ -96,10 +91,9 @@ def test_quad_trigonometric() raises:
     assert_true(result2.ier == 0)
 
     # Test ∫sin²(x) dx from 0 to π = π/2
-    @parameter
     def sin_squared[
         dtype: DType
-    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
         dtype
     ] where dtype.is_floating_point():
         var s = sin(x)
@@ -114,10 +108,9 @@ def test_quad_exponential() raises:
     """Test quad with exponential functions."""
 
     # Test ∫e^x dx from 0 to 1 = e - 1
-    @parameter
     def exponential[
         dtype: DType
-    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
         dtype
     ] where dtype.is_floating_point():
         return exp(x)
@@ -128,10 +121,9 @@ def test_quad_exponential() raises:
     assert_true(result.ier == 0)
 
     # Test ∫e^(-x) dx from 0 to ∞ ≈ 1 (using large upper bound)
-    @parameter
     def exp_decay[
         dtype: DType
-    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
         dtype
     ] where dtype.is_floating_point():
         return exp(-x)
@@ -147,10 +139,9 @@ def test_quad_edge_cases() raises:
     """Test quad with edge cases and boundary conditions."""
 
     # Test with identical limits (should return 0)
-    @parameter
     def constant_func[
         dtype: DType
-    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
         return 5.0
 
     var result = quad[sj.f64, constant_func](2.0, 2.0)
@@ -174,10 +165,9 @@ def test_quad_with_parameters() raises:
     """Test quad with parameterized functions using args."""
 
     # Test ∫a*x dx with parameter a
-    @parameter
     def linear_param[
         dtype: DType
-    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
         if args:
             var a = args.value()[0]
             return a * x
@@ -195,10 +185,9 @@ def test_quad_with_parameters() raises:
 def test_quad_method_dispatch() raises:
     """Test compile-time method dispatch for qng/qag/qags."""
 
-    @parameter
     def cubic[
         dtype: DType
-    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
         return x * x * x
 
     var qng_res = quad[sj.f64, cubic, method="qng"](0.0, 1.0)
@@ -215,10 +204,9 @@ def test_quad_difficult_integrands() raises:
 
     # Test Gaussian integral ∫e^(-x²) dx from -∞ to ∞ ≈ √π
     # Using finite bounds that approximate infinity
-    @parameter
     def gaussian[
         dtype: DType
-    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
         dtype
     ] where dtype.is_floating_point():
         return exp(-x * x)
@@ -228,10 +216,9 @@ def test_quad_difficult_integrands() raises:
     assert_true(result.ier == 0)
 
     # Test oscillatory function sin(x)/x near origin (needs careful handling)
-    @parameter
     def sinc_like[
         dtype: DType
-    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
         dtype
     ] where dtype.is_floating_point():
         if abs(x) < 1e-10:
@@ -307,10 +294,9 @@ def test_qag_rule_constants() raises:
     """All six QAG_GK* constants produce correct results on ∫x² dx from 0 to 1 = 1/3.
     """
 
-    @parameter
     def quadratic[
         dtype: DType
-    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
         return x * x
 
     var expected = 1.0 / 3.0

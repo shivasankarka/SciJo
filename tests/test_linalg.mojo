@@ -91,7 +91,7 @@ def test_det() raises:
 def test_trace() raises:
     var A = nm.fromstring[sj.f64]("[[1, 2], [3, 4]]")
     var t = trace(A)
-    assert_almost_equal(t.item(0), 5.0, atol=1e-8)
+    assert_almost_equal(t.item(), 5.0, atol=1e-8)
 
 
 def test_lu_reconstructs_a() raises:

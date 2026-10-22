@@ -421,7 +421,6 @@ def test_step_size_parameters() raises:
 def test_hessian_quadratic() raises:
     """Hessian of x^2 + y^2 is the identity scaled by 2."""
 
-    @parameter
     def f[
         dtype: DType
     ](
@@ -441,7 +440,6 @@ def test_hessian_quadratic() raises:
 def test_hessian_cross_term() raises:
     """Hessian of x*y has off-diagonal 1 and diagonal 0."""
 
-    @parameter
     def f[
         dtype: DType
     ](
@@ -461,7 +459,6 @@ def test_hessian_cross_term() raises:
 def test_hessian_cubic() raises:
     """Hessian of x^3 + y^3: diagonal = 6x, 6y; off-diagonal = 0."""
 
-    @parameter
     def f[
         dtype: DType
     ](
@@ -483,7 +480,6 @@ def test_hessian_cubic() raises:
 def test_hessian_symmetric() raises:
     """Hessian is always symmetric: H[i,j] == H[j,i]."""
 
-    @parameter
     def f[
         dtype: DType
     ](
@@ -506,7 +502,6 @@ def test_hessian_symmetric() raises:
 def test_hessian_vector_valued() raises:
     """Hessian tensor of f(x, y) = [x^2 + y^2, x*y], shape (2, 2, 2)."""
 
-    @parameter
     def f[
         dtype: DType
     ](
@@ -540,7 +535,6 @@ def test_hessian_vector_valued() raises:
 def test_hessian_vector_valued_args_free() raises:
     """Args-free overload matches the args-taking one for f(x) = x * x."""
 
-    @parameter
     def f[dtype: DType](x: NDArray[dtype]) capturing raises -> NDArray[dtype]:
         return x * x
 

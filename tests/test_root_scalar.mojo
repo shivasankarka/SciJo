@@ -22,10 +22,9 @@ from scijo.optimize.root_scalar import (
 
 
 def test_bisect_root_scalar_basic() raises:
-    @parameter
     def f[
         dtype: DType
-    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
         return x * x - 2.0
 
     var result = root_scalar[sj.f64, f](bracket=(0.0, 2.0))
@@ -39,16 +38,14 @@ def test_bisect_root_scalar_basic() raises:
 
 
 def test_newton_basic() raises:
-    @parameter
     def f[
         dtype: DType
-    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
         return x * x - 2.0
 
-    @parameter
     def fprime[
         dtype: DType
-    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
         return 2.0 * x
 
     var result = newton[sj.f64, f, fprime](None, x0=1.0, atol=1e-12, rtol=1e-12)
@@ -58,10 +55,9 @@ def test_newton_basic() raises:
 
 
 def test_secant_basic() raises:
-    @parameter
     def f[
         dtype: DType
-    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
         return x * x - 2.0
 
     var result = secant[sj.f64, f](None, 1.0, 2.0)
@@ -71,10 +67,9 @@ def test_secant_basic() raises:
 
 
 def test_brent_basic() raises:
-    @parameter
     def f[
         dtype: DType
-    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
         return x * x - 2.0
 
     var result = brent[sj.f64, f](None, (0.0, 2.0))
@@ -89,10 +84,9 @@ def test_brent_basic() raises:
 
 
 def test_bisect_invalid_bracket_raises() raises:
-    @parameter
     def g[
         dtype: DType
-    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
         return x * x + 1.0
 
     var raised = False
@@ -108,10 +102,9 @@ def test_bisect_invalid_bracket_raises() raises:
 def test_root_results_fields() raises:
     """Verify RootResults carries all diagnostic fields."""
 
-    @parameter
     def f[
         dtype: DType
-    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) -> Scalar[dtype]:
+    ](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
         return x - 3.0
 
     var result = bisect[sj.f64, f](None, (0.0, 5.0))

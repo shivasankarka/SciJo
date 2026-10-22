@@ -45,7 +45,6 @@ from scijo.optimize import (
 
 
 def test_derivative_args_free() raises:
-    @parameter
     def f[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
         return x * x
 
@@ -54,7 +53,6 @@ def test_derivative_args_free() raises:
 
 
 def test_jacobian_args_free() raises:
-    @parameter
     def f[
         dtype: DType
     ](x: nm.NDArray[dtype]) capturing raises -> nm.NDArray[dtype]:
@@ -69,7 +67,6 @@ def test_jacobian_args_free() raises:
 
 
 def test_hessian_args_free() raises:
-    @parameter
     def f[dtype: DType](x: nm.NDArray[dtype]) capturing raises -> Scalar[dtype]:
         return x.item(0) * x.item(0) + x.item(1) * x.item(1)
 
@@ -81,7 +78,6 @@ def test_hessian_args_free() raises:
 
 
 def test_quad_args_free() raises:
-    @parameter
     def f[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
         return x
 
@@ -90,11 +86,9 @@ def test_quad_args_free() raises:
 
 
 def test_root_scalar_family_args_free() raises:
-    @parameter
     def f[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
         return x * x - 2.0
 
-    @parameter
     def fprime[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
         return 2.0 * x
 
@@ -121,7 +115,6 @@ def test_root_scalar_family_args_free() raises:
 
 
 def test_minimize_scalar_args_free() raises:
-    @parameter
     def objective[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
         return (x - 2.0) * (x - 2.0) + 1.0
 
@@ -133,7 +126,6 @@ def test_minimize_scalar_args_free() raises:
 
 
 def test_root_args_free() raises:
-    @parameter
     def f[
         dtype: DType
     ](x: nm.NDArray[dtype]) capturing raises -> nm.NDArray[dtype]:
@@ -141,7 +133,6 @@ def test_root_args_free() raises:
         var b = nm.fromstring[dtype]("[9, 8]")
         return matmul(A, x) - b
 
-    @parameter
     def jac[
         dtype: DType
     ](x: nm.NDArray[dtype]) capturing raises -> nm.NDArray[dtype]:

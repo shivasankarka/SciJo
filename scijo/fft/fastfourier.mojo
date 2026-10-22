@@ -195,7 +195,13 @@ def rfft[
                 Scalar[cdtype.dtype](0),
             ),
         )
-    # Remaining elements are already zero-initialized
+    for i in range(n, n_padded):
+        complex_input.unsafe_store(
+            i,
+            ComplexSIMD[cdtype](
+                Scalar[cdtype.dtype](0), Scalar[cdtype.dtype](0)
+            ),
+        )
 
     var full = fft[cdtype](complex_input)
 

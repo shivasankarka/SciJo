@@ -337,6 +337,34 @@ def test_rfft_sine() raises:
     )
 
 
+def test_rfft_zero_pads_non_power_of_two() raises:
+    """Test non-power-of-two rfft zero-padding against NumPy."""
+    var np = Python.import_module("numpy")
+
+    var n = 6
+    var padded_n = 8
+    var x = nm.zeros[nm.f64](nm.Shape(n))
+    var np_x = np.zeros(padded_n)
+    for i in range(n):
+        var value = Float64(i) * 0.2
+        x.itemset(i, value)
+        np_x[i] = value
+
+    var result = rfft[nm.f64](x)
+    var np_result = np.fft.rfft(np_x)
+    compare_complex_arrays[nm.cf64](
+        result, np_result, "rfft: zero-padded length 6", atol=1e-10
+    )
+
+    var reconstructed = irfft[nm.f64](result, padded_n)
+    compare_real_arrays[nm.f64](
+        reconstructed,
+        np_x,
+        "irfft: zero-padded length 6 roundtrip",
+        atol=1e-10,
+    )
+
+
 def test_irfft_roundtrip() raises:
     """Test that irfft(rfft(x)) ≈ x."""
     var np = Python.import_module("numpy")

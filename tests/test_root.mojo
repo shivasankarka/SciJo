@@ -34,7 +34,6 @@ from scijo.optimize import root
 def test_root_linear_system() raises:
     """Solving a linear system: f(x) = Ax - b, root at x = A^-1 b."""
 
-    @parameter
     def f[
         dtype: DType
     ](
@@ -55,7 +54,6 @@ def test_root_linear_system() raises:
 def test_root_nonlinear_system() raises:
     """Classic 2-eqn nonlinear system: x^2 + y^2 = 4, x*y = 1."""
 
-    @parameter
     def f[
         dtype: DType
     ](
@@ -77,7 +75,6 @@ def test_root_nonlinear_system() raises:
 def test_root_with_analytic_jacobian() raises:
     """Same linear system, but with an analytic Jacobian supplied."""
 
-    @parameter
     def f[
         dtype: DType
     ](
@@ -87,7 +84,6 @@ def test_root_with_analytic_jacobian() raises:
         var b = nm.fromstring[dtype]("[9, 8]")
         return matmul(A, x) - b
 
-    @parameter
     def jac[
         dtype: DType
     ](
@@ -109,7 +105,6 @@ def test_root_broyden_linear_system() raises:
     as `test_root_linear_system`, without ever forming a Jacobian.
     """
 
-    @parameter
     def f[
         dtype: DType
     ](
@@ -133,7 +128,6 @@ def test_root_broyden_nonlinear_system() raises:
     (there are 4 by symmetry).
     """
 
-    @parameter
     def f[
         dtype: DType
     ](
@@ -172,7 +166,6 @@ def test_root_broyden_matches_scipy() raises:
         print("SciPy not available, skipping root broyden1 comparison test")
         return
 
-    @parameter
     def f[
         dtype: DType
     ](
@@ -216,7 +209,6 @@ def test_root_broyden_matches_scipy() raises:
 def test_root_broyden_shape_mismatch_raises() raises:
     """F(x) with a different length than x should raise for Broyden too."""
 
-    @parameter
     def f[
         dtype: DType
     ](
@@ -236,7 +228,6 @@ def test_root_broyden_shape_mismatch_raises() raises:
 def test_root_shape_mismatch_raises() raises:
     """F(x) with a different length than x should raise, not misbehave."""
 
-    @parameter
     def f[
         dtype: DType
     ](

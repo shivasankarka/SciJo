@@ -97,17 +97,22 @@ minimization:
 
 ## Installation
 
-### Method 1: Git Installation via pixi-build-backend
-Install SciJo directly from the GitHub repository to access the latest features.
+### Method 1: Git Installation with pixi-build-mojo
+Install the SciJo v0.3.0 release directly from GitHub.
 
 Add to your `pixi.toml`:
 ```toml
 [workspace]
+channels = [
+    "https://conda.modular.com/max",
+    "conda-forge",
+    "https://repo.prefix.dev/modular-community",
+]
+platforms = ["osx-arm64", "linux-64"]
 preview = ["pixi-build"]
 
 [dependencies]
-mojo = ">=1.0.0,<2"
-scijo = { git = "https://github.com/mojomath/SciJo.git", branch = "main"}
+scijo = { git = "https://github.com/mojomath/SciJo.git", tag = "v0.3.0" }
 ```
 
 Then run:
@@ -121,13 +126,22 @@ For most users, we recommend installing a stable release through Pixi for guaran
 Add the following to your `pixi.toml`:
 ```toml
 [workspace]
-channels = ["https://repo.prefix.dev/modular-community"]
+channels = [
+    "https://conda.modular.com/max",
+    "conda-forge",
+    "https://repo.prefix.dev/modular-community",
+]
+
+[dependencies]
+scijo = "=0.3.0"
 ```
 
 Then run:
 ```bash
-pixi add scijo
+pixi install
 ```
+
+SciJo v0.3.0 requires Mojo 1.1 and NuMojo 0.11.
 
 ### Method 3: Build from Source
 ```bash

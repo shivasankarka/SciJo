@@ -5,8 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on "Keep a Changelog" and follows Semantic Versioning.
 
 ## [Unreleased]
+
+## [v0.3.0] - 2026-10-22
 ### Added
-- **Linear algebra module** (`scijo.linalg`), built on NuMojo's linalg primitives (NuMojo `linalg_funcs` branch: LU/QR/Cholesky decompositions, `solve`/`lstsq`/`inv`):
+- **Linear algebra module** (`scijo.linalg`), built on NuMojo 0.11.0's linalg primitives (LU/QR/Cholesky decompositions, `solve`/`lstsq`/`inv`):
   - `lu` - pivoted LU decomposition, scipy-style `(P, L, U)` with `A == P @ L @ U`.
   - `qr` - reduced QR decomposition (thin wrapper over NuMojo's Householder implementation).
   - `cholesky` - Cholesky decomposition, with a `lower` flag for the lower/upper factor.
@@ -69,9 +71,12 @@ The format is based on "Keep a Changelog" and follows Semantic Versioning.
     standard algorithms, matching the existing native `minimize_scalar`
     solvers in style.
   - SciJo now depends only on NuMojo; `msl` is removed from `pixi.toml`.
-- Temporarily pinned the `numojo` dependency in `pixi.toml` to the `linalg_funcs` branch on `shivasankarka/NuMojo` (adds `qr`, `cholesky`, `lstsq` on top of NuMojo's existing `lu_decomposition`/`solve`/`inv`); revert to NuMojo's `main` once that branch merges upstream.
+- The `numojo` dependency, temporarily pinned earlier in development to a feature branch adding `qr`/`cholesky`/`lstsq`, now targets the NuMojo v0.11.0 release.
 
 ### Fixed
+- **`rfft` zero-padding for non-power-of-two inputs**: explicitly initialize
+  the padded tail before transforming. Previously those elements contained
+  uninitialized data, producing an incorrect spectrum and inverse round trip.
 - **Closure-capture miscompile with generic callback parameters**, across every public callback-taking function (`scijo.differentiate.derivative`/`jacobian`/`hessian`, `scijo.integrate.quad`, `scijo.optimize.root_scalar`/`minimize_scalar`/`root`/`minimize`): a closure capturing outer-scope runtime state, passed as a generic `capturing`-effect closure-type parameter and called from inside the receiving generic function (or a further generic helper it forwards to), was silently computing garbage (e.g. a Jacobian of all zeros, or a BFGS gradient of NaN) on the current Mojo toolchain - no error raised. Closures that only read their own `args` parameter (the common, recommended pattern) were unaffected; this only bit a closure that actually captured a variable from its enclosing scope. Fixed everywhere by declaring those closure-type parameters with the parameterized `capturing[_]` effect instead of bare `capturing` (ordering: `raises thin capturing[_] -> ReturnType where ...`, or `raises capturing[_] -> ReturnType` where no `where`-constraint is needed), which lets the compiler track the closure's origin per call site instead of miscomputing it.
 - **Test suite correctness audit**: several test files wrapped their entire
   body - including the actual `assert_*` comparisons against SciPy/NumPy -
@@ -135,6 +140,18 @@ The format is based on "Keep a Changelog" and follows Semantic Versioning.
   above against known integrals; this table backs both
   `gk21_kronrod_weights`/`gk21_gauss_weights` and (via the shared
   embedded-rule values) `gk43_gauss21_weights`.
+- **Release packaging** (`pixi.toml`, `pixi.lock`): `pixi.lock` had drifted
+  from `pixi.toml` (still locked to a local `../numojo` path checkout from
+  development, rather than the `numojo` git dependency `pixi.toml` declares)
+  - regenerated via `pixi lock`. The `feature.test` `python` pin
+  (`>=3.15.0,<3.16`) was narrowed to `>=3.13,<3.15`: conda-forge's current
+  `cpython 3.15.0` build for `osx-arm64` ships no shared `libpython`,
+  which crashes every test that imports `numpy`/`scipy` for comparison
+  (`dlopen failed`) rather than raising a catchable Mojo error.
+- `tests/test_linalg.mojo::test_trace`: `trace` (re-exported from NuMojo)
+  now returns a 0-D array; indexing it with `.item(0)` raises
+  (`Cannot index a 0-D array ... Call .item() with no arguments`) on the
+  NuMojo v0.11.0 release. Fixed to `.item()`.
 
 ## [v0.2.0] - 2026-09-04
 ### Added

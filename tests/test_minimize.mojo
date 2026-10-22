@@ -29,7 +29,6 @@ from scijo.optimize import minimize
 def test_minimize_quadratic_bowl() raises:
     """F(x, y) = (x - 3)^2 + (y + 1)^2, minimum at (3, -1)."""
 
-    @parameter
     def f[
         dtype: DType
     ](
@@ -51,7 +50,6 @@ def test_minimize_quadratic_bowl() raises:
 def test_minimize_rosenbrock() raises:
     """Classic Rosenbrock banana function, minimum at (1, 1)."""
 
-    @parameter
     def rosenbrock[
         dtype: DType
     ](
@@ -71,7 +69,6 @@ def test_minimize_rosenbrock() raises:
 def test_minimize_with_args() raises:
     """F(x) = a * ||x||^2, with `a` threaded through `args`."""
 
-    @parameter
     def scaled_sphere[
         dtype: DType
     ](
@@ -92,7 +89,6 @@ def test_minimize_args_free_overload() raises:
     """The args-free overload captures its coefficient from the closure."""
     var scale: Scalar[sj.f64] = 5.0
 
-    @parameter
     def scaled_sphere[
         dtype: DType
     ](x: nm.NDArray[dtype]) capturing raises -> Scalar[dtype]:
@@ -110,7 +106,6 @@ def test_minimize_args_free_overload() raises:
 def test_minimize_empty_x0_raises() raises:
     """An empty initial guess should raise, not misbehave."""
 
-    @parameter
     def f[dtype: DType](x: nm.NDArray[dtype]) capturing raises -> Scalar[dtype]:
         return Scalar[dtype](0.0)
 
@@ -126,7 +121,6 @@ def test_minimize_empty_x0_raises() raises:
 def test_minimize_unsupported_method_raises() raises:
     """An unsupported method should raise, not silently do the wrong thing."""
 
-    @parameter
     def f[dtype: DType](x: nm.NDArray[dtype]) capturing raises -> Scalar[dtype]:
         return x.item(0) * x.item(0)
 
@@ -142,7 +136,6 @@ def test_minimize_unsupported_method_raises() raises:
 def test_minimize_bfgs_quadratic_bowl() raises:
     """F(x, y) = (x - 3)^2 + (y + 1)^2, minimum at (3, -1)."""
 
-    @parameter
     def f[
         dtype: DType
     ](
@@ -164,7 +157,6 @@ def test_minimize_bfgs_quadratic_bowl() raises:
 def test_minimize_bfgs_rosenbrock() raises:
     """Classic Rosenbrock banana function, minimum at (1, 1)."""
 
-    @parameter
     def rosenbrock[
         dtype: DType
     ](
@@ -184,7 +176,6 @@ def test_minimize_bfgs_rosenbrock() raises:
 def test_minimize_cg_quadratic_bowl() raises:
     """F(x, y) = (x - 3)^2 + (y + 1)^2, minimum at (3, -1)."""
 
-    @parameter
     def f[
         dtype: DType
     ](
@@ -206,7 +197,6 @@ def test_minimize_cg_quadratic_bowl() raises:
 def test_minimize_bfgs_with_args() raises:
     """F(x) = a * ||x||^2, with `a` threaded through `args`."""
 
-    @parameter
     def scaled_sphere[
         dtype: DType
     ](
@@ -229,7 +219,6 @@ def test_minimize_bfgs_args_free_overload() raises:
     """The args-free overload captures its coefficient from the closure."""
     var scale: Scalar[sj.f64] = 5.0
 
-    @parameter
     def scaled_sphere[
         dtype: DType
     ](x: nm.NDArray[dtype]) capturing raises -> Scalar[dtype]:
