@@ -26,13 +26,14 @@ SciJo is a high-performance scientific computing library for Mojo that brings th
 Accurate derivatives using finite difference methods:
 - **`derivative`**: Central, forward, and backward differences
 - **`jacobian`**: Jacobian matrix computation for vector-valued functions
+- **`hessian`**: Hessian matrix for scalar-valued functions, or Hessian tensor (one matrix per output component) for vector-valued functions
 - **Order control**: Specify accuracy order (1-6 for forward/backward, 2-8 for central)
 - **Adaptive stepping**: Automatic step size refinement with Richardson extrapolation
 - **Error estimation**: Built-in convergence tracking
 
 ### Integration (`scijo.integrate`)
 Numerical integration with adaptive algorithms:
-- **`quad`**: Adaptive quadrature via MSL/QUADPACK
+- **`quad`**: Adaptive quadrature via native Gauss-Kronrod rules (QUADPACK-style)
   - `method="qng"` - non-adaptive Gauss-Kronrod-Patterson (10, 21, 43, 87 point rules)
   - `method="qag"` - adaptive Gauss-Kronrod with configurable rule (`qag_rule=`)
   - `method="qags"` - adaptive + Wynn epsilon extrapolation
@@ -52,9 +53,11 @@ Numerical integration with adaptive algorithms:
 
 ### FFT (`scijo.fft`)
 Fast Fourier Transform operations:
-- **`fft`**: Forward FFT using Cooley-Tukey algorithm
-- **`ifft`**: Inverse FFT with proper normalization
-- Supports complex arrays (power-of-2 sizes)
+- **`fft`** / **`ifft`**: Forward/inverse FFT using the Cooley-Tukey algorithm
+- **`fftn`** / **`ifftn`**: N-dimensional forward/inverse FFT over one or more axes
+- **`fft2`** / **`ifft2`**: 2-dimensional forward/inverse FFT (convenience wrapper over `fftn`/`ifftn`)
+- **`rfft`** / **`irfft`**: Real-input FFT and its inverse
+- Supports complex arrays (power-of-2 sizes per transformed axis)
 - Compatible with NumPy's FFT conventions
 
 ### Physical Constants (`scijo.constants`)
@@ -66,29 +69,50 @@ Access fundamental physical constants from CODATA 2022:
 - Temperature conversion utilities
 - Compatible with `scipy.constants` structure
 
+### Linear Algebra (`scijo.linalg`)
+Linear algebra, built on NuMojo's linalg primitives:
+- **Decompositions**: `lu` (pivoted, `A == P @ L @ U`), `qr` (reduced, Householder), `cholesky` (lower/upper)
+- **Eigenvalues/SVD**: `eigh`/`eigvalsh` (symmetric, via cyclic Jacobi), `svd`/`svdvals` (via one-sided Jacobi), `matrix_rank`, `cond`
+- **Solvers**: `solve`, `solve_triangular`, `inv`, `pinv` (SVD-based, rank-deficient OK), `lstsq` — all accept 1-D or 2-D right-hand sides
+- **Norms**: `norm` (vector `1`/`2`/`inf`, matrix `fro`/`1`/`2`/`inf`), `det`, `trace`
+- Re-exports `matmul`, `dot`, `outer`, `kron`, `tensordot`, `cross`, `diagonal` from NuMojo for convenience
+- The general (non-symmetric) eigenvalue problem (`eig`/`eigvals`, possibly complex eigenvalues) is not yet available
+
 ### Optimization (`scijo.optimize`)
-Scalar root-finding and minimization:
-- **`root_scalar`**: Unified interface for root finding
+Scalar and multi-dimensional root-finding, and scalar and multi-dimensional
+minimization:
+- **`root_scalar`**: Unified interface for scalar root finding
   - **`newton`**: Newton-Raphson method
   - **`bisect`**: Bisection method
   - **`secant`**: Secant method (derivative-free)
-  - **`brent`**: Brent's bracketed method (MSL backend)
+  - **`brent`**: Brent's bracketed method
+- **`root`**: Multi-dimensional root finding (`f: R^n -> R^n`)
+  - `method="newton"` (default): finite-difference Jacobian, or supply an analytic one: `root[f64, f, jac](x0)`
+  - `method="broyden1"`: Broyden's quasi-Newton method, derivative-free (never forms a Jacobian)
 - **`minimize_scalar`**: Scalar function minimization
   - Brent's method, golden section search, bounded minimization
+- **`minimize`**: Multi-dimensional minimization (`f: R^n -> R`)
+  - `method="Nelder-Mead"` (default): derivative-free simplex method
+  - `method="BFGS"` / `method="CG"`: gradient-based, with the gradient estimated via finite differences
 
 ## Installation
 
-### Method 1: Git Installation via pixi-build-backend
-Install SciJo directly from the GitHub repository to access the latest features.
+### Method 1: Git Installation with pixi-build-mojo
+Install the SciJo v0.3.0 release directly from GitHub.
 
 Add to your `pixi.toml`:
 ```toml
 [workspace]
+channels = [
+    "https://conda.modular.com/max",
+    "conda-forge",
+    "https://repo.prefix.dev/modular-community",
+]
+platforms = ["osx-arm64", "linux-64"]
 preview = ["pixi-build"]
 
 [dependencies]
-mojo = ">=1.0.0,<2"
-scijo = { git = "https://github.com/mojomath/SciJo.git", branch = "main"}
+scijo = { git = "https://github.com/mojomath/SciJo.git", tag = "v0.3.0" }
 ```
 
 Then run:
@@ -102,13 +126,22 @@ For most users, we recommend installing a stable release through Pixi for guaran
 Add the following to your `pixi.toml`:
 ```toml
 [workspace]
-channels = ["https://repo.prefix.dev/modular-community"]
+channels = [
+    "https://conda.modular.com/max",
+    "conda-forge",
+    "https://repo.prefix.dev/modular-community",
+]
+
+[dependencies]
+scijo = "=0.3.0"
 ```
 
 Then run:
 ```bash
-pixi add scijo
+pixi install
 ```
+
+SciJo v0.3.0 requires Mojo 1.1 and NuMojo 0.11.
 
 ### Method 3: Build from Source
 ```bash
@@ -130,15 +163,12 @@ from scijo.prelude import *
 
 def simple_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
-    var a = args.value()[0]
-    return a * x * x + 2.0 * x + 1.0
+](x: Scalar[dtype]) capturing -> Scalar[dtype]:
+    return 2.0 * x * x + 2.0 * x + 1.0
 
 def main() raises:
-    var args: List[Scalar[f64]] = [2.0]
     var result = derivative[f64, simple_function, step_direction=0](
         x0=1.0,
-        args=args^,
         atol=1e-8,
         rtol=1e-8,
         order=6,
@@ -153,19 +183,14 @@ from scijo.prelude import *
 
 def simple_function[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
-    dtype
-]:
+](x: Scalar[dtype]) capturing -> Scalar[dtype]:
     """A simple function for testing."""
-    var a = args.value()[0]
-    return a * x * x + 2.0 * x + 1.0
+    return 2.0 * x * x + 2.0 * x + 1.0
 
 def main() raises:
-    var args: List[Scalar[f64]] = [2.0]
     var result = quad[f64, simple_function](
         a=0.0,
         b=1.0,
-        args=args^,
         atol=1e-6,
         rtol=1e-6,
     )
@@ -196,7 +221,7 @@ def main() raises:
 
 ### FFT
 ```mojo
-from scijo.fft import fft, ifft
+from scijo.fft import fft, ifft, fftn, ifftn
 import numojo as nm
 
 def main() raises:
@@ -210,6 +235,15 @@ def main() raises:
     # Inverse FFT
     var y_ifft = ifft[nm.cf64](y_fft)
     print("IFFT result:", y_ifft)
+
+    # N-dimensional FFT: transforms over every axis by default
+    var arr2d = nm.arange[nm.cf64](
+        nm.CScalar[nm.cf64](0), nm.CScalar[nm.cf64](16)
+    ).reshape(nm.Shape(4, 4))
+    var y_fftn = fftn[nm.cf64](arr2d)
+    print("FFTN result:", y_fftn)
+    var y_ifftn = ifftn[nm.cf64](y_fftn)
+    print("IFFTN result:", y_ifftn)
 ```
 
 ### Physical Constants
@@ -228,12 +262,12 @@ from scijo.prelude import *
 
 def f[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
+](x: Scalar[dtype]) capturing -> Scalar[dtype]:
     return x * x - 2.0
 
 def objective[
     dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[dtype]:
+](x: Scalar[dtype]) capturing -> Scalar[dtype]:
     return (x - 2.0) * (x - 2.0) + 1.0
 
 def main() raises:
@@ -250,6 +284,65 @@ def main() raises:
     print("Minimum at:", result.x)
 ```
 
+### Multi-Dimensional Root Finding
+```mojo
+from scijo.optimize import root
+from scijo.linalg import matmul
+import numojo as nm
+
+def f[dtype: DType](x: nm.NDArray[dtype]) capturing raises -> nm.NDArray[dtype]:
+    var A = nm.fromstring[dtype]("[[3, 1], [1, 2]]")
+    var b = nm.fromstring[dtype]("[9, 8]")
+    return matmul(A, x) - b
+
+def main() raises:
+    var x0 = nm.fromstring[nm.f64]("[0, 0]")
+    var result = root[nm.f64, f](x0)
+    print("Root:", result.x)
+```
+
+### Multi-Dimensional Minimization
+```mojo
+from scijo.optimize import minimize
+import numojo as nm
+
+def rosenbrock[
+    dtype: DType
+](x: nm.NDArray[dtype]) capturing raises -> Scalar[dtype]:
+    var a = 1.0 - x.item(0)
+    var b = x.item(1) - x.item(0) * x.item(0)
+    return a * a + 100.0 * b * b
+
+def main() raises:
+    var x0 = nm.fromstring[nm.f64]("[-1.2, 1.0]")
+    var result = minimize[nm.f64, rosenbrock](x0, maxiter=2000)
+    print("Minimum at:", result.x)
+
+    # Or a gradient-based method (gradient estimated via finite differences):
+    var result_bfgs = minimize[nm.f64, rosenbrock, method="BFGS"](x0)
+    print("Minimum at:", result_bfgs.x)
+```
+
+### Linear Algebra
+```mojo
+from scijo.linalg import eigh, solve, lu, matmul
+import numojo as nm
+
+def main() raises:
+    var A = nm.fromstring[nm.f64]("[[3, 1], [1, 2]]")
+    var b = nm.fromstring[nm.f64]("[9, 8]")
+    print("x:", solve(A, b))
+
+    var PLU = lu(A)
+    var P = PLU[0].copy()
+    var L = PLU[1].copy()
+    var U = PLU[2].copy()
+    print("A == P @ L @ U:", matmul(P, matmul(L, U)))
+
+    var w_v = eigh(A)
+    print("eigenvalues:", w_v[0])
+```
+
 See the **[Manual»](docs/MANUAL.md)** for a full prose tour of every module, and
 **[examples/»](examples/)** for runnable, longer versions of the snippets above
 (run them all with `examples/run_all.sh`, after `pixi run package`).
@@ -257,14 +350,12 @@ See the **[Manual»](docs/MANUAL.md)** for a full prose tour of every module, an
 ## Roadmap
 
 ### Near Term
-- 2D FFT support
-- Multi-dimensional root finding and optimization
-- Expand differentiation module (higher-order Jacobian, Hessian)
+- An analytic-gradient overload for `scijo.optimize.minimize`'s BFGS/CG methods (finite differences only today)
+- The general (non-symmetric) eigenvalue problem for `scijo.linalg.eig`/`eigvals`, where eigenvalues may be complex
 
 ### Future
-- **Optimization**: Multi-dimensional minimization, curve fitting
+- **Optimization**: Curve fitting
 - **Signal Processing**: Filtering, windowing, convolution
-- **Linear Algebra**: Matrix decompositions (SVD, QR, Cholesky)
 - **Sparse Matrices**: Efficient storage and operations
 
 ## Contributing
@@ -280,6 +371,13 @@ Priority areas:
 ## License
 
 Distributed under the Apache 2.0 License with LLVM Exceptions. See [LICENSE](LICENSE) for more information.
+
+## Acknowledgements
+
+SciJo's API is directly inspired by [SciPy](https://scipy.org), and its test
+suite validates numerical results against SciPy and NumPy throughout. Many
+thanks to the SciPy and NumPy maintainers and communities for decades of
+work on the algorithms, APIs, and documentation that SciJo draws on.
 
 ## Citation
 Feel free to cite SciJo in your work, helps with visibility :)

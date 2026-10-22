@@ -5,8 +5,7 @@
 """CODATA Physical Constants Module (`scijo.constants.codata`)
 ==============================================================
 Provides access to the CODATA 2022 recommended values for fundamental
-physical constants. Constants are stored in a global dictionary, similar to
-SciPy's constants module.
+physical constants, stored in a global dictionary.
 
 Examples
 --------

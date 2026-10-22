@@ -10,7 +10,6 @@ backward finite difference schemes with adaptive step sizing.
 
 References
 ----------
-- SciPy derivative documentation.
 - Wikipedia: Finite difference coefficient
   https://en.wikipedia.org/wiki/Finite_difference_coefficient
 """
@@ -34,7 +33,7 @@ def derivative[
     dtype: DType,
     deriv_func: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing -> Scalar[dtype],
+    ) thin capturing[_] -> Scalar[dtype] where dtype.is_floating_point(),
     *,
     step_direction: Int = 0,
 ](
@@ -139,6 +138,81 @@ def derivative[
         )
 
 
+def derivative[
+    dtype: DType,
+    deriv_func: def[dtype: DType](x: Scalar[dtype]) thin capturing[_] -> Scalar[dtype] where dtype.is_floating_point(),
+    *,
+    step_direction: Int = 0,
+](
+    x0: Scalar[dtype],
+    atol: Scalar[dtype] = 1e-6,
+    rtol: Scalar[dtype] = 1e-6,
+    max_iter: Int = 10,
+    order: Int = 8,
+    initial_step: Scalar[dtype] = 0.5,
+    step_factor: Scalar[dtype] = 2.0,
+) raises -> DiffResult[dtype] where dtype.is_floating_point():
+    """Computes the first derivative of a scalar function (args-free overload).
+
+    For functions that do not need `args`: `deriv_func` takes only `x`, so
+    extra parameters (if any) are captured directly from the enclosing
+    scope instead of threaded through `args`. See the two-parameter
+    overload `derivative[dtype, deriv_func](..., args=...)` for a function
+    reused across call sites with different `args` values.
+
+    Parameters:
+        dtype: The floating-point data type.
+        deriv_func: Function to differentiate with signature def(x) -> Scalar[dtype].
+        step_direction: Direction of finite difference: central=0, forward=1, backward=-1.
+
+    Args:
+        x0: Point at which to evaluate the derivative.
+        atol: Absolute convergence tolerance (default 1e-6).
+        rtol: Relative convergence tolerance (default 1e-6).
+        max_iter: Maximum number of iterations.
+        order: Accuracy order for finite differences.
+            Central: {2, 4, 6, 8}. Forward/Backward: {1, 2, 3, 4, 5, 6}.
+        initial_step: Initial step size for finite differences.
+        step_factor: Factor by which to reduce step size in each iteration (must be > 1).
+
+    Returns:
+        DiffResult[dtype] containing the derivative, convergence status,
+        estimated error, iteration count, and function evaluation count.
+
+    Raises:
+        Error: If step_direction is not in {-1, 0, 1}.
+        Error: If the specified order is not supported for the chosen method.
+
+    Examples:
+        ```mojo
+        from scijo.differentiate import derivative
+        from scijo.prelude import *
+
+        def f[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
+            return x * x
+
+        var res = derivative[f64, f](1.0)
+        ```
+    """
+
+    def _with_args[
+        dtype2: DType
+    ](
+        x: Scalar[dtype2], args: Optional[List[Scalar[dtype2]]]
+    ) capturing -> Scalar[dtype2] where dtype2.is_floating_point():
+        return deriv_func(x)
+
+    return derivative[dtype, _with_args, step_direction=step_direction](
+        x0=x0,
+        atol=atol,
+        rtol=rtol,
+        max_iter=max_iter,
+        order=order,
+        initial_step=initial_step,
+        step_factor=step_factor,
+    )
+
+
 # ===----------------------------------------------------------------------=== #
 # Internal methods
 # ===----------------------------------------------------------------------=== #
@@ -148,7 +222,7 @@ def _derivative_central_difference[
     dtype: DType,
     deriv_func: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing -> Scalar[dtype],
+    ) thin capturing[_] -> Scalar[dtype] where dtype.is_floating_point(),
 ](
     x0: Scalar[dtype],
     args: Optional[List[Scalar[dtype]]],
@@ -158,7 +232,7 @@ def _derivative_central_difference[
     initial_step: Scalar[dtype] = 0.5,
     step_factor: Scalar[dtype] = 2.0,
     max_iter: Int = 10,
-) raises -> DiffResult[dtype]:
+) raises -> DiffResult[dtype] where dtype.is_floating_point():
     """Computes first derivative using central finite difference method.
 
     Uses symmetric stencils around the evaluation point with adaptive step size
@@ -297,7 +371,7 @@ def _derivative_forward_difference[
     dtype: DType,
     deriv_func: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing -> Scalar[dtype],
+    ) thin capturing[_] -> Scalar[dtype] where dtype.is_floating_point(),
 ](
     x0: Scalar[dtype],
     args: Optional[List[Scalar[dtype]]],
@@ -307,7 +381,7 @@ def _derivative_forward_difference[
     initial_step: Scalar[dtype] = 0.5,
     step_factor: Scalar[dtype] = 2.0,
     max_iter: Int = 10,
-) raises -> DiffResult[dtype]:
+) raises -> DiffResult[dtype] where dtype.is_floating_point():
     """Computes first derivative using forward finite difference method.
 
     Uses one-sided stencils in the forward direction with adaptive step size
@@ -447,7 +521,7 @@ def _derivative_backward_difference[
     dtype: DType,
     deriv_func: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing -> Scalar[dtype],
+    ) thin capturing[_] -> Scalar[dtype] where dtype.is_floating_point(),
 ](
     x0: Scalar[dtype],
     args: Optional[List[Scalar[dtype]]],
@@ -457,7 +531,7 @@ def _derivative_backward_difference[
     initial_step: Scalar[dtype] = 0.5,
     step_factor: Scalar[dtype] = 2.0,
     max_iter: Int = 10,
-) raises -> DiffResult[dtype]:
+) raises -> DiffResult[dtype] where dtype.is_floating_point():
     """Computes first derivative using backward finite difference method.
 
     Uses one-sided stencils in the backward direction with adaptive step size

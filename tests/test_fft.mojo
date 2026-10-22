@@ -1,15 +1,45 @@
-from std.python import Python, PythonObject
-from std.testing import assert_almost_equal, assert_equal, assert_true
-from std.testing import TestSuite
+# ===----------------------------------------------------------------------=== #
+# Stdlib
+# ===----------------------------------------------------------------------=== #
+from std.python import (
+    Python,
+    PythonObject,
+)
+from std.testing import (
+    assert_almost_equal,
+    assert_equal,
+    assert_true,
+    TestSuite,
+)
 
-import scijo as sj
+# ===----------------------------------------------------------------------=== #
+# External
+# ===----------------------------------------------------------------------=== #
 import numojo as nm
-from scijo.fft.fastfourier import fft, ifft, rfft, irfft
-from scijo.fft import fftfreq, rfftfreq, fftshift, ifftshift, next_fast_len
-from numojo.core.complex import ComplexNDArray, ComplexSIMD
 from numojo.core import CScalar
-from numojo.core.ndarray import NDArray
+from numojo.core.complex import (
+    ComplexNDArray,
+    ComplexSIMD,
+)
 from numojo.core.layout import NDArrayShape
+from numojo.core.ndarray import NDArray
+
+# ===----------------------------------------------------------------------=== #
+# SciJo
+# ===----------------------------------------------------------------------=== #
+from scijo.fft import (
+    fftfreq,
+    fftshift,
+    ifftshift,
+    next_fast_len,
+    rfftfreq,
+)
+from scijo.fft.fastfourier import (
+    fft,
+    ifft,
+    irfft,
+    rfft,
+)
 
 
 def compare_complex_arrays[
@@ -260,10 +290,12 @@ def test_error_conditions() raises:
     for i in range(5):
         arr_bad[nm.Item(i)] = ComplexSIMD[nm.cf64](Float64(i), 0.0)
 
+    var raised = False
     try:
         var _ = fft[nm.cf64](arr_bad)
     except:
-        print("Non-power-of-2 error handling - PASSED")
+        raised = True
+    assert_true(raised, "fft should raise for a non-power-of-2 length")
 
 
 def test_rfft_basic() raises:
@@ -305,6 +337,34 @@ def test_rfft_sine() raises:
     )
 
 
+def test_rfft_zero_pads_non_power_of_two() raises:
+    """Test non-power-of-two rfft zero-padding against NumPy."""
+    var np = Python.import_module("numpy")
+
+    var n = 6
+    var padded_n = 8
+    var x = nm.zeros[nm.f64](nm.Shape(n))
+    var np_x = np.zeros(padded_n)
+    for i in range(n):
+        var value = Float64(i) * 0.2
+        x.itemset(i, value)
+        np_x[i] = value
+
+    var result = rfft[nm.f64](x)
+    var np_result = np.fft.rfft(np_x)
+    compare_complex_arrays[nm.cf64](
+        result, np_result, "rfft: zero-padded length 6", atol=1e-10
+    )
+
+    var reconstructed = irfft[nm.f64](result, padded_n)
+    compare_real_arrays[nm.f64](
+        reconstructed,
+        np_x,
+        "irfft: zero-padded length 6 roundtrip",
+        atol=1e-10,
+    )
+
+
 def test_irfft_roundtrip() raises:
     """Test that irfft(rfft(x)) ≈ x."""
     var np = Python.import_module("numpy")
@@ -325,161 +385,168 @@ def test_irfft_roundtrip() raises:
 
 def test_fftfreq() raises:
     """Test: fftfreq matches scipy.fft.fftfreq for even and odd n."""
+    var scipy_fft: PythonObject
     try:
-        var scipy_fft = Python.import_module("scipy.fft")
-
-        # even n=8, d=1
-        var freqs = fftfreq[nm.f64](8)
-        var py_freqs = scipy_fft.fftfreq(8)
-        for i in range(freqs.size):
-            assert_almost_equal(
-                freqs.item(i),
-                Float64(py=py_freqs[i]),
-                atol=1e-14,
-                msg="fftfreq n=8 index " + String(i),
-            )
-
-        # even n=8, d=0.5
-        var freqs_d = fftfreq[nm.f64](8, d=Scalar[nm.f64](0.5))
-        var py_freqs_d = scipy_fft.fftfreq(8, d=0.5)
-        for i in range(freqs_d.size):
-            assert_almost_equal(
-                freqs_d.item(i),
-                Float64(py=py_freqs_d[i]),
-                atol=1e-14,
-                msg="fftfreq n=8 d=0.5 index " + String(i),
-            )
-
-        # odd n=7
-        var freqs_odd = fftfreq[nm.f64](7)
-        var py_freqs_odd = scipy_fft.fftfreq(7)
-        for i in range(freqs_odd.size):
-            assert_almost_equal(
-                freqs_odd.item(i),
-                Float64(py=py_freqs_odd[i]),
-                atol=1e-14,
-                msg="fftfreq n=7 index " + String(i),
-            )
+        scipy_fft = Python.import_module("scipy.fft")
     except:
         print("SciPy not available, skipping fftfreq test")
+        return
+
+    # even n=8, d=1
+    var freqs = fftfreq[nm.f64](8)
+    var py_freqs = scipy_fft.fftfreq(8)
+    for i in range(freqs.size):
+        assert_almost_equal(
+            freqs.item(i),
+            Float64(py=py_freqs[i]),
+            atol=1e-14,
+            msg="fftfreq n=8 index " + String(i),
+        )
+
+    # even n=8, d=0.5
+    var freqs_d = fftfreq[nm.f64](8, d=Scalar[nm.f64](0.5))
+    var py_freqs_d = scipy_fft.fftfreq(8, d=0.5)
+    for i in range(freqs_d.size):
+        assert_almost_equal(
+            freqs_d.item(i),
+            Float64(py=py_freqs_d[i]),
+            atol=1e-14,
+            msg="fftfreq n=8 d=0.5 index " + String(i),
+        )
+
+    # odd n=7
+    var freqs_odd = fftfreq[nm.f64](7)
+    var py_freqs_odd = scipy_fft.fftfreq(7)
+    for i in range(freqs_odd.size):
+        assert_almost_equal(
+            freqs_odd.item(i),
+            Float64(py=py_freqs_odd[i]),
+            atol=1e-14,
+            msg="fftfreq n=7 index " + String(i),
+        )
 
 
 def test_rfftfreq() raises:
     """Test: rfftfreq matches scipy.fft.rfftfreq for even and odd n."""
+    var scipy_fft: PythonObject
     try:
-        var scipy_fft = Python.import_module("scipy.fft")
-
-        # even n=8
-        var freqs = rfftfreq[nm.f64](8)
-        var py_freqs = scipy_fft.rfftfreq(8)
-        assert_equal(freqs.size, 5)
-        for i in range(freqs.size):
-            assert_almost_equal(
-                freqs.item(i),
-                Float64(py=py_freqs[i]),
-                atol=1e-14,
-                msg="rfftfreq n=8 index " + String(i),
-            )
-
-        # odd n=7
-        var freqs_odd = rfftfreq[nm.f64](7)
-        var py_freqs_odd = scipy_fft.rfftfreq(7)
-        assert_equal(freqs_odd.size, 4)
-        for i in range(freqs_odd.size):
-            assert_almost_equal(
-                freqs_odd.item(i),
-                Float64(py=py_freqs_odd[i]),
-                atol=1e-14,
-                msg="rfftfreq n=7 index " + String(i),
-            )
-
-        # with d=0.1
-        var freqs_d = rfftfreq[nm.f64](8, d=Scalar[nm.f64](0.1))
-        var py_freqs_d = scipy_fft.rfftfreq(8, d=0.1)
-        for i in range(freqs_d.size):
-            assert_almost_equal(
-                freqs_d.item(i),
-                Float64(py=py_freqs_d[i]),
-                atol=1e-14,
-                msg="rfftfreq n=8 d=0.1 index " + String(i),
-            )
+        scipy_fft = Python.import_module("scipy.fft")
     except:
         print("SciPy not available, skipping rfftfreq test")
+        return
+
+    # even n=8
+    var freqs = rfftfreq[nm.f64](8)
+    var py_freqs = scipy_fft.rfftfreq(8)
+    assert_equal(freqs.size, 5)
+    for i in range(freqs.size):
+        assert_almost_equal(
+            freqs.item(i),
+            Float64(py=py_freqs[i]),
+            atol=1e-14,
+            msg="rfftfreq n=8 index " + String(i),
+        )
+
+    # odd n=7
+    var freqs_odd = rfftfreq[nm.f64](7)
+    var py_freqs_odd = scipy_fft.rfftfreq(7)
+    assert_equal(freqs_odd.size, 4)
+    for i in range(freqs_odd.size):
+        assert_almost_equal(
+            freqs_odd.item(i),
+            Float64(py=py_freqs_odd[i]),
+            atol=1e-14,
+            msg="rfftfreq n=7 index " + String(i),
+        )
+
+    # with d=0.1
+    var freqs_d = rfftfreq[nm.f64](8, d=Scalar[nm.f64](0.1))
+    var py_freqs_d = scipy_fft.rfftfreq(8, d=0.1)
+    for i in range(freqs_d.size):
+        assert_almost_equal(
+            freqs_d.item(i),
+            Float64(py=py_freqs_d[i]),
+            atol=1e-14,
+            msg="rfftfreq n=8 d=0.1 index " + String(i),
+        )
 
 
 def test_fftshift() raises:
     """Test: fftshift matches scipy.fft.fftshift."""
+    var scipy_fft: PythonObject
     try:
-        var scipy_fft = Python.import_module("scipy.fft")
-        var np = Python.import_module("numpy")
-
-        # even n=8
-        var freqs = fftfreq[nm.f64](8)
-        var shifted = fftshift[nm.f64](freqs)
-        var py_shifted = scipy_fft.fftshift(scipy_fft.fftfreq(8))
-        for i in range(shifted.size):
-            assert_almost_equal(
-                shifted.item(i),
-                Float64(py=py_shifted[i]),
-                atol=1e-14,
-                msg="fftshift n=8 index " + String(i),
-            )
-
-        # odd n=7
-        var freqs_odd = fftfreq[nm.f64](7)
-        var shifted_odd = fftshift[nm.f64](freqs_odd)
-        var py_shifted_odd = scipy_fft.fftshift(scipy_fft.fftfreq(7))
-        for i in range(shifted_odd.size):
-            assert_almost_equal(
-                shifted_odd.item(i),
-                Float64(py=py_shifted_odd[i]),
-                atol=1e-14,
-                msg="fftshift n=7 index " + String(i),
-            )
+        scipy_fft = Python.import_module("scipy.fft")
     except:
         print("SciPy not available, skipping fftshift test")
+        return
+
+    # even n=8
+    var freqs = fftfreq[nm.f64](8)
+    var shifted = fftshift[nm.f64](freqs)
+    var py_shifted = scipy_fft.fftshift(scipy_fft.fftfreq(8))
+    for i in range(shifted.size):
+        assert_almost_equal(
+            shifted.item(i),
+            Float64(py=py_shifted[i]),
+            atol=1e-14,
+            msg="fftshift n=8 index " + String(i),
+        )
+
+    # odd n=7
+    var freqs_odd = fftfreq[nm.f64](7)
+    var shifted_odd = fftshift[nm.f64](freqs_odd)
+    var py_shifted_odd = scipy_fft.fftshift(scipy_fft.fftfreq(7))
+    for i in range(shifted_odd.size):
+        assert_almost_equal(
+            shifted_odd.item(i),
+            Float64(py=py_shifted_odd[i]),
+            atol=1e-14,
+            msg="fftshift n=7 index " + String(i),
+        )
 
 
 def test_ifftshift() raises:
     """Test: ifftshift is the inverse of fftshift."""
+    var scipy_fft: PythonObject
     try:
-        var scipy_fft = Python.import_module("scipy.fft")
-
-        # even n=8: ifftshift(fftshift(x)) == x
-        var freqs = fftfreq[nm.f64](8)
-        var roundtrip = ifftshift[nm.f64](fftshift[nm.f64](freqs))
-        for i in range(freqs.size):
-            assert_almost_equal(
-                roundtrip.item(i),
-                freqs.item(i),
-                atol=1e-14,
-                msg="ifftshift roundtrip n=8 index " + String(i),
-            )
-
-        # odd n=7
-        var freqs_odd = fftfreq[nm.f64](7)
-        var roundtrip_odd = ifftshift[nm.f64](fftshift[nm.f64](freqs_odd))
-        for i in range(freqs_odd.size):
-            assert_almost_equal(
-                roundtrip_odd.item(i),
-                freqs_odd.item(i),
-                atol=1e-14,
-                msg="ifftshift roundtrip n=7 index " + String(i),
-            )
-
-        # match scipy directly
-        var py_result = scipy_fft.ifftshift(
-            scipy_fft.fftshift(scipy_fft.fftfreq(8))
-        )
-        for i in range(freqs.size):
-            assert_almost_equal(
-                freqs.item(i),
-                Float64(py=py_result[i]),
-                atol=1e-14,
-                msg="ifftshift scipy match index " + String(i),
-            )
+        scipy_fft = Python.import_module("scipy.fft")
     except:
         print("SciPy not available, skipping ifftshift test")
+        return
+
+    # even n=8: ifftshift(fftshift(x)) == x
+    var freqs = fftfreq[nm.f64](8)
+    var roundtrip = ifftshift[nm.f64](fftshift[nm.f64](freqs))
+    for i in range(freqs.size):
+        assert_almost_equal(
+            roundtrip.item(i),
+            freqs.item(i),
+            atol=1e-14,
+            msg="ifftshift roundtrip n=8 index " + String(i),
+        )
+
+    # odd n=7
+    var freqs_odd = fftfreq[nm.f64](7)
+    var roundtrip_odd = ifftshift[nm.f64](fftshift[nm.f64](freqs_odd))
+    for i in range(freqs_odd.size):
+        assert_almost_equal(
+            roundtrip_odd.item(i),
+            freqs_odd.item(i),
+            atol=1e-14,
+            msg="ifftshift roundtrip n=7 index " + String(i),
+        )
+
+    # match scipy directly
+    var py_result = scipy_fft.ifftshift(
+        scipy_fft.fftshift(scipy_fft.fftfreq(8))
+    )
+    for i in range(freqs.size):
+        assert_almost_equal(
+            freqs.item(i),
+            Float64(py=py_result[i]),
+            atol=1e-14,
+            msg="ifftshift scipy match index " + String(i),
+        )
 
 
 def test_next_fast_len() raises:

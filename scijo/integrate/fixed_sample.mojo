@@ -270,9 +270,13 @@ def simpson[
         )
 
     if y.size % 2 == 0:
-        var y_n1 = y.item(y.size - 2)
-        var y_n = y.item(y.size - 1)
-        integral += (y_n1 + y_n) * dx * 0.5
+        # One interval left over: integrate it as the second half of the
+        # quadratic interpolant through the last three points, not a plain
+        # trapezoid over the last interval.
+        var y0 = y.item(y.size - 3)
+        var y1 = y.item(y.size - 2)
+        var y2 = y.item(y.size - 1)
+        integral += (-y0 + 8.0 * y1 + 5.0 * y2) * dx / 12.0
 
     return integral
 
@@ -288,9 +292,10 @@ def simpson[
 ]:
     """Integrates along the given axis using Simpson's rule.
 
-    Computes ∫ y(x) dx along the parametric curve defined by `x` and `y`.
-    For arrays with an even number of points, the last panel falls back to
-    the trapezoidal rule.
+    Computes ∫ y(x) dx along the parametric curve defined by `x` and `y`,
+    supporting non-uniform spacing. For arrays with an even number of
+    points, the last interval is integrated as the second half of the
+    quadratic interpolant through the final three points.
 
     Parameters:
         dtype: The floating-point data type.
@@ -357,22 +362,40 @@ def simpson[
         )
 
     var integral: Scalar[dtype] = 0.0
-    comptime multiplier: Scalar[dtype] = 1.0 / 6.0
     for i in range(1, y.size - 1, 2):
-        var dx_segment = x.item(i + 1) - x.item(i - 1)
+        # General (possibly non-uniform) two-interval Simpson panel: h0, h1
+        # need not be equal, unlike the naive (y0+4y1+y2)*(h0+h1)/6 formula,
+        # which is only exact when h0 == h1.
+        var h0 = x.item(i) - x.item(i - 1)
+        var h1 = x.item(i + 1) - x.item(i)
+        var hsum = h0 + h1
+        var y0 = y.item(i - 1)
+        var y1 = y.item(i)
+        var y2 = y.item(i + 1)
         integral += (
-            multiplier
-            * dx_segment
-            * (y.item(i - 1) + 4.0 * y.item(i) + y.item(i + 1))
+            hsum
+            / 6.0
+            * (
+                y0 * (2.0 - h1 / h0)
+                + y1 * (hsum * hsum) / (h0 * h1)
+                + y2 * (2.0 - h0 / h1)
+            )
         )
 
     if y.size % 2 == 0:
-        var y_n1 = y.item(y.size - 2)
-        var y_n = y.item(y.size - 1)
-        var x_n1 = x.item(x.size - 2)
-        var x_n = x.item(x.size - 1)
-        var dx_last = x_n - x_n1
-        integral += (y_n1 + y_n) * dx_last * 0.5
+        # One interval left over: integrate it as the second half of the
+        # quadratic interpolant through the last three points, generalized
+        # to unequal spacing between the last three x values.
+        var h0 = x.item(x.size - 2) - x.item(x.size - 3)
+        var h1 = x.item(x.size - 1) - x.item(x.size - 2)
+        var y0 = y.item(y.size - 3)
+        var y1 = y.item(y.size - 2)
+        var y2 = y.item(y.size - 1)
+        integral += (
+            y0 * (-(h1 * h1 * h1) / (6.0 * h0 * (h0 + h1)))
+            + y1 * (h1 * (h1 + 3.0 * h0) / (6.0 * h0))
+            + y2 * (h1 * (2.0 * h1 + 3.0 * h0) / (6.0 * (h0 + h1)))
+        )
 
     return integral
 
@@ -503,8 +526,7 @@ def cumulative_trapezoid[
 ) raises -> NDArray[dtype] where dtype.is_floating_point():
     """Cumulatively integrates y using the composite trapezoidal rule.
 
-    Returns an array of the running integral, matching
-    `scipy.integrate.cumulative_trapezoid`. The output has length ``n-1``
+    Returns an array of the running integral. The output has length ``n-1``
     when `initial` is None, or length ``n`` when an `initial` value is given
     (prepended as the first element).
 
@@ -574,7 +596,7 @@ def cumulative_trapezoid[
     """Cumulatively integrates y(x) using the composite trapezoidal rule.
 
     Non-uniform spacing version — spacing is taken from successive differences
-    in `x`. Matches `scipy.integrate.cumulative_trapezoid`.
+    in `x`.
 
     Parameters:
         dtype: The floating-point data type.
@@ -663,12 +685,11 @@ def cumulative_simpson[
 
     Each output element i (0-based, before prepending `initial`) is the
     integral over ``y[0..2i+2]`` using composite Simpson's rule applied to
-    each consecutive triple ``(y[2i], y[2i+1], y[2i+2])``. Matches
-    `scipy.integrate.cumulative_simpson` for even-length inputs.
+    each consecutive triple ``(y[2i], y[2i+1], y[2i+2])``.
 
-    Requires an odd number of samples (even number of intervals). For even
-    number of samples the last panel falls back to the trapezoidal rule,
-    consistent with `simpson`.
+    Requires an odd number of samples (even number of intervals). For an
+    even number of samples, the last interval is integrated as the second
+    half of the quadratic interpolant through the final three points.
 
     Parameters:
         dtype: The floating-point data type.
@@ -695,7 +716,6 @@ def cumulative_simpson[
 
         var y = nm.array[f64]([1.0, 4.0, 1.0, 4.0, 1.0])
         var cum = cumulative_simpson(y, dx=1.0, initial=0.0)
-        # matches scipy.integrate.cumulative_simpson
         ```
     """
     if y.ndim != 1:
@@ -720,23 +740,28 @@ def cumulative_simpson[
     var running: Scalar[dtype] = 0.0
     var i = 0
     while i < n - 2:
-        var panel = (
-            (
-                y.unsafe_load(i)
-                + 4.0 * y.unsafe_load(i + 1)
-                + y.unsafe_load(i + 2)
-            )
-            * dx
-            / 3.0
-        )
-        var half = (y.unsafe_load(i) + y.unsafe_load(i + 1)) * dx * 0.5
+        var y0 = y.unsafe_load(i)
+        var y1 = y.unsafe_load(i + 1)
+        var y2 = y.unsafe_load(i + 2)
+        var panel = (y0 + 4.0 * y1 + y2) * dx / 3.0
+        # Cumulative value at the panel's midpoint (i+1): the integral of
+        # the quadratic interpolant through (y0, y1, y2) from x[i] to
+        # x[i+1], i.e. half of the Simpson panel - not a plain trapezoid
+        # of (y0, y1), which double-counts the panel's curvature.
+        var half = (5.0 * y0 + 8.0 * y1 - y2) * dx / 12.0
         result.unsafe_store(i + offset, running + half)
         running += panel
         result.unsafe_store(i + 1 + offset, running)
         i += 2
 
     if i == n - 2:
-        var half = (y.unsafe_load(i) + y.unsafe_load(i + 1)) * dx * 0.5
+        # One interval left over (n even): integrate it as the second half
+        # of the quadratic interpolant through the last three points, not
+        # a plain trapezoid.
+        var y0 = y.unsafe_load(i - 1)
+        var y1 = y.unsafe_load(i)
+        var y2 = y.unsafe_load(i + 1)
+        var half = (-y0 + 8.0 * y1 + 5.0 * y2) * dx / 12.0
         result.unsafe_store(i + offset, running + half)
 
     return result^

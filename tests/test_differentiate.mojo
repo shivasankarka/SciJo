@@ -1,16 +1,32 @@
+# ===----------------------------------------------------------------------=== #
+# Stdlib
+# ===----------------------------------------------------------------------=== #
+from std.math import (
+    cos,
+    exp,
+    sin,
+)
 from std.testing import (
     assert_almost_equal,
     assert_equal,
     assert_true,
-    assert_false,
+    TestSuite,
 )
-from std.testing import TestSuite
-from std.math import sin, cos, exp
 
-from scijo.differentiate import derivative, hessian
-from numojo.core import NDArray
+# ===----------------------------------------------------------------------=== #
+# External
+# ===----------------------------------------------------------------------=== #
 import numojo as nm
+from numojo.core import NDArray
+
+# ===----------------------------------------------------------------------=== #
+# SciJo
+# ===----------------------------------------------------------------------=== #
 import scijo as sj
+from scijo.differentiate import (
+    derivative,
+    hessian,
+)
 
 
 def constant_function[
@@ -355,13 +371,14 @@ def test_convergence_properties() raises:
 def test_error_conditions() raises:
     """Test error conditions and invalid parameters."""
 
+    var raised = False
     try:
         var _ = derivative[DType.float64, quadratic_function, step_direction=5](
             x0=1.0, args=None
         )
-        assert_false(True, "Invalid step direction should raise an error")
     except:
-        pass
+        raised = True
+    assert_true(raised, "Invalid step direction should raise an error")
 
 
 def test_step_size_parameters() raises:
@@ -404,7 +421,6 @@ def test_step_size_parameters() raises:
 def test_hessian_quadratic() raises:
     """Hessian of x^2 + y^2 is the identity scaled by 2."""
 
-    @parameter
     def f[
         dtype: DType
     ](
@@ -424,7 +440,6 @@ def test_hessian_quadratic() raises:
 def test_hessian_cross_term() raises:
     """Hessian of x*y has off-diagonal 1 and diagonal 0."""
 
-    @parameter
     def f[
         dtype: DType
     ](
@@ -444,7 +459,6 @@ def test_hessian_cross_term() raises:
 def test_hessian_cubic() raises:
     """Hessian of x^3 + y^3: diagonal = 6x, 6y; off-diagonal = 0."""
 
-    @parameter
     def f[
         dtype: DType
     ](
@@ -466,7 +480,6 @@ def test_hessian_cubic() raises:
 def test_hessian_symmetric() raises:
     """Hessian is always symmetric: H[i,j] == H[j,i]."""
 
-    @parameter
     def f[
         dtype: DType
     ](
@@ -484,6 +497,57 @@ def test_hessian_symmetric() raises:
     assert_almost_equal(
         H.item(1), H.item(2), atol=1e-8, msg="Hessian must be symmetric"
     )
+
+
+def test_hessian_vector_valued() raises:
+    """Hessian tensor of f(x, y) = [x^2 + y^2, x*y], shape (2, 2, 2)."""
+
+    def f[
+        dtype: DType
+    ](
+        x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
+    ) capturing raises -> NDArray[dtype]:
+        var out = nm.zeros[dtype](nm.Shape(2))
+        out.store(0, val=x.item(0) * x.item(0) + x.item(1) * x.item(1))
+        out.store(1, val=x.item(0) * x.item(1))
+        return out^
+
+    var x = nm.fromstring[sj.f64]("[1.0, 1.0]")
+    var H = hessian[sj.f64, f](x)
+
+    assert_equal(H.shape[0], 2)
+    assert_equal(H.shape[1], 2)
+    assert_equal(H.shape[2], 2)
+
+    # f_0 = x^2 + y^2 -> Hessian [[2, 0], [0, 2]]
+    assert_almost_equal(H.item(0), 2.0, atol=1e-5, msg="H[0,0,0]")
+    assert_almost_equal(H.item(1), 0.0, atol=1e-5, msg="H[0,0,1]")
+    assert_almost_equal(H.item(2), 0.0, atol=1e-5, msg="H[0,1,0]")
+    assert_almost_equal(H.item(3), 2.0, atol=1e-5, msg="H[0,1,1]")
+
+    # f_1 = x*y -> Hessian [[0, 1], [1, 0]]
+    assert_almost_equal(H.item(4), 0.0, atol=1e-5, msg="H[1,0,0]")
+    assert_almost_equal(H.item(5), 1.0, atol=1e-5, msg="H[1,0,1]")
+    assert_almost_equal(H.item(6), 1.0, atol=1e-5, msg="H[1,1,0]")
+    assert_almost_equal(H.item(7), 0.0, atol=1e-5, msg="H[1,1,1]")
+
+
+def test_hessian_vector_valued_args_free() raises:
+    """Args-free overload matches the args-taking one for f(x) = x * x."""
+
+    def f[dtype: DType](x: NDArray[dtype]) capturing raises -> NDArray[dtype]:
+        return x * x
+
+    var x = nm.fromstring[sj.f64]("[1.0, 2.0]")
+    var H = hessian[sj.f64, f](x)
+
+    assert_equal(H.shape[0], 2)
+    # f_0 = x0^2 -> only H[0,0,0] nonzero (=2)
+    assert_almost_equal(H.item(0), 2.0, atol=1e-4, msg="H[0,0,0]")
+    assert_almost_equal(H.item(3), 0.0, atol=1e-4, msg="H[0,1,1]")
+    # f_1 = x1^2 -> only H[1,1,1] nonzero (=2)
+    assert_almost_equal(H.item(4), 0.0, atol=1e-4, msg="H[1,0,0]")
+    assert_almost_equal(H.item(7), 2.0, atol=1e-4, msg="H[1,1,1]")
 
 
 def main() raises:

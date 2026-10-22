@@ -9,8 +9,19 @@ mojo run -I . -I tests/ examples/differentiate_examples.mojo
 ```
 """
 
+# ===----------------------------------------------------------------------=== #
+# External
+# ===----------------------------------------------------------------------=== #
 import numojo as nm
-from scijo.differentiate import derivative, jacobian, hessian
+
+# ===----------------------------------------------------------------------=== #
+# SciJo
+# ===----------------------------------------------------------------------=== #
+from scijo.differentiate import (
+    derivative,
+    hessian,
+    jacobian,
+)
 from scijo.prelude import *
 
 
@@ -19,6 +30,7 @@ def main() raises:
     step_direction_variants()
     jacobian_example()
     hessian_example()
+    hessian_vector_valued_example()
 
 
 # ===----------------------------------------------------------------------=== #
@@ -26,11 +38,7 @@ def main() raises:
 # ===----------------------------------------------------------------------=== #
 
 
-def parabola[
-    dtype: DType
-](x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]) capturing -> Scalar[
-    dtype
-]:
+def parabola[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
     return x * x + 2.0 * x + 1.0
 
 
@@ -47,7 +55,9 @@ def first_derivative() raises:
     print("  nit     =", res.nit)
     print("  nfev    =", res.nfev)
 
-    # A function that reads extra coefficients from `args`.
+    # A reusable, module-level function that reads extra coefficients from
+    # `args` instead of capturing them - see the `args`-taking overload of
+    # `derivative` in the manual.
     var args: List[Scalar[f64]] = [3.0]
     var res_args = derivative[f64, scaled_parabola](x0=1.0, args=args^)
     print("With args=[3.0] (f(x) = 3*x^2):", res_args.df)  # 3*2*1 = 6
@@ -84,9 +94,7 @@ def step_direction_variants() raises:
 
 def vector_square[
     dtype: DType
-](
-    x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-) capturing raises -> NDArray[dtype]:
+](x: NDArray[dtype]) capturing raises -> NDArray[dtype]:
     return x * x
 
 
@@ -109,9 +117,7 @@ def jacobian_example() raises:
 
 def sum_of_squares[
     dtype: DType
-](
-    x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-) capturing raises -> Scalar[dtype]:
+](x: NDArray[dtype]) capturing raises -> Scalar[dtype]:
     return x.item(0) * x.item(0) + x.item(1) * x.item(1)
 
 
@@ -124,4 +130,30 @@ def hessian_example() raises:
     var x = nm.array[f64]([1.0, 2.0], [2])
     var H = hessian[f64, sum_of_squares](x)
     print("hessian(g(x,y)=x^2+y^2) at [1, 2] (should be ~[[2, 0], [0, 2]]):")
+    print(H)
+
+
+# ===----------------------------------------------------------------------=== #
+# hessian (vector-valued): f(x, y) = [x^2 + y^2, x*y]
+# ===----------------------------------------------------------------------=== #
+
+
+def sum_and_product[
+    dtype: DType
+](x: NDArray[dtype]) capturing raises -> NDArray[dtype]:
+    var out = nm.zeros[dtype](nm.Shape(2))
+    out.store(0, val=x.item(0) * x.item(0) + x.item(1) * x.item(1))
+    out.store(1, val=x.item(0) * x.item(1))
+    return out^
+
+
+def hessian_vector_valued_example() raises:
+    print()
+    print("=" * 80)
+    print("HESSIAN (vector-valued): f(x,y) = [x^2 + y^2, x*y]")
+    print("=" * 80)
+
+    var x = nm.array[f64]([1.0, 1.0], [2])
+    var H = hessian[f64, sum_and_product](x)
+    print("shape (2, 2, 2): H[0] ~ [[2,0],[0,2]], H[1] ~ [[0,1],[1,0]]:")
     print(H)

@@ -32,14 +32,22 @@ not an enumeration of every signature.
     - [The functional `interp`](#the-functional-interp)
   - [FFT (`scijo.fft`)](#fft-scijofft)
     - [`fft` and `ifft`](#fft-and-ifft)
+    - [`fftn`, `ifftn`, `fft2`, and `ifft2`](#fftn-ifftn-fft2-and-ifft2)
     - [`rfft` and `irfft`](#rfft-and-irfft)
     - [Frequency helpers](#frequency-helpers)
   - [Constants (`scijo.constants`)](#constants-scijoconstants)
     - [Named constants vs. the CODATA table](#named-constants-vs-the-codata-table)
     - [Temperature and optics helpers](#temperature-and-optics-helpers)
+  - [Linear Algebra (`scijo.linalg`)](#linear-algebra-scijolinalg)
+    - [Decompositions](#decompositions)
+    - [Eigenvalues and SVD](#eigenvalues-and-svd)
+    - [Solving](#solving)
+    - [Norms, determinant, trace](#norms-determinant-trace)
   - [Optimization (`scijo.optimize`)](#optimization-scijooptimize)
     - [`root_scalar` and the individual solvers](#root_scalar-and-the-individual-solvers)
     - [`minimize_scalar`](#minimize_scalar)
+    - [`root` - multi-dimensional root finding](#root---multi-dimensional-root-finding)
+    - [`minimize` - multi-dimensional minimization](#minimize---multi-dimensional-minimization)
   - [Errors](#errors)
   - [Appendix: NuMojo is the array backend](#appendix-numojo-is-the-array-backend)
   - [Appendix: what is not here yet](#appendix-what-is-not-here-yet)
@@ -92,9 +100,7 @@ A first program:
 from scijo.differentiate import derivative
 from scijo.prelude import *
 
-def f[dtype: DType](
-    x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-) capturing -> Scalar[dtype]:
+def f[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
     return x * x
 
 def main() raises:
@@ -105,38 +111,47 @@ def main() raises:
 ### Passing a function to SciJo
 
 Every callback-based routine in SciJo - `derivative`, `jacobian`, `hessian`,
-`quad`, `root_scalar` and its individual solvers, `minimize_scalar` - takes
-the function to operate on as a **compile-time parameter**, not a runtime
-argument, and expects one exact parameter shape:
+`quad`, `root_scalar` and its individual solvers, `root`, `minimize_scalar`,
+`minimize` - takes the function to operate on as a **compile-time parameter**, not a
+runtime argument. Each one comes in two overloads, differing only in
+whether the callback takes an `args` parameter:
 
 ```mojo
+def[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]
+
 def[dtype: DType](
     x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
 ) capturing -> Scalar[dtype]
 ```
 
-Read that as: a `def` (not `fn`) taking the evaluation point and an optional
-list of extra parameters, both generic over the same `dtype`, returning a
-scalar of that dtype, and `capturing` so it may close over outer variables.
-`jacobian` and `hessian` take the vector-valued version of the same shape,
-operating on `NDArray[dtype]` instead of `Scalar[dtype]`:
+Read the first as: a `def` (not `fn`) taking just the evaluation point,
+generic over `dtype`, returning a scalar of that dtype, and `capturing` so
+it may close over outer variables. `jacobian`, `hessian`, and `root` take
+the vector-valued version of the same two shapes, operating on
+`NDArray[dtype]` instead of `Scalar[dtype]` (and `raises`, since array
+operations can fail):
 
 ```mojo
-def[dtype: DType](
-    x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-) capturing raises -> NDArray[dtype]        # jacobian
-def[dtype: DType](
-    x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-) capturing raises -> Scalar[dtype]         # hessian
+def[dtype: DType](x: NDArray[dtype]) capturing raises -> NDArray[dtype]           # jacobian, root
+def[dtype: DType](x: NDArray[dtype]) capturing raises -> Scalar[dtype]            # hessian
 ```
 
-Two consequences follow directly from the shape:
+**Use the `args`-free overload by default.** It is the one shown in every
+quick example in this manual, and it is what you want whenever the
+function doesn't need extra runtime parameters:
 
-**`args` is always present in the signature, even when you never use it.**
-It exists so a function can be parameterised without a closure - pass extra
-coefficients through `args=List[Scalar[dtype]](2.0, 3.0)` and read them back
-with `args.value()[0]`, `args.value()[1]`, ... A function that ignores the
-argument simply never touches it:
+```mojo
+def parabola[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
+    return 2.0 * x * x
+
+var d = derivative[f64, parabola](x0=1.0)
+```
+
+**Reach for the `args`-taking overload only when you need one function,
+defined once at module level, reused across call sites with different
+parameter values** - `args` exists specifically for that case, because a
+top-level `def` (unlike one nested inside another function) has no
+enclosing scope to `capturing`-capture from:
 
 ```mojo
 def parabola[dtype: DType](
@@ -144,6 +159,20 @@ def parabola[dtype: DType](
 ) capturing -> Scalar[dtype]:
     var a = args.value()[0]
     return a * x * x
+
+var d1 = derivative[f64, parabola](x0=1.0, args=List[Scalar[f64]](2.0))
+var d2 = derivative[f64, parabola](x0=1.0, args=List[Scalar[f64]](3.0))
+```
+
+If you only need a one-off closure over some outer value, prefer capturing
+it directly instead - no `args` plumbing, and no `.value()[i]` indexing:
+
+```mojo
+def scale_and_differentiate[dtype: DType](a: Scalar[dtype], x0: Scalar[dtype]) raises -> Scalar[dtype]:
+    @parameter
+    def f(x: Scalar[dtype]) capturing -> Scalar[dtype]:
+        return a * x * x
+    return derivative[dtype, f](x0).df
 ```
 
 **The function is a parameter, so the call site names it in brackets, next
@@ -152,16 +181,20 @@ does - `f64` and `f` both go where NumPy would only ever see a runtime
 argument:
 
 ```mojo
-var d  = derivative[f64, parabola](x0=1.0, args=List[Scalar[f64]](2.0))
-var r  = root_scalar[f64, my_f](bracket=(0.0, 2.0), method="bisect")
-var m  = minimize_scalar[f64, my_f, method="Brent"](bracket=(0.0, 4.0))
+var d = derivative[f64, parabola](x0=1.0)
+var r = root_scalar[f64, my_f](bracket=(0.0, 2.0), method="bisect")
+var m = minimize_scalar[f64, my_f, method="Brent"](bracket=(0.0, 4.0))
 ```
 
 Because the function is a compile-time parameter, SciJo can specialise the
 whole call at compile time - there is no function-pointer indirection at
 the call site - but it also means a function used with two different
 `dtype`s needs to *be* generic over `dtype`, as every example in this manual
-is. A concrete `fn(x: Float64) -> Float64` will not satisfy the parameter.
+is. A concrete `fn(x: Float64) -> Float64` will not satisfy the parameter,
+and a closure *returned from* another function (as opposed to one defined
+inline with `@parameter` at the call site) cannot be passed as a
+compile-time parameter either - Mojo rejects it as "a dynamic value in a
+parameter list".
 
 ---
 
@@ -183,9 +216,7 @@ is reached).
 from scijo.differentiate import derivative
 from scijo.prelude import *
 
-def f[dtype: DType](
-    x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-) capturing -> Scalar[dtype]:
+def f[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
     return x * x + 2.0 * x + 1.0
 
 def main() raises:
@@ -234,9 +265,7 @@ import numojo as nm
 from scijo.differentiate import jacobian
 from scijo.prelude import *
 
-def f[dtype: DType](
-    x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-) capturing raises -> NDArray[dtype]:
+def f[dtype: DType](x: NDArray[dtype]) capturing raises -> NDArray[dtype]:
     return x * x
 
 def main() raises:
@@ -253,9 +282,7 @@ matrix of a scalar-valued function, using the standard central formula on
 the diagonal and the mixed-partial four-point stencil off it:
 
 ```mojo
-def g[dtype: DType](
-    x: NDArray[dtype], args: Optional[List[Scalar[dtype]]]
-) capturing raises -> Scalar[dtype]:
+def g[dtype: DType](x: NDArray[dtype]) capturing raises -> Scalar[dtype]:
     return x.item(0) * x.item(0) + x.item(1) * x.item(1)
 
 var x = nm.array[f64]([1.0, 2.0])
@@ -265,6 +292,21 @@ var H = hessian[f64, g](x)          # ≈ [[2, 0], [0, 2]]
 `hessian`'s default `step` is `1e-5`, much smaller than `jacobian`'s `0.5`
 - a second-derivative stencil divides by `step * step`, so the truncation
 error scales differently and the right step size is not the same one.
+
+`hessian` also has an overload for vector-valued functions (`f: R^n -> R^m`):
+when the callback returns an `NDArray` instead of a `Scalar`, `hessian`
+applies the same stencil to every output component and stacks the `m`
+resulting `(n, n)` matrices into a single `(m, n, n)` tensor, `H[k, i, j] =
+∂²f_k/∂x_i∂x_j`:
+
+```mojo
+def h[dtype: DType](x: NDArray[dtype]) capturing raises -> NDArray[dtype]:
+    return x * x   # f_0 = x0^2, f_1 = x1^2
+
+var x = nm.array[f64]([1.0, 2.0])
+var H = hessian[f64, h](x)   # shape (2, 2, 2)
+# H[0] ≈ [[2, 0], [0, 0]], H[1] ≈ [[0, 0], [0, 2]]
+```
 
 Both functions raise if any column's (or entry's) evaluation raises inside
 the callback; `jacobian` collects errors from its parallel workers and
@@ -287,9 +329,7 @@ integrates a *function* you supply (adaptive quadrature, like
 from scijo.integrate import quad, QAG_GK61
 from scijo.prelude import *
 
-def integrand[dtype: DType](
-    x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-) capturing -> Scalar[dtype]:
+def integrand[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
     return x * x
 
 def main() raises:
@@ -303,19 +343,21 @@ def main() raises:
 ```
 
 `method` (a compile-time, keyword-only parameter defaulting to `"qng"`)
-selects the backend algorithm, all from MSL's QUADPACK-derived routines:
+selects the algorithm, all built natively on the Gauss-Kronrod rules and
+adaptive-subdivision priority queue in `scijo.integrate.utility`
+(QUADPACK-style, no external backend):
 
 | `method` | What it does |
 | --- | --- |
-| `"qng"` | Non-adaptive Gauss-Kronrod-Patterson quadrature (10/21/43/87-point rules); the default. |
-| `"qag"` | Adaptive Gauss-Kronrod, refining subintervals until `limit` is reached or tolerance is met. `qag_rule=` selects the rule: `QAG_GK15`, `QAG_GK21` (default), `QAG_GK31`, `QAG_GK41`, `QAG_GK51`, `QAG_GK61` - larger numbers mean more points per subinterval and faster convergence on smooth integrands. |
-| `"qags"` | Adaptive integration plus Wynn epsilon extrapolation, for integrands with endpoint singularities or slow convergence. |
+| `"qng"` | Non-adaptive Gauss-Kronrod-Patterson cascade (21, then 43, then 87-point rules, stopping at the first that meets tolerance); the default. |
+| `"qag"` | Adaptive Gauss-Kronrod, refining subintervals until `limit` is reached or tolerance is met. `qag_rule=` selects the rule: `QAG_GK15`, `QAG_GK21` (default), `QAG_GK31`, `QAG_GK41`, `QAG_GK51`, `QAG_GK61`. Only 15-, 21-, 43-, and 87-point rules are tabulated, so `QAG_GK31`/`QAG_GK41` are served by the 43-point rule and `QAG_GK51`/`QAG_GK61` by the 87-point rule - both strictly more accurate than requested. |
+| `"qags"` | The same adaptive engine as `"qag"`, plus Wynn epsilon extrapolation on the running integral estimate, for integrands with endpoint singularities or slow convergence. |
 
 The return value is an `IntegralResult[dtype]` with fields `integral`,
-`abserr`, `nfev` and `ier` (SciJo does not currently populate `nfev`/`ier`
-from the backend - they read `0` on success). `limit <= 0` raises before any
-integration is attempted, and an unrecognised `method` string raises naming
-the three supported values.
+`abserr`, `nfev`, and `ier` (`0` on success, `1` if the requested tolerance
+wasn't met within `limit` subintervals or the `qng` cascade). `limit <= 0`
+raises before any integration is attempted, and an unrecognised `method`
+string raises naming the three supported values.
 
 ### Fixed-sample rules for discrete data
 
@@ -502,11 +544,13 @@ calling it many times avoids repeating the input validation on every call.
 ## FFT (`scijo.fft`)
 
 `scijo.fft` implements the Cooley-Tukey radix-2 decimation-in-time FFT.
-**Every transform in this module requires a 1-D input whose length is a
-power of two** (`rfft` and `irfft` zero-pad to the next power of two
-automatically; `fft` and `ifft` do not - they raise if the length is not
-already a power of two). There is no 2-D FFT yet; see
-[Appendix: what is not here yet](#appendix-what-is-not-here-yet).
+**Every transformed axis must have a length that is a power of two**
+(`rfft` and `irfft` zero-pad to the next power of two automatically; `fft`,
+`ifft`, `fftn`, `ifftn`, `fft2`, and `ifft2` do not - they raise if a
+transformed axis's length is not already a power of two). `fft`/`ifft` are
+1-D only; `fftn`/`ifftn`/`fft2`/`ifft2` transform an N-dimensional array
+over one or more axes by applying the 1-D transform to every line along
+each requested axis in turn.
 
 ### `fft` and `ifft`
 
@@ -533,6 +577,40 @@ does for you. `ifft` applies the `1/N` normalization internally, so
 5-element array raises `Error`, it does not round up for you. `n <= 1` is
 accepted trivially and returns a copy of the input unchanged (there is
 nothing to transform).
+
+### `fftn`, `ifftn`, `fft2`, and `ifft2`
+
+`fftn`/`ifftn` transform an N-dimensional `ComplexNDArray` over one or more
+axes by applying the 1-D `fft`/`ifft` to every line along each axis in
+turn, matching `scipy.fft.fftn`/`ifftn`. `fft2`/`ifft2` are convenience
+wrappers that default to the last two axes, matching `scipy.fft.fft2`/`ifft2`:
+
+```mojo
+import numojo as nm
+from scijo.fft import fftn, ifftn, fft2, ifft2
+from scijo.prelude import *
+
+def main() raises:
+    var arr = nm.arange[cf64](CScalar[cf64](0), CScalar[cf64](16)).reshape(
+        Shape(4, 4)
+    )
+
+    var freq = fftn(arr)              # transform over every axis (default)
+    var freq2 = fft2(arr)             # same result, via the fft2 wrapper
+
+    var axis_1: List[Int] = [1]
+    var freq_rows = fftn(arr, axes=axis_1^)  # transform along axis 1 only
+
+    var time = ifftn(freq)            # recovers arr, up to floating-point error
+```
+
+`axes` defaults to every axis, transformed in the order given; negative
+axes count from the end, matching NumPy/SciPy. **Every transformed axis's
+length must be a power of 2** - the same constraint as `fft`/`ifft`, just
+checked per axis instead of once. `ifftn`/`ifft2` normalize once by the
+product of the transformed axes' lengths (rather than per axis), which is
+mathematically equivalent but does one division pass instead of `len(axes)`
+of them.
 
 ### `rfft` and `irfft`
 
@@ -644,12 +722,145 @@ direction depending on which quantity you have in hand.
 
 ---
 
+## Linear Algebra (`scijo.linalg`)
+
+`scijo.linalg` is a SciPy-style layer on top of NuMojo's linalg primitives
+(`numojo.linalg`): decompositions, solvers, and norms, with the small API
+differences (1-D right-hand sides, `(P, L, U)` from `lu`, string `ord` on
+`norm`) that make it read like `scipy.linalg` rather than `numpy.linalg`.
+
+### Decompositions
+
+```mojo
+from scijo.linalg import lu, qr, cholesky
+import numojo as nm
+
+def main() raises:
+    var A = nm.fromstring[nm.f64]("[[4, 3], [6, 3]]")
+    var PLU = lu(A)                 # A == P @ L @ U
+    var P = PLU[0].copy()
+    var L = PLU[1].copy()
+    var U = PLU[2].copy()
+
+    var Q_R = qr(A)                 # reduced (economy) QR, matches numpy's mode="reduced"
+    var C = nm.fromstring[nm.f64]("[[4, 2], [2, 3]]")
+    var L2 = cholesky(C)            # lower factor by default; cholesky(C, lower=False) for upper
+```
+
+`lu` differs from NuMojo's own `lu_decomposition`: NuMojo's version factors
+the matrix as-is and can blow up on a matrix that needs pivoting (e.g. a
+zero in a pivot position). `scijo.linalg.lu` pivots first via NuMojo's
+`partial_pivoting`, then returns `(P, L, U)` so `A == P @ L @ U` holds
+directly, matching `scipy.linalg.lu`. `qr` and `cholesky` are thin
+wrappers with no behavior change, offered here so the whole module has one
+import path.
+
+### Eigenvalues and SVD
+
+```mojo
+from scijo.linalg import eigh, eigvalsh, svd, svdvals, matrix_rank, cond
+import numojo as nm
+
+def main() raises:
+    var A = nm.fromstring[nm.f64]("[[2, 1], [1, 2]]")
+    var w_v = eigh(A)           # (eigenvalues ascending, eigenvectors as columns)
+    var w = eigvalsh(A)         # eigenvalues only
+
+    var B = nm.fromstring[nm.f64]("[[1, 2], [3, 4], [5, 6]]")
+    var usvt = svd(B)           # (U, s, Vt), s descending, A == U @ diag(s) @ Vt
+    var s = svdvals(B)          # singular values only
+    var rank = matrix_rank(B)
+    var c = cond(B)             # 2-norm condition number: smax / smin
+```
+
+`eigh`/`eigvalsh` cover the symmetric (Hermitian, for real input) case,
+via the classic cyclic Jacobi eigenvalue algorithm: it iterates full
+sweeps until the off-diagonal norm falls below `tol` (not a fixed sweep
+count), so it keeps working on matrices that need more than the usual
+handful of sweeps. `lower` selects which triangle of `A` is read; the
+matrix is treated as symmetric regardless of what the other triangle
+holds. The general (non-symmetric) eigenvalue problem, where eigenvalues
+may be complex, is not yet available.
+
+`svd`/`svdvals` use one-sided Jacobi column orthogonalization, which
+works directly on `A` (`m >= n`, or transposed when `m < n`) rather than
+forming `A.T @ A` and calling an eigensolver on it - the latter squares
+the condition number and loses up to half the significant digits of the
+small singular values. `matrix_rank` and `cond` are both built on
+`svdvals`.
+
+### Solving
+
+```mojo
+from scijo.linalg import solve, solve_triangular, inv, pinv, lstsq
+import numojo as nm
+
+def main() raises:
+    var A = nm.fromstring[nm.f64]("[[3, 1], [1, 2]]")
+    var b = nm.fromstring[nm.f64]("[9, 8]")     # 1-D right-hand side works directly
+    var x = solve(A, b)
+
+    var Lower = nm.fromstring[nm.f64]("[[2, 0], [1, 3]]")
+    var y = solve_triangular(Lower, b, lower=True)   # forward/back substitution, no LU pass
+
+    var A_inv = inv(A)
+
+    var Tall = nm.fromstring[nm.f64]("[[1, 1], [1, 2], [1, 3]]")
+    var target = nm.fromstring[nm.f64]("[6, 0, 0]")
+    var coeffs = lstsq(Tall, target)      # least-squares fit
+    var Tall_pinv = pinv(Tall)            # Moore-Penrose pseudo-inverse, via SVD
+```
+
+`solve` and `solve_triangular` both accept a 1-D `b` (shape `(m,)`) and
+return a 1-D result, even though the underlying NuMojo `solve` only takes a
+matrix right-hand side - the 1-D case is reshaped to a column and flattened
+back on the way out. `solve_triangular` does not go through LU
+decomposition at all: pass it a matrix that is only known to be
+triangular (e.g. `R` from a QR decomposition) and it runs forward or back
+substitution directly, which is both cheaper and correct in cases where
+`solve` would be wasteful.
+
+`pinv` is computed from the SVD as `V @ diag(1/s) @ U.T`, with singular
+values at or below `rcond` times the largest treated as zero, so it
+handles rank-deficient input correctly. `lstsq` still only supports
+full-rank matrices, since it goes through NuMojo's own `lstsq`, which
+does not yet handle a rank-deficient `A`.
+
+### Norms, determinant, trace
+
+```mojo
+from scijo.linalg import norm, det, trace
+import numojo as nm
+
+def main() raises:
+    var x = nm.fromstring[nm.f64]("[3, 4]")
+    print(norm(x))              # 5.0, Euclidean (default)
+    print(norm(x, ord="1"))     # 7.0, sum of absolute values
+    print(norm(x, ord="inf"))   # 4.0, max absolute value
+
+    var A = nm.fromstring[nm.f64]("[[1, -2], [-3, 4]]")
+    print(norm(A))               # Frobenius norm (default for a matrix)
+    print(norm(A, ord="1"))      # max absolute column sum
+    print(norm(A, ord="inf"))    # max absolute row sum
+    print(norm(A, ord="2"))      # induced 2-norm (largest singular value), via svdvals
+    print(det(A))
+    print(trace(A))              # returns a length-1 NDArray, not a bare scalar
+```
+
+`norm`'s `ord` is a runtime `String`, not a Python-style `None`/number/`inf`
+value, because Mojo has no convenient sentinel for "unset or infinity" in
+one parameter. The default (`ord=""`) picks the Euclidean norm for a 1-D
+array and the Frobenius norm for a 2-D array. `trace` is re-exported from
+NuMojo as-is and returns a length-1 `NDArray`, unlike `det`, which
+returns a bare `Scalar`.
+
+---
+
 ## Optimization (`scijo.optimize`)
 
-`scijo.optimize` covers scalar root-finding and scalar minimization -
-there is no multi-dimensional optimization yet (see
-[Appendix: what is not here yet](#appendix-what-is-not-here-yet)). Every
-solver follows the callback shape from
+`scijo.optimize` covers scalar root-finding, multi-dimensional
+root-finding, scalar minimization, and multi-dimensional minimization.
+Every solver follows the callback shape from
 [Passing a function to SciJo](#passing-a-function-to-scijo).
 
 ### `root_scalar` and the individual solvers
@@ -658,14 +869,10 @@ solver follows the callback shape from
 from scijo.optimize import root_scalar
 from scijo.prelude import *
 
-def f[dtype: DType](
-    x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-) capturing -> Scalar[dtype]:
+def f[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
     return x * x - 2.0
 
-def fprime[dtype: DType](
-    x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-) capturing -> Scalar[dtype]:
+def fprime[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
     return 2.0 * x
 
 def main() raises:
@@ -706,9 +913,7 @@ that ran).
 from scijo.optimize import minimize_scalar
 from scijo.prelude import *
 
-def objective[dtype: DType](
-    x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-) capturing -> Scalar[dtype]:
+def objective[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
     return (x - 2.0) * (x - 2.0) + 1.0
 
 def main() raises:
@@ -718,6 +923,82 @@ def main() raises:
     print(result)          # multi-line report via write_to
     print(result.x, result.fun, result.success)
 ```
+
+### `root` - multi-dimensional root finding
+
+```mojo
+from scijo.optimize import root
+from scijo.linalg import matmul
+import numojo as nm
+
+def f[dtype: DType](x: nm.NDArray[dtype]) capturing raises -> nm.NDArray[dtype]:
+    var A = nm.fromstring[dtype]("[[3, 1], [1, 2]]")
+    var b = nm.fromstring[dtype]("[9, 8]")
+    return matmul(A, x) - b            # root at the solution of Ax = b
+
+def jac[dtype: DType](x: nm.NDArray[dtype]) capturing raises -> nm.NDArray[dtype]:
+    return nm.fromstring[dtype]("[[3, 1], [1, 2]]")
+
+def main() raises:
+    var x0 = nm.fromstring[nm.f64]("[0, 0]")
+
+    # Finite-difference Jacobian, re-estimated every iteration:
+    var r1 = root[nm.f64, f](x0)
+
+    # Analytic Jacobian - skips the finite-difference cost, and converges
+    # in one Newton step here since the system is already linear:
+    var r2 = root[nm.f64, f, jac](x0)
+
+    # Broyden's method - never forms a Jacobian at all, finite-difference
+    # or analytic; approximates the inverse Jacobian from successive steps:
+    var r3 = root[nm.f64, f, method="broyden1"](x0)
+
+    print(r1.x, r1.success, r1.nit)
+```
+
+`root` mirrors `scipy.optimize.root`'s frontend: `f` maps `R^n -> R^n` (as
+many equations as unknowns), and the result is the vector where all of
+them are simultaneously zero. Like `root_scalar`, `method` is a
+compile-time, keyword-only parameter, accepting `"newton"` (the default)
+or `"broyden1"`. Unlike `root_scalar`, there is a single unified entry
+point `root` (no separately-callable `newton`/`broyden1` function at this
+level - the scalar `newton` already has that name, and the multivariate
+solvers are only reachable through `root`).
+
+For `method="newton"`, whether `root[dtype, f]` or `root[dtype, f, jac]`
+is chosen matters for cost, not just convenience: every Newton iteration
+needs a Jacobian, and without one, `root` estimates it with
+`scijo.differentiate.jacobian` - `2n` extra function evaluations per
+iteration, for an `n`-dimensional problem. Supplying `jac` replaces that
+with one direct call. `f` and `jac(x)` are checked for shape at runtime:
+`f(x0)` must be the same length as `x0` (raises `Error` immediately if
+not, rather than trying to solve a non-square Jacobian), and `jac(x)` is
+expected to return an `(n, n)` matrix.
+
+`method="broyden1"` (Broyden's "good" method) sidesteps the Jacobian
+question entirely: it maintains a running `n x n` approximation of the
+*inverse* Jacobian, starting at the identity and refined after every step
+by a rank-1 correction built from that step and the resulting change in
+`f` - so `f` is the only function ever evaluated, at the cost of usually
+needing more iterations than Newton's method (with a good Jacobian) to
+reach the same tolerance. It only takes the `root[dtype, f]` /
+`root[dtype, f, args=...]` overloads - there is no analytic-derivative
+variant to skip, so it never appears alongside `jac`.
+
+Convergence uses two independent checks per iteration, mirroring
+`root_scalar`'s `atol`/`rtol`: `||f(x)|| <= atol` (residual small enough)
+and `||dx|| <= rtol * (||x|| + atol)` (Newton step no longer moving `x`
+meaningfully), using `scijo.linalg.norm`'s default (Euclidean) norm for
+both. `result.success` reflects only the first check, evaluated once more
+after the loop exits - so a run that stops on `maxiter` with a genuinely
+small residual is still reported as converged, and one that stalls on a
+tiny step far from a root is correctly reported as not.
+
+`root` returns `RootResultVector[dtype]`: `x` (the root vector), `fun`
+(the residual `f(x)` there - near-zero at a true root, informative when
+`success` is `False`), `nit`, `nfev`, `success`, `message`, and `method` -
+the vector-valued counterpart of `RootResult`, printable the same way via
+`write_to`.
 
 `method` (default `"Brent"`) accepts `"Brent"`, `"Golden"` or `"Bounded"`,
 case-insensitively (`"brent"` and `"Brent"` both work). Brent and Golden
@@ -730,6 +1011,59 @@ method needs raises `Error` naming it. The result is an
 `message`, `nit` and `nfev`; printing it directly (`print(result)`) runs
 its `write_to`, producing a multi-line report rather than the compact
 `__str__` form.
+
+### `minimize` - multi-dimensional minimization
+
+```mojo
+from scijo.optimize import minimize
+import numojo as nm
+
+def rosenbrock[dtype: DType](x: nm.NDArray[dtype]) capturing raises -> Scalar[dtype]:
+    var a = 1.0 - x.item(0)
+    var b = x.item(1) - x.item(0) * x.item(0)
+    return a * a + 100.0 * b * b       # minimum at (1, 1)
+
+def main() raises:
+    var x0 = nm.fromstring[nm.f64]("[-1.2, 1.0]")
+    var result = minimize[nm.f64, rosenbrock](x0, maxiter=2000)
+    print(result)
+```
+
+`minimize` mirrors `scipy.optimize.minimize`'s frontend: `f` maps
+`R^n -> R` (a scalar-valued function of several variables), and the result
+is the point where it is (locally) smallest. Like `root`, `method` is a
+compile-time, keyword-only parameter, with three supported values:
+
+- `"Nelder-Mead"` (the default), the derivative-free simplex method. It
+  never evaluates a gradient or Hessian, only `f` itself, which makes it
+  the right default when `f` is not (easily) differentiable, at the cost
+  of typically needing more function evaluations than a gradient-based
+  method would for a smooth, well-scaled problem. The algorithm maintains
+  a simplex of `n + 1` points (`n` = `len(x0)`), built by perturbing `x0`
+  by `initial_step * x0[i]` along each coordinate (default
+  `initial_step=0.05`; a small fixed step if `x0[i] == 0`), and repeatedly
+  reflects, expands, or contracts it around the worst point, shrinking the
+  whole simplex toward the best point when none of those help. Convergence
+  is checked the way SciPy checks it: both the simplex's point-to-point
+  spread (`xatol`, default `1e-4`) and its function-value spread (`fatol`,
+  default `1e-4`) must fall below tolerance.
+- `"BFGS"`, a quasi-Newton method that maintains a running approximation
+  of the inverse Hessian (updated at every step via the BFGS secant
+  formula) and a backtracking line search satisfying the Armijo
+  sufficient-decrease condition. The gradient is estimated with central
+  finite differences (`fd_step`, default matching SciPy's own
+  `sqrt(machine epsilon)`); there is no overload accepting an analytic
+  gradient yet. Converges once `||grad f(x)|| <= gtol` (default `1e-5`).
+- `"CG"`, nonlinear conjugate gradient (Polak-Ribiere, with periodic
+  restarts along steepest descent), using the same finite-difference
+  gradient and line search as `"BFGS"` but O(n) memory per iteration
+  instead of O(n^2), so it scales better to large `n` at the cost of
+  usually needing more iterations to reach the same tolerance.
+
+`minimize` returns `OptimizeResultVector[dtype]`: `x` (the minimizer),
+`fun` (the objective value there), `nit`, `nfev`, `success`, `message`, and
+`method` - the vector-valued counterpart of `OptimizeResult`, printable the
+same way via `write_to`.
 
 ---
 
@@ -770,7 +1104,7 @@ raise conditions across the library: an unsupported `order` (differentiate),
 a non-power-of-2 length (`fft`/`ifft`), wrong-dimensional or mismatched-size
 arrays (integrate, interpolate), a missing method-specific argument
 (optimize), and an unrecognised `method`/`type` string (`quad`, `interp`,
-`root_scalar`, `minimize_scalar`). Validate the obviously-checkable things
+`root_scalar`, `minimize_scalar`, `minimize`). Validate the obviously-checkable things
 - array shapes, bracket ordering, whether you actually have the arguments a
 given `method` needs - before the call if you want to avoid the exception
 path in a hot loop.
@@ -801,13 +1135,18 @@ written to take and return NuMojo's own types.
 This manual documents what exists. The README's roadmap tracks what does
 not; as of this writing, the notable gaps are:
 
-- **FFT**: 2-D FFT support. Every transform in `scijo.fft` is 1-D only.
-- **Optimization**: multi-dimensional root-finding and minimization -
-  everything in `scijo.optimize` today is scalar-only.
-- **Differentiation**: higher-order Jacobians, and Hessians for
-  vector-valued (rather than scalar-valued) functions.
-- **Signal processing, sparse matrices, and further linear algebra** are
-  listed as future directions but have no code in the repository yet.
+- **Optimization**: `scijo.optimize.minimize` covers multi-dimensional
+  minimization with Nelder-Mead, BFGS, and CG; there is no overload of
+  BFGS/CG accepting an analytic gradient yet (finite differences only).
+- **Differentiation**: higher-order Jacobians (e.g. a third-order tensor
+  of second derivatives of a vector-valued function's Jacobian itself).
+- **Linear algebra**: the general (non-symmetric) eigenvalue problem,
+  where eigenvalues may be complex (`eig`/`eigvals`), and a
+  rank-deficient `lstsq`. Everything else in `scijo.linalg` - LU, QR,
+  Cholesky, `eigh`/`eigvalsh`, `svd`/`svdvals`, `matrix_rank`, `cond`,
+  `solve`, `solve_triangular`, `inv`, `pinv`, and norms - is implemented.
+- **Signal processing and sparse matrices** are listed as future
+  directions but have no code in the repository yet.
 
 None of these are silently half-implemented - a 2-D array handed to `fft`,
 or a bracket-based multi-dimensional call to `root_scalar`, simply does not

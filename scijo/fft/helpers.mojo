@@ -4,8 +4,7 @@
 # ===----------------------------------------------------------------------=== #
 """FFT Helper Functions (`scijo.fft.helpers`)
 =============================================
-Utility functions for working with FFT output arrays, matching the
-`scipy.fft` helper API.
+Utility functions for working with FFT output arrays.
 
 Examples
 --------
@@ -34,7 +33,7 @@ def fftfreq[
     """Returns the discrete Fourier transform sample frequencies.
 
     The returned array contains the frequency bin centres in cycles per unit
-    of the sample spacing, matching `scipy.fft.fftfreq`.
+    of the sample spacing.
 
     The bins are: ``[0, 1, ..., n//2-1, -n//2, ..., -1] / (d*n)``
 
@@ -65,7 +64,10 @@ def fftfreq[
         raise Error("Scijo [fftfreq]: n must be positive, got " + String(n))
 
     var result = NDArray[dtype](Shape(n))
-    var half = n // 2
+    # For odd n, the positive/zero block has (n+1)//2 entries: index n//2
+    # itself is the last positive frequency, not the first negative one
+    # (e.g. n=7 -> [0, 1, 2, 3, -3, -2, -1], not [0, 1, 2, -4, -3, -2, -1]).
+    var half = (n + 1) // 2
     var scale = Scalar[dtype](1.0) / (Scalar[dtype](n) * d)
 
     for i in range(half):
@@ -87,8 +89,8 @@ def rfftfreq[
     """Returns the discrete Fourier transform sample frequencies for rfft output.
 
     The returned array contains the frequency bin centres for the output of
-    `rfft`, matching `scipy.fft.rfftfreq`. Only non-negative frequencies are
-    returned since the input is real.
+    `rfft`. Only non-negative frequencies are returned since the input is
+    real.
 
     The bins are: ``[0, 1, ..., n//2] / (d*n)``
 
@@ -137,7 +139,7 @@ def fftshift[
     """Shifts the zero-frequency component to the centre of the spectrum.
 
     Rearranges the output of `fft` by moving the zero-frequency component
-    to the middle of the array, matching `scipy.fft.fftshift`.
+    to the middle of the array.
 
     For a 1-D array of length n, the element at index k moves to index
     ``(k + n//2) % n``.
@@ -187,7 +189,7 @@ def ifftshift[
     """Inverse of `fftshift`.
 
     Undoes the shift performed by `fftshift`, restoring the standard FFT
-    ordering with zero-frequency at index 0, matching `scipy.fft.ifftshift`.
+    ordering with zero-frequency at index 0.
 
     For a 1-D array of length n, the element at index k moves to index
     ``(k - n//2) % n`` (equivalently ``(k + (n+1)//2) % n`` for odd n).
@@ -234,9 +236,9 @@ def ifftshift[
 def next_fast_len(n: Int) raises -> Int:
     """Returns the next fast FFT input size >= n.
 
-    Finds the smallest integer >= n that is a power of 2, matching the
-    spirit of `scipy.fft.next_fast_len` for the current Cooley-Tukey
-    radix-2 implementation (which requires power-of-2 lengths).
+    Finds the smallest integer >= n that is a power of 2, as needed by the
+    current Cooley-Tukey radix-2 implementation (which requires
+    power-of-2 lengths).
 
     Args:
         n: Minimum desired length.

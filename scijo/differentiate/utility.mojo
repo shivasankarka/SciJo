@@ -118,7 +118,6 @@ struct DiffResult[dtype: DType](ImplicitlyCopyable, Writable):
 # ===----------------------------------------------------------------------=== #
 
 
-@parameter
 def generate_central_finite_difference_table[
     dtype: DType
 ]() -> Dict[Int, List[Scalar[dtype]]]:
@@ -167,7 +166,6 @@ def generate_central_finite_difference_table[
     return coefficients^
 
 
-@parameter
 def generate_forward_finite_difference_table[
     dtype: DType
 ]() -> Dict[Int, List[Scalar[dtype]]]:
@@ -224,7 +222,6 @@ def generate_forward_finite_difference_table[
     return coefficients^
 
 
-@parameter
 def generate_backward_finite_difference_table[
     dtype: DType
 ]() -> Dict[Int, List[Scalar[dtype]]]:

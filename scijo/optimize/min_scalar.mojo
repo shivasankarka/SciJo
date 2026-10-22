@@ -24,14 +24,6 @@ Examples
     ```
 """
 
-# ===----------------------------------------------------------------------=== #
-# External
-# ===----------------------------------------------------------------------=== #
-from msl import (
-    min_brent as msl_min_brent,
-    min_golden as msl_min_golden,
-)
-
 comptime _phi: Float64 = 1.618033988749895
 """Inverse of the golden ratio, used in optimization algorithms."""
 comptime _invphi: Float64 = 0.3819660112501051
@@ -136,172 +128,17 @@ struct OptimizeResult[dtype: DType](ImplicitlyCopyable, Writable):
 # ===----------------------------------------------------------------------=== #
 
 
-def _min_message(success: Bool, errno: Int) -> String:
-    """Maps MSL minimizer status codes to SciJo status messages.
-
-    Args:
-        success: Whether backend minimization converged.
-        errno: MSL status/error code.
-
-    Returns:
-        Human-readable status message.
-    """
-    if success:
-        return "Optimization terminated successfully."
-    if errno == 11:
-        return "Maximum number of iterations exceeded."
-    if errno == 1:
-        return "Domain error (invalid interval or bracket)."
-    return "Optimization failed."
-
-
-def _brent_minimize_msl[
-    dtype: DType,
-    f: def[dtype: DType](
-        x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing -> Scalar[dtype],
-](
-    args: Optional[List[Scalar[dtype]]],
-    interval: Tuple[Scalar[dtype], Scalar[dtype]],
-    tol: Scalar[dtype],
-    maxiter: Int,
-) raises -> OptimizeResult[dtype]:
-    """Minimizes a scalar function using Brent's method.
-
-    Parameters:
-        dtype: The floating-point data type.
-        f: Objective function with signature `def(x, args) -> Scalar[dtype]`.
-
-    Args:
-        args: Optional arguments forwarded to `f`.
-        interval: Search interval `(a, b)`.
-        tol: Convergence tolerance used for absolute and relative thresholds.
-        maxiter: Maximum number of iterations.
-
-    Returns:
-        OptimizeResult[dtype] containing minimizer location, objective value,
-        convergence status, and diagnostics.
-
-    Raises:
-        Error: If interval endpoints are not distinct.
-    """
-    var a: Scalar[dtype] = interval[0]
-    var b: Scalar[dtype] = interval[1]
-
-    if a == b:
-        raise Error(
-            "Scijo [_brent_minimize_msl]: Bracket endpoints must be distinct."
-        )
-
-    if a > b:
-        var tmp = a
-        a = b
-        b = tmp
-
-    var xmid = (a + b) / 2
-
-    @parameter
-    def wrapped_fn(x: Float64) -> Float64:
-        return Float64(f(Scalar[dtype](x), args))
-
-    var result = msl_min_brent[wrapped_fn](
-        Float64(a),
-        Float64(xmid),
-        Float64(b),
-        epsabs=Float64(tol),
-        epsrel=Float64(tol),
-        max_iter=maxiter,
-    )
-
-    return OptimizeResult[dtype](
-        x=Scalar[dtype](result.x),
-        fun=Scalar[dtype](result.fun),
-        success=result.success,
-        message=_min_message(result.success, result.errno),
-        nit=result.nit,
-        nfev=result.nfev,
-    )
-
-
-def _golden_minimize_msl[
-    dtype: DType,
-    f: def[dtype: DType](
-        x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing -> Scalar[dtype],
-](
-    args: Optional[List[Scalar[dtype]]],
-    interval: Tuple[Scalar[dtype], Scalar[dtype]],
-    tol: Scalar[dtype],
-    maxiter: Int,
-) raises -> OptimizeResult[dtype]:
-    """Minimizes a scalar function using golden-section search.
-
-    Parameters:
-        dtype: The floating-point data type.
-        f: Objective function with signature `def(x, args) -> Scalar[dtype]`.
-
-    Args:
-        args: Optional arguments forwarded to `f`.
-        interval: Search interval `(a, b)`.
-        tol: Convergence tolerance used for absolute and relative thresholds.
-        maxiter: Maximum number of iterations.
-
-    Returns:
-        OptimizeResult[dtype] containing minimizer location, objective value,
-        convergence status, and diagnostics.
-
-    Raises:
-        Error: If interval endpoints are not distinct.
-    """
-    var a: Scalar[dtype] = interval[0]
-    var b: Scalar[dtype] = interval[1]
-
-    if a == b:
-        raise Error(
-            "Scijo [_golden_minimize_msl]: Bracket endpoints must be distinct."
-        )
-
-    if a > b:
-        var tmp = a
-        a = b
-        b = tmp
-
-    var xmid = (a + b) / 2
-
-    @parameter
-    def wrapped_fn(x: Float64) -> Float64:
-        return Float64(f(Scalar[dtype](x), args))
-
-    var result = msl_min_golden[wrapped_fn](
-        Float64(a),
-        Float64(xmid),
-        Float64(b),
-        epsabs=Float64(tol),
-        epsrel=Float64(tol),
-        max_iter=maxiter,
-    )
-
-    return OptimizeResult[dtype](
-        x=Scalar[dtype](result.x),
-        fun=Scalar[dtype](result.fun),
-        success=result.success,
-        message=_min_message(result.success, result.errno),
-        nit=result.nit,
-        nfev=result.nfev,
-    )
-
-
 def _brent_minimize[
     dtype: DType,
     f: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing -> Scalar[dtype],
+    ) thin capturing[_] -> Scalar[dtype] where dtype.is_floating_point(),
 ](
     args: Optional[List[Scalar[dtype]]],
     bracket: Tuple[Scalar[dtype], Scalar[dtype]],
     tol: Scalar[dtype],
     maxiter: Int,
-) raises -> OptimizeResult[dtype]:
+) raises -> OptimizeResult[dtype] where dtype.is_floating_point():
     var a: Scalar[dtype] = bracket[0]
     var b: Scalar[dtype] = bracket[1]
 
@@ -435,13 +272,13 @@ def _golden_minimize[
     dtype: DType,
     f: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing -> Scalar[dtype],
+    ) thin capturing[_] -> Scalar[dtype] where dtype.is_floating_point(),
 ](
     args: Optional[List[Scalar[dtype]]],
     bounds: Tuple[Scalar[dtype], Scalar[dtype]],
     tol: Scalar[dtype],
     maxiter: Int,
-) raises -> OptimizeResult[dtype]:
+) raises -> OptimizeResult[dtype] where dtype.is_floating_point():
     var a: Scalar[dtype] = bounds[0]
     var b: Scalar[dtype] = bounds[1]
 
@@ -473,14 +310,14 @@ def _golden_minimize[
             )
 
         if fc < fd:
-            b = d
+            a = d
             d = c
             fd = fc
             c = b - Scalar[dtype](_invphi) * (b - a)
             fc = f(c, args)
             nfev += 1
         else:
-            a = c
+            b = c
             c = d
             fc = fd
             d = a + Scalar[dtype](_invphi) * (b - a)
@@ -503,13 +340,13 @@ def _bounded_minimize[
     dtype: DType,
     f: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing -> Scalar[dtype],
+    ) thin capturing[_] -> Scalar[dtype] where dtype.is_floating_point(),
 ](
     args: Optional[List[Scalar[dtype]]],
     bounds: Tuple[Scalar[dtype], Scalar[dtype]],
     tol: Scalar[dtype],
     maxiter: Int,
-) raises -> OptimizeResult[dtype]:
+) raises -> OptimizeResult[dtype] where dtype.is_floating_point():
     var a: Scalar[dtype] = bounds[0]
     var b: Scalar[dtype] = bounds[1]
 
@@ -618,7 +455,7 @@ def minimize_scalar[
     dtype: DType,
     f: def[dtype: DType](
         x: Scalar[dtype], args: Optional[List[Scalar[dtype]]]
-    ) capturing -> Scalar[dtype],
+    ) thin capturing[_] -> Scalar[dtype] where dtype.is_floating_point(),
     *,
     method: String = "Brent",
 ](
@@ -627,7 +464,7 @@ def minimize_scalar[
     args: Optional[List[Scalar[dtype]]] = None,
     atol: Scalar[dtype] = 1e-8,
     maxiter: Int = 500,
-) raises -> OptimizeResult[dtype]:
+) raises -> OptimizeResult[dtype] where dtype.is_floating_point():
     """Minimize a scalar function using the specified method.
 
     Parameters:
@@ -668,22 +505,22 @@ def minimize_scalar[
     """
     comptime if method == "Brent" or method == "brent":
         if bracket:
-            return _brent_minimize_msl[dtype, f](
+            return _brent_minimize[dtype, f](
                 args, bracket.value(), atol, maxiter
             )
         if bounds:
-            return _brent_minimize_msl[dtype, f](
+            return _brent_minimize[dtype, f](
                 args, bounds.value(), atol, maxiter
             )
         raise Error("bracket or bounds must be provided for Brent method.")
 
     elif method == "Golden" or method == "golden":
         if bracket:
-            return _golden_minimize_msl[dtype, f](
+            return _golden_minimize[dtype, f](
                 args, bracket.value(), atol, maxiter
             )
         if bounds:
-            return _golden_minimize_msl[dtype, f](
+            return _golden_minimize[dtype, f](
                 args, bounds.value(), atol, maxiter
             )
         raise Error("bracket or bounds must be provided for Golden method.")
@@ -699,3 +536,70 @@ def minimize_scalar[
             + String(method)
             + ". Supported methods: 'Brent', 'Golden', 'Bounded'."
         )
+
+
+def minimize_scalar[
+    dtype: DType,
+    f: def[dtype: DType](x: Scalar[dtype]) thin capturing[_] -> Scalar[dtype] where dtype.is_floating_point(),
+    *,
+    method: String = "Brent",
+](
+    bracket: Optional[Tuple[Scalar[dtype], Scalar[dtype]]] = None,
+    bounds: Optional[Tuple[Scalar[dtype], Scalar[dtype]]] = None,
+    atol: Scalar[dtype] = 1e-8,
+    maxiter: Int = 500,
+) raises -> OptimizeResult[dtype] where dtype.is_floating_point():
+    """Minimize a scalar function using the specified method (args-free overload).
+
+    For functions that do not need `args`: `f` takes only `x`, so extra
+    parameters (if any) are captured directly from the enclosing scope
+    instead of threaded through `args`. See the `args`-taking overload
+    `minimize_scalar[dtype, f](..., args=...)` for a function reused
+    across call sites with different `args` values.
+
+    Parameters:
+        dtype: The floating-point data type.
+        f: Function f(x) -> Scalar[dtype] to minimize.
+        method: Optimization algorithm: "Brent", "Golden", or
+            "Bounded".
+
+    Args:
+        bracket: (a, b) tuple specifying an initial interval for Brent and Golden methods.
+        bounds: (lower, upper) tuple specifying the search interval for Bounded method.
+        atol: Absolute tolerance for convergence.
+        maxiter: Maximum number of iterations.
+
+    Returns:
+        OptimizeResult[dtype] containing the optimization result.
+
+    Raises:
+        Error: If neither bracket nor bounds is provided for the chosen
+            method.
+
+    Examples:
+        ```mojo
+        from scijo.prelude import *
+        from scijo.optimize import minimize_scalar
+
+        def objective[dtype: DType](x: Scalar[dtype]) capturing -> Scalar[dtype]:
+            return (x - 2) * (x - 2) + 1
+
+        var result = minimize_scalar[f64, objective, method="Brent"](
+            bracket=(0.0, 4.0),
+            atol=1e-8,
+            maxiter=100
+        )
+        print(result)
+        ```
+    """
+
+    def _with_args[
+        dtype2: DType
+    ](
+        x: Scalar[dtype2], args: Optional[List[Scalar[dtype2]]]
+    ) capturing -> Scalar[dtype2] where dtype2.is_floating_point():
+        return f(x)
+
+    return minimize_scalar[dtype, _with_args, method=method](
+        bracket=bracket, bounds=bounds, atol=atol, maxiter=maxiter
+    )
