@@ -15,7 +15,7 @@ mojo run -I . -I tests/ examples/special_examples.mojo
 # ===----------------------------------------------------------------------=== #
 # SciJo
 # ===----------------------------------------------------------------------=== #
-from scijo.special import bessel_j0, bessel_j1, erf, gamma
+from scijo.special import bessel_j0, bessel_j1, erf, gamma, gamma_inc
 from scijo.types import NumericComparable, variable
 from scijo.prelude import *
 
@@ -38,6 +38,11 @@ def plain_scalar_calls() raises:
     print("gamma(5.0)       =", gamma(Scalar[f64](5.0)), " (expect 24.0 == 4!)")
     print("erf(1.0)         =", erf(Scalar[f64](1.0)), " (expect 0.8427...)")
     print("bessel_j0(2.0)   =", bessel_j0(Scalar[f64](2.0)), " (expect 0.2239...)")
+    print(
+        "gamma_inc(2, 1)  =",
+        gamma_inc(Scalar[f64](2.0), Scalar[f64](1.0)),
+        " (expect 0.2642...)",
+    )
 
 
 # ===----------------------------------------------------------------------=== #

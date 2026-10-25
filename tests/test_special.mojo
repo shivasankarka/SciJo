@@ -1,7 +1,7 @@
 # ===----------------------------------------------------------------------=== #
 # Stdlib
 # ===----------------------------------------------------------------------=== #
-from std.math import exp, pi, sqrt
+from std.math import exp, log, pi, sqrt
 from std.testing import assert_almost_equal, TestSuite
 
 # ===----------------------------------------------------------------------=== #
@@ -10,6 +10,7 @@ from std.testing import assert_almost_equal, TestSuite
 from scijo import f64
 from scijo.special import (
     beta,
+    beta_inc,
     bessel_i0,
     bessel_i1,
     bessel_j0,
@@ -22,10 +23,12 @@ from scijo.special import (
     erf,
     erfc,
     gamma,
+    gamma_inc,
+    gamma_incc,
     lnbeta,
     lngamma,
 )
-from scijo.types import NumericComparable, variable
+from scijo.types import Dual, NumericComparable, Primal, variable
 
 
 # ===----------------------------------------------------------------------=== #
@@ -95,6 +98,74 @@ def test_beta_matches_oracle_and_gamma_relation() raises:
         beta(Scalar[f64](2.5), Scalar[f64](4.5)),
         beta(Scalar[f64](4.5), Scalar[f64](2.5)),
         msg="beta(a, b) == beta(b, a)",
+    )
+
+
+def test_gamma_inc_matches_oracle_and_boundaries() raises:
+    assert_almost_equal(
+        gamma_inc(Scalar[f64](2.0), Scalar[f64](1.0)),
+        0.2642411176571153,
+        msg="gamma_inc(2, 1)",
+    )
+    assert_almost_equal(
+        gamma_incc(Scalar[f64](2.0), Scalar[f64](1.0)),
+        0.7357588823428847,
+        msg="gamma_incc(2, 1)",
+    )
+    assert_almost_equal(
+        gamma_inc(Scalar[f64](0.5), Scalar[f64](0.5)),
+        0.6826894921370859,
+        msg="gamma_inc(0.5, 0.5), past the series/CF threshold",
+    )
+    assert_almost_equal(
+        gamma_inc(Scalar[f64](3.0), Scalar[f64](0.0)),
+        0.0,
+        msg="gamma_inc(a, 0) == 0",
+    )
+    assert_almost_equal(
+        gamma_inc(Scalar[f64](2.5), Scalar[f64](4.0))
+        + gamma_incc(Scalar[f64](2.5), Scalar[f64](4.0)),
+        1.0,
+        msg="P(a, x) + Q(a, x) == 1",
+    )
+    assert_almost_equal(
+        gamma_inc(Scalar[f64](1.0), Scalar[f64](2.0)),
+        1.0 - exp(Scalar[f64](-2.0)),
+        msg="gamma_inc(1, x) == 1 - exp(-x), the exponential CDF",
+    )
+
+
+def test_beta_inc_matches_oracle_and_boundaries() raises:
+    assert_almost_equal(
+        beta_inc(Scalar[f64](2.0), Scalar[f64](3.0), Scalar[f64](0.4)),
+        0.5247999999999999,
+        msg="beta_inc(2, 3, 0.4)",
+    )
+    assert_almost_equal(
+        beta_inc(Scalar[f64](0.5), Scalar[f64](0.5), Scalar[f64](0.3)),
+        0.36901011956554536,
+        msg="beta_inc(0.5, 0.5, 0.3), past the continued-fraction threshold",
+    )
+    assert_almost_equal(
+        beta_inc(Scalar[f64](2.0), Scalar[f64](3.0), Scalar[f64](0.0)),
+        0.0,
+        msg="beta_inc(a, b, 0) == 0",
+    )
+    assert_almost_equal(
+        beta_inc(Scalar[f64](2.0), Scalar[f64](3.0), Scalar[f64](1.0)),
+        1.0,
+        msg="beta_inc(a, b, 1) == 1",
+    )
+    assert_almost_equal(
+        beta_inc(Scalar[f64](2.0), Scalar[f64](3.0), Scalar[f64](0.4))
+        + beta_inc(Scalar[f64](3.0), Scalar[f64](2.0), Scalar[f64](0.6)),
+        1.0,
+        msg="I_x(a, b) == 1 - I_(1-x)(b, a)",
+    )
+    assert_almost_equal(
+        beta_inc(Scalar[f64](1.0), Scalar[f64](1.0), Scalar[f64](0.37)),
+        0.37,
+        msg="beta_inc(1, 1, x) == x, the uniform CDF",
     )
 
 
@@ -178,6 +249,14 @@ def bessel_i1_fn[T: NumericComparable](x: T) -> T:
 
 def bessel_k1_fn[T: NumericComparable](x: T) -> T:
     return bessel_k1(x)
+
+
+def gamma_inc_fn[T: NumericComparable](a: T, x: T) -> T:
+    return gamma_inc(a, x)
+
+
+def beta_inc_fn[T: NumericComparable](a: T, b: T, x: T) -> T:
+    return beta_inc(a, b, x)
 
 
 def test_dual_erf_derivative() raises:
@@ -277,6 +356,51 @@ def test_dual_bessel_k1_derivative() raises:
         Scalar[f64](x0)
     ) / x0
     assert_almost_equal(result.deriv.v, expected)
+
+
+def test_dual_gamma_inc_derivative() raises:
+    """`d/dx P(a, x) = x^(a-1) * exp(-x) / Gamma(a)`, the gamma pdf, with
+    `a` held fixed as a zero-derivative constant."""
+    var a0 = 2.5
+    var x0 = 1.3
+    var a = Dual[Primal[f64]].constant(a0)
+    var x = variable(x0)
+    var result = gamma_inc_fn(a, x)
+    assert_almost_equal(
+        result.value.v, gamma_inc(Scalar[f64](a0), Scalar[f64](x0)),
+        msg="gamma_inc(2.5, 1.3)",
+    )
+    var expected_deriv = exp((a0 - 1.0) * log(x0) - x0 - lngamma(Scalar[f64](a0)))
+    assert_almost_equal(
+        result.deriv.v, expected_deriv,
+        msg="d/dx P(a, x) = x^(a-1)*exp(-x)/Gamma(a)",
+    )
+
+
+def test_dual_beta_inc_derivative() raises:
+    """`d/dx I_x(a, b) = x^(a-1) * (1-x)^(b-1) / B(a, b)`, the beta pdf,
+    with `a` and `b` held fixed as zero-derivative constants."""
+    var a0 = 2.5
+    var b0 = 3.1
+    var x0 = 0.42
+    var a = Dual[Primal[f64]].constant(a0)
+    var b = Dual[Primal[f64]].constant(b0)
+    var x = variable(x0)
+    var result = beta_inc_fn(a, b, x)
+    assert_almost_equal(
+        result.value.v,
+        beta_inc(Scalar[f64](a0), Scalar[f64](b0), Scalar[f64](x0)),
+        msg="beta_inc(2.5, 3.1, 0.42)",
+    )
+    var expected_deriv = exp(
+        (a0 - 1.0) * log(x0)
+        + (b0 - 1.0) * log(1.0 - x0)
+        - lnbeta(Scalar[f64](a0), Scalar[f64](b0))
+    )
+    assert_almost_equal(
+        result.deriv.v, expected_deriv,
+        msg="d/dx I_x(a, b) = x^(a-1)*(1-x)^(b-1)/B(a, b)",
+    )
 
 
 def main() raises:

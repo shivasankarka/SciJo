@@ -4,7 +4,8 @@
 # ===----------------------------------------------------------------------=== #
 """Special Functions (`scijo.special`)
 ======================================
-Gamma, error, beta, digamma, and Bessel functions.
+Gamma, error, beta, digamma, regularized incomplete gamma/beta, and Bessel
+functions.
 
 Every function here has two overloads: a concrete one taking and returning
 a plain `Scalar[dtype]`, and a generic one over `scijo.types.NumericComparable`.
@@ -39,6 +40,7 @@ from .beta import (
     beta,
     lnbeta,
 )
+from .beta_inc import beta_inc
 from .erf import (
     erf,
     erfc,
@@ -46,5 +48,9 @@ from .erf import (
 from .gamma import (
     gamma,
     lngamma,
+)
+from .gamma_inc import (
+    gamma_inc,
+    gamma_incc,
 )
 from .psi import digamma
