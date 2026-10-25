@@ -6,6 +6,64 @@ The format is based on "Keep a Changelog" and follows Semantic Versioning.
 
 ## [Unreleased]
 
+## [v0.4.0] - 2026-10-26
+### Added
+- **Types module** (`scijo.types`), an opt-in trait-based layer used by
+  `scijo.special` (below) and available for any future module that wants
+  the same pattern:
+  - `Numeric` - the minimal arithmetic/transcendental trait
+    (`+`/`-`/`*`/`/`/`exp`/`log`/`sqrt`/`sin`/`cos`, `one()`/`constant()`)
+    a differentiable scalar kernel needs.
+  - `NumericComparable` - `Numeric` plus `<`/`<=`/`>`/`==`/`floor()`, for
+    algorithms that branch by magnitude (series vs. asymptotic expansion,
+    reflection formulas, convergence cutoffs) without the branch ever
+    depending on a conformer's derivative.
+  - `Primal` - a zero-cost wrapper over `SIMD[dtype, width]` conforming to
+    both traits.
+  - `Complex` - `re + im*i` with the usual complex arithmetic and
+    transcendentals (principal branch for `log`/`sqrt`).
+  - `Dual` - forward-mode automatic differentiation: a `(value, derivative)`
+    pair that differentiates any kernel written generically over `Numeric`
+    via its own chain-rule arithmetic, with nesting
+    (`Dual[Dual[Primal[f64]]]`) for higher-order derivatives and
+    `Dual[Complex[f64]]` for complex-valued kernels. `variable`/`variable2`
+    build a seeded `Dual`/nested `Dual` without naming the nested generic
+    type.
+  - `examples/types_examples.mojo` and `tests/test_types.mojo`.
+- **Special functions module** (`scijo.special`), the first consumer of
+  the pattern above: every function has a concrete `Scalar[dtype]`
+  overload for ordinary use, backed by a single generic implementation
+  over `NumericComparable` - so calling that same generic function on a
+  `Dual` instead of a `Primal` gives an exact derivative for free, with no
+  separate hand-written derivative formula anywhere in the module:
+  - `gamma` / `lngamma` - the gamma function and its log, via the Lanczos
+    approximation (`x >= 0.5`) and the reflection formula (`x < 0.5`).
+  - `erf` / `erfc` - the error function and its complement, via a power
+    series (`|x| < 2`) and a continued fraction (`|x| >= 2`).
+  - `beta` / `lnbeta` - `Gamma(a)*Gamma(b)/Gamma(a+b)` and its log, built
+    on `lngamma`.
+  - `digamma` - `d/dx[ln(Gamma(x))]`, via the shift recurrence into an
+    asymptotic series, with the reflection formula for `x <= 0`.
+  - `gamma_inc` / `gamma_incc` - the regularized lower/upper incomplete
+    gamma functions `P(a, x)`/`Q(a, x)`, via a power series and a
+    continued fraction depending on how `x` compares to `a`.
+  - `beta_inc` - the regularized incomplete beta function `I_x(a, b)`, via
+    Lentz's modified continued fraction.
+  - `bessel_j0`/`bessel_j1`/`bessel_y0`/`bessel_y1` (first/second kind) and
+    `bessel_i0`/`bessel_i1`/`bessel_k0`/`bessel_k1` (modified first/second
+    kind) - order-0/1 Bessel functions, via a convergent power series for
+    small `|x|` and a shared asymptotic expansion for large `|x|`.
+  - `examples/special_examples.mojo` and `tests/test_special.mojo`.
+- **Developer guide**: new "Progressive Disclosure" section
+  (`docs/developer_guide.md`) documenting the concrete-`Scalar`-first,
+  `Numeric`-generic-second pattern `scijo.types`/`scijo.special` establish,
+  as the template for any future module.
+- README and Manual sections for both new modules.
+
+### Changed
+- Bumped the `mojo` dependency to `>=1.2.0` (from `>=1.1.0`) and `numojo`
+  to the `v0.12.0` tag (from `v0.11.0`).
+
 ## [v0.3.0] - 2026-10-22
 ### Added
 - **Linear algebra module** (`scijo.linalg`), built on NuMojo 0.11.0's linalg primitives (LU/QR/Cholesky decompositions, `solve`/`lstsq`/`inv`):
