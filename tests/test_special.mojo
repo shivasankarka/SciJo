@@ -29,7 +29,7 @@ from scijo.types import NumericComparable, variable
 
 
 # ===----------------------------------------------------------------------=== #
-# Tier 1 (`scijo.special`, plain `Scalar`): values against the scipy oracle
+# Level 1 (`scijo.special`, plain `Scalar`): values against the scipy oracle
 # (`pixi run -e test python3 -c "from scipy.special import ..."`, recorded
 # in each assertion's comment) and against identities that need no oracle.
 # ===----------------------------------------------------------------------=== #
@@ -139,7 +139,7 @@ def test_bessel_asymptotic_branch_matches_oracle() raises:
 
 
 # ===----------------------------------------------------------------------=== #
-# Tier 2 (the generic `scijo.special` overloads, run through `Dual`): every
+# Level 2 (the generic `scijo.special` overloads, run through `Dual`): every
 # derivative here falls out of `Dual`'s own chain-rule arithmetic - there is
 # no hand-written derivative formula anywhere in `scijo.special` to call.
 # The expected values below are still the closed-form derivative, used only

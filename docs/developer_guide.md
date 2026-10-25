@@ -50,14 +50,14 @@ A regular user should be able to do anything SciPy does by calling a plain
 function on a `Scalar`/`SIMD` value - no need to know `scijo.types.Numeric`
 exists. A power user who wants an exact derivative, or to run a kernel
 generically over `Primal`/`Dual`/`Complex`, opts into the `Numeric`-based
-tier. **Support both. Never pivot a module fully to `Numeric`** - a concrete
+level. **Support both. Never pivot a module fully to `Numeric`** - a concrete
 `Scalar`/`SIMD` entry point is the default for every new numerical module,
-with a `Numeric`-generic tier layered on top as an addition, not a
+with a `Numeric`-generic level layered on top as an addition, not a
 replacement.
 
 `scijo/types/` and `scijo/special/` are the worked example - and a
 non-obvious refinement worth calling out, since it isn't the first design
-that comes to mind: tier 1 and tier 2 are **the same code**, not two
+that comes to mind: level 1 and level 2 are **the same code**, not two
 implementations kept in sync.
 
 - `scijo/types/comparable.mojo`'s `NumericComparable` trait extends
@@ -70,14 +70,14 @@ implementations kept in sync.
   `T: NumericComparable`, using only `Numeric`'s `+`/`-`/`*`/`/`/`exp`/`log`/
   `sin`/`cos` for the arithmetic and `NumericComparable`'s comparisons for
   the branching. A thin concrete overload (`gamma[dtype: DType](x:
-  Scalar[dtype])`) wraps the generic one via `Primal` - that's tier 1,
+  Scalar[dtype])`) wraps the generic one via `Primal` - that's level 1,
   `gamma(2.5)` with no `Numeric` in sight.
-- Tier 2 is calling that exact same generic function with a `Dual` instead
+- Level 2 is calling that exact same generic function with a `Dual` instead
   of a `Primal`. There is no second implementation and no hand-written
   derivative table: `Dual`'s own chain-rule arithmetic differentiates
   whichever branch the algorithm takes, automatically. This is what
   resolved a real limitation from this design's first draft - `gamma`,
-  `lngamma`, and `digamma` first shipped as tier-1-only, because giving
+  `lngamma`, and `digamma` first shipped as level-1-only, because giving
   `Dual` an exact *hand-written* derivative for `gamma` needs `digamma`'s
   value, whose own hand-written derivative needs `trigamma`, and so on with
   no end. Writing the algorithm generically instead of writing a derivative
@@ -99,7 +99,7 @@ When writing a new module (or a new function in an existing one):
    (or `NumericComparable`, if it branches by magnitude). If so, write it
    **once**, generically over `T`, and add a thin concrete
    `Scalar[dtype]` overload that wraps the generic one via `Primal` - see
-   `scijo/special/gamma.mojo`. This gets tier 2 for free, with no separate
+   `scijo/special/gamma.mojo`. This gets level 2 for free, with no separate
    derivative formula to write or maintain.
 2. If the algorithm genuinely isn't expressible that way (it calls into
    something outside `Numeric`'s operation set, or its exact derivative
@@ -109,9 +109,9 @@ When writing a new module (or a new function in an existing one):
    involved - and only add a hand-written `Dual` method with a manual
    chain-rule formula if a generic/autodiff use case actually needs one
    (see `scijo/types/dual.mojo`'s `exp`/`log`/`sin`/`cos`).
-3. Document both tiers in the module's docstring, and give an example of
+3. Document both levels in the module's docstring, and give an example of
    each in `examples/` - one plain call, one through `Dual` - so the two
-   tiers are discoverable without reading the source.
+   levels are discoverable without reading the source.
 
 ---
 

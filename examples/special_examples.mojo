@@ -32,7 +32,7 @@ def main() raises:
 
 def plain_scalar_calls() raises:
     print("=" * 80)
-    print("TIER 1: scijo.special on a plain Scalar")
+    print("LEVEL 1: scijo.special on a plain Scalar")
     print("=" * 80)
 
     print("gamma(5.0)       =", gamma(Scalar[f64](5.0)), " (expect 24.0 == 4!)")
@@ -54,7 +54,7 @@ def j0_kernel[T: NumericComparable](x: T) -> T:
 def exact_derivative_via_dual() raises:
     print()
     print("=" * 80)
-    print("TIER 2: the same bessel_j0, called through Dual for a free derivative")
+    print("LEVEL 2: the same bessel_j0, called through Dual for a free derivative")
     print("=" * 80)
 
     var x0 = 3.0
