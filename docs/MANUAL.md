@@ -48,6 +48,13 @@ not an enumeration of every signature.
     - [`minimize_scalar`](#minimize_scalar)
     - [`root` - multi-dimensional root finding](#root---multi-dimensional-root-finding)
     - [`minimize` - multi-dimensional minimization](#minimize---multi-dimensional-minimization)
+  - [Types (`scijo.types`)](#types-scijotypes)
+    - [`Numeric` and `NumericComparable`](#numeric-and-numericcomparable)
+    - [`Primal`, `Complex`, and `Dual`](#primal-complex-and-dual)
+  - [Special Functions (`scijo.special`)](#special-functions-scijospecial)
+    - [Gamma, error, and beta functions](#gamma-error-and-beta-functions)
+    - [Incomplete gamma and beta functions](#incomplete-gamma-and-beta-functions)
+    - [Bessel functions](#bessel-functions)
   - [Errors](#errors)
   - [Appendix: NuMojo is the array backend](#appendix-numojo-is-the-array-backend)
   - [Appendix: what is not here yet](#appendix-what-is-not-here-yet)
@@ -57,7 +64,7 @@ not an enumeration of every signature.
 ## Getting started
 
 SciJo is built on [NuMojo](https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo)
-and targets Mojo `>=1.0.0,<2`. Inside a checkout, pixi builds and packages it:
+and targets Mojo `>=1.2.0,<2`. Inside a checkout, pixi builds and packages it:
 
 ```bash
 pixi install
