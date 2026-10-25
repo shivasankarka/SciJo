@@ -1096,6 +1096,7 @@ any conformer:
 
 ```mojo
 from scijo.types import Numeric, Primal, variable
+from scijo.prelude import *
 
 def f[T: Numeric](x: T) -> T:
     return x * x + 2.0 * x
@@ -1292,6 +1293,14 @@ not; as of this writing, the notable gaps are:
   `solve`, `solve_triangular`, `inv`, `pinv`, and norms - is implemented.
 - **Signal processing and sparse matrices** are listed as future
   directions but have no code in the repository yet.
+- **Special functions**: `scijo.special` covers gamma/error/beta,
+  digamma, the regularized incomplete gamma/beta functions, and order-0/1
+  Bessel functions - all generic over `NumericComparable`, so each also
+  works on a `Dual` for an exact derivative (e.g. `digamma`'s derivative,
+  the trigamma function, falls out automatically with no hand-written
+  formula). General-order Bessel functions, polygamma, Airy functions,
+  Legendre polynomials, and complex-valued special functions are not yet
+  implemented.
 
 None of these are silently half-implemented - a 2-D array handed to `fft`,
 or a bracket-based multi-dimensional call to `root_scalar`, simply does not
