@@ -14,8 +14,8 @@ format = "mojo format ./scijo && mojo format ./tests && mojo format ./benchmark"
 package = "mojo precompile scijo && cp scijo.mojoc tests/"
 
 [dependencies]
-mojo = ">=1.1.0,<2"
-numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", tag = "v0.11.0" }
+mojo = ">=1.2.0,<2"
+numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", tag = "v0.12.0" }
 
 [package]
 name = "scijo"
@@ -31,16 +31,16 @@ backend = { name = "pixi-build-mojo", version = "0.*", channels = [
 name = "scijo"
 
 [package.host-dependencies]
-mojo = "==1.1.0"
-numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", tag = "v0.11.0" }
+mojo = "==1.2.0"
+numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", tag = "v0.12.0" }
 
 [package.build-dependencies]
-mojo = "==1.1.0"
-numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", tag = "v0.11.0" }
+mojo = "==1.2.0"
+numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", tag = "v0.12.0" }
 
 [package.run-dependencies]
-mojo = "==1.1.0"
-numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", tag = "v0.11.0" }
+mojo = "==1.2.0"
+numojo = { git = "https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo.git", tag = "v0.12.0" }
 
 [feature.test.dependencies]
 python = ">=3.13,<3.15"
