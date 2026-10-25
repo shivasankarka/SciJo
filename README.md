@@ -122,6 +122,13 @@ plain `Scalar` gives an exact derivative for free:
 
 ## Installation
 
+### Version Compatibility
+
+| SciJo  | Mojo      | NuMojo  |
+|--------|-----------|---------|
+| v0.4.0 | `>=1.2.0` | v0.12.0 |
+| v0.3.0 | `>=1.1.0` | v0.11.0 |
+
 ### Method 1: Git Installation with pixi-build-mojo
 Install the SciJo v0.4.0 release directly from GitHub.
 
