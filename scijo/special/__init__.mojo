@@ -7,13 +7,10 @@
 Gamma, error, beta, digamma, and Bessel functions.
 
 Every function here has two overloads: a concrete one taking and returning
-a plain `Scalar[dtype]` (tier 1 - no knowledge of `scijo.types.Numeric`
-needed), and a generic one over `scijo.types.NumericComparable` (tier 2 -
-`T: NumericComparable`). The concrete overload is a thin wrapper around the
-generic one via `Primal`; the generic algorithm is the only implementation,
-so a power user who wants an exact derivative just calls the same function
-on a `Dual` instead of a `Primal` - no separate derivative formula exists
-anywhere, it falls out of `Dual`'s own chain-rule arithmetic for free.
+a plain `Scalar[dtype]`, and a generic one over `scijo.types.NumericComparable`.
+The concrete overload is a thin wrapper around the generic one via `Primal`;
+the generic algorithm is the only implementation, so a power user who wants an exact
+derivative just calls the same function on a `Dual` instead of a `Primal`.
 
 Examples
 --------
