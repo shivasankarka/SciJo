@@ -48,6 +48,13 @@ not an enumeration of every signature.
     - [`minimize_scalar`](#minimize_scalar)
     - [`root` - multi-dimensional root finding](#root---multi-dimensional-root-finding)
     - [`minimize` - multi-dimensional minimization](#minimize---multi-dimensional-minimization)
+  - [Types (`scijo.types`)](#types-scijotypes)
+    - [`Numeric` and `NumericComparable`](#numeric-and-numericcomparable)
+    - [`Primal`, `Complex`, and `Dual`](#primal-complex-and-dual)
+  - [Special Functions (`scijo.special`)](#special-functions-scijospecial)
+    - [Gamma, error, and beta functions](#gamma-error-and-beta-functions)
+    - [Incomplete gamma and beta functions](#incomplete-gamma-and-beta-functions)
+    - [Bessel functions](#bessel-functions)
   - [Errors](#errors)
   - [Appendix: NuMojo is the array backend](#appendix-numojo-is-the-array-backend)
   - [Appendix: what is not here yet](#appendix-what-is-not-here-yet)
@@ -57,7 +64,7 @@ not an enumeration of every signature.
 ## Getting started
 
 SciJo is built on [NuMojo](https://github.com/Mojo-Numerics-and-Algorithms-group/NuMojo)
-and targets Mojo `>=1.0.0,<2`. Inside a checkout, pixi builds and packages it:
+and targets Mojo `>=1.2.0,<2`. Inside a checkout, pixi builds and packages it:
 
 ```bash
 pixi install
@@ -1067,6 +1074,145 @@ same way via `write_to`.
 
 ---
 
+## Types (`scijo.types`)
+
+`scijo.types` is the opt-in half of a pattern used throughout the rest of
+SciJo: every ordinary function in this manual takes and returns a plain
+`Scalar`/`SIMD` value, no `scijo.types` import required. A power user who
+wants an exact derivative, or who wants to run the same code over a complex
+value, opts into this module instead of hand-deriving a formula.
+
+### `Numeric` and `NumericComparable`
+
+`Numeric` is a trait capturing the minimal arithmetic a differentiable
+scalar kernel needs - `+`, `-`, `*`, `/`, `exp`, `log`, `sqrt`, `sin`,
+`cos`, and the `one()`/`constant()` factories every conformer provides.
+Every operator also accepts a bare `Float64` on either side, so a kernel
+reads like ordinary arithmetic (`2.0 * x + 1.0`) rather than
+`T.constant(2.0) * x + T.constant(1.0)`.
+
+A function written once, generically over `T: Numeric`, works unchanged on
+any conformer:
+
+```mojo
+from scijo.types import Numeric, Primal, variable
+from scijo.prelude import *
+
+def f[T: Numeric](x: T) -> T:
+    return x * x + 2.0 * x
+
+def main() raises:
+    print(f(Primal[f64](3.0)).v)     # 15.0, plain value
+    print(f(variable(3.0)).deriv.v)  # f'(3) = 2*3 + 2 = 8.0, exact derivative
+```
+
+`NumericComparable` extends `Numeric` with `<`, `<=`, `>`, `==`, and
+`floor()` - everything a *branchy* numerical algorithm needs to pick a
+series vs. an asymptotic expansion, a reflection formula, or a convergence
+cutoff, without ever looking at a conformer's derivative. This is what
+`scijo.special` is written against (see below): every comparison or
+`floor()` on a `Dual` inspects its primal `value` only, so the branch a
+`Dual`-valued call takes is always the same branch the matching `Scalar`
+call would take, and the chain rule still applies cleanly to whichever
+branch ran.
+
+### `Primal`, `Complex`, and `Dual`
+
+- **`Primal[dtype, width]`** - a zero-cost wrapper over
+  `SIMD[dtype, width]`. This is what a concrete `Scalar`-taking function
+  wraps its generic implementation in; most users never construct one
+  directly.
+- **`Complex[dtype, width]`** - `re + im*i`, with the usual complex
+  arithmetic and transcendentals (`log`/`sqrt` use the principal branch,
+  the same convention as NumPy).
+- **`Dual[Inner: Numeric]`** - forward-mode automatic differentiation:
+  a `(value, derivative)` pair, both of type `Inner`. Arithmetic on a
+  `Dual` applies the chain rule automatically (`(f*g)' = f'*g + f*g'`, and
+  so on through `exp`/`log`/`sin`/`cos`), so a kernel written once,
+  generically over `Numeric`, gets an exact derivative for free by simply
+  being called on a `Dual` instead of a `Primal` - no separate derivative
+  formula to write or maintain. Nesting `Dual[Dual[Primal[f64]]]` tracks a
+  second derivative with the same chain rule applied twice, and
+  `Dual[Complex[f64]]` differentiates a complex-valued kernel the same way.
+- **`variable(x)`** / **`variable2(x)`** - build a `Dual`/nested `Dual`
+  seeded at a point (derivative `1.0`), without having to name the nested
+  generic type by hand.
+
+---
+
+## Special Functions (`scijo.special`)
+
+Every function in `scijo.special` has two overloads: a concrete one taking
+and returning a plain `Scalar[dtype]` (what most users call), and a
+generic one written once over `scijo.types.NumericComparable`. The concrete
+overload is a thin wrapper around the generic one via `Primal`; since the
+generic algorithm is the *only* implementation, calling it on a `Dual`
+instead gives an exact derivative with no hand-written derivative formula
+anywhere in the module:
+
+```mojo
+from scijo.special import bessel_j0, bessel_j1
+from scijo.types import NumericComparable, variable
+from scijo.prelude import *
+
+def j0_kernel[T: NumericComparable](x: T) -> T:
+    return bessel_j0(x)
+
+def main() raises:
+    var result = j0_kernel(variable(3.0))
+    print(result.value.v)   # J0(3.0)
+    print(result.deriv.v)   # J0'(3.0) == -J1(3.0), exact
+```
+
+### Gamma, error, and beta functions
+
+- **`gamma(x)`** / **`lngamma(x)`** - `Gamma(x)` and `ln(|Gamma(x)|)`, via
+  the Lanczos approximation for `x >= 0.5` and the reflection formula
+  `Gamma(x)*Gamma(1-x) = pi/sin(pi*x)` for `x < 0.5`.
+- **`erf(x)`** / **`erfc(x)`** - the error function and its complement
+  (`erfc` computed directly, not by subtraction, so it stays accurate for
+  large `x`), via a convergent power series for `|x| < 2` and a continued
+  fraction for `|x| >= 2`.
+- **`digamma(x)`** - `d/dx[ln(Gamma(x))]`, via the recurrence
+  `psi(x) = psi(x+1) - 1/x` into an asymptotic series, with the reflection
+  formula for `x <= 0`.
+- **`beta(a, b)`** / **`lnbeta(a, b)`** - `Gamma(a)*Gamma(b)/Gamma(a+b)`
+  and its log, built on `lngamma` so it stays accurate where `Gamma` itself
+  would overflow. Domain: `a > 0`, `b > 0`.
+
+### Incomplete gamma and beta functions
+
+- **`gamma_inc(a, x)`** - the regularized *lower* incomplete gamma
+  function, `P(a, x)`, and **`gamma_incc(a, x)`** - its complement
+  `Q(a, x) = 1 - P(a, x)`, via a power series for `x < a + 1` and a
+  continued fraction for `x >= a + 1` (the well-conditioned form for that
+  tail). Domain: `a > 0`, `x >= 0`.
+- **`beta_inc(a, b, x)`** - the regularized incomplete beta function,
+  `I_x(a, b)`, via Lentz's modified continued fraction, swapped to its
+  complement `1 - I_{1-x}(b, a)` above `x = (a+1)/(a+b+2)` where the same
+  continued fraction converges quickly instead. Domain: `a > 0`, `b > 0`,
+  `0 <= x <= 1`.
+
+These are the functions behind the CDFs of the gamma, chi-squared, and
+beta distributions, and are the natural next thing to reach for before a
+`scijo.stats` module exists.
+
+### Bessel functions
+
+Order-0 and order-1 Bessel functions of the first kind (`bessel_j0`,
+`bessel_j1`), second kind (`bessel_y0`, `bessel_y1`), and the modified
+first kind (`bessel_i0`, `bessel_i1`) and second kind (`bessel_k0`,
+`bessel_k1`). Each uses a convergent power series for small `|x|` and a
+shared asymptotic expansion for large `|x|`, where the series either
+converges too slowly (`J`, `Y`, `I`) or loses precision to cancellation
+(`K`).
+
+General-order Bessel functions (`bessel_jn`/`yn`/`in`/`kn`), polygamma,
+Airy functions, and Legendre polynomials are not yet in `scijo.special` -
+see the [Appendix](#appendix-what-is-not-here-yet).
+
+---
+
 ## Errors
 
 SciJo functions are `raises` almost everywhere, since the checks that
@@ -1147,6 +1293,14 @@ not; as of this writing, the notable gaps are:
   `solve`, `solve_triangular`, `inv`, `pinv`, and norms - is implemented.
 - **Signal processing and sparse matrices** are listed as future
   directions but have no code in the repository yet.
+- **Special functions**: `scijo.special` covers gamma/error/beta,
+  digamma, the regularized incomplete gamma/beta functions, and order-0/1
+  Bessel functions - all generic over `NumericComparable`, so each also
+  works on a `Dual` for an exact derivative (e.g. `digamma`'s derivative,
+  the trigamma function, falls out automatically with no hand-written
+  formula). General-order Bessel functions, polygamma, Airy functions,
+  Legendre polynomials, and complex-valued special functions are not yet
+  implemented.
 
 None of these are silently half-implemented - a 2-D array handed to `fft`,
 or a bracket-based multi-dimensional call to `root_scalar`, simply does not
