@@ -11,20 +11,30 @@ A thin, zero-cost wrapper over `SIMD[dtype, width]` conforming to
 # ===----------------------------------------------------------------------=== #
 # Stdlib
 # ===----------------------------------------------------------------------=== #
-from std.math import cos, exp, log, sin, sqrt
+from std.math import (
+    cos,
+    exp,
+    floor,
+    log,
+    sin,
+    sqrt,
+)
 
 # ===----------------------------------------------------------------------=== #
 # SciJo
 # ===----------------------------------------------------------------------=== #
-from .numeric import Numeric
+from scijo.types.comparable import NumericComparable
+from scijo.types.numeric import Numeric
 
 
 @fieldwise_init
 struct Primal[dtype: DType, width: Int = 1](
     Copyable,
     Deinitable,
+    ImplicitlyCopyable,
     Movable,
     Numeric where dtype.is_floating_point(),
+    NumericComparable where dtype.is_floating_point() and width == 1,
 ):
     """A `SIMD[dtype, width]` value, exposed through `Numeric`."""
 
@@ -140,3 +150,66 @@ struct Primal[dtype: DType, width: Int = 1](
             The cosine of `self`.
         """
         return Self(cos(self.v))
+
+    def __lt__(self, other: Self) -> Bool where Self.dtype.is_floating_point() and Self.width == 1:
+        """`self < other`.
+
+        Args:
+            other: The value to compare against.
+
+        Returns:
+            Whether `self` is less than `other`.
+        """
+        return self.v[0] < other.v[0]
+
+    def __lt__(self, other: Float64) -> Bool where Self.dtype.is_floating_point() and Self.width == 1:
+        """`self < other`, against a literal.
+
+        Args:
+            other: The literal to compare against.
+
+        Returns:
+            Whether `self` is less than `other`.
+        """
+        return self.v[0] < Scalar[Self.dtype](other)
+
+    def __le__(self, other: Float64) -> Bool where Self.dtype.is_floating_point() and Self.width == 1:
+        """`self <= other`, against a literal.
+
+        Args:
+            other: The literal to compare against.
+
+        Returns:
+            Whether `self` is at most `other`.
+        """
+        return self.v[0] <= Scalar[Self.dtype](other)
+
+    def __gt__(self, other: Self) -> Bool where Self.dtype.is_floating_point() and Self.width == 1:
+        """`self > other`.
+
+        Args:
+            other: The value to compare against.
+
+        Returns:
+            Whether `self` is greater than `other`.
+        """
+        return self.v[0] > other.v[0]
+
+    def __eq__(self, other: Self) -> Bool where Self.dtype.is_floating_point() and Self.width == 1:
+        """`self == other`.
+
+        Args:
+            other: The value to compare against.
+
+        Returns:
+            Whether `self` equals `other`.
+        """
+        return self.v[0] == other.v[0]
+
+    def floor(self) -> Self where Self.dtype.is_floating_point() and Self.width == 1:
+        """The largest integer value not greater than `self`.
+
+        Returns:
+            `floor(self)`.
+        """
+        return Self(floor(self.v[0]))

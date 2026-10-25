@@ -13,12 +13,20 @@ rule applied twice.
 # ===----------------------------------------------------------------------=== #
 # SciJo
 # ===----------------------------------------------------------------------=== #
-from .numeric import Numeric
-from .primal import Primal
+from scijo.types.comparable import NumericComparable
+from scijo.types.numeric import Numeric
+from scijo.types.primal import Primal
 
 
 @fieldwise_init
-struct Dual[Inner: Numeric](Copyable, Deinitable, Movable, Numeric):
+struct Dual[Inner: Numeric](
+    Copyable,
+    Deinitable,
+    ImplicitlyCopyable,
+    Movable,
+    Numeric,
+    NumericComparable where conforms_to(Inner, NumericComparable),
+):
     """`value` is `f(x)`; `deriv` is `df/dx` at the same point."""
 
     var value: Self.Inner
@@ -151,6 +159,73 @@ struct Dual[Inner: Numeric](Copyable, Deinitable, Movable, Numeric):
             `cos(self)`, with derivative via the chain rule.
         """
         return Self(self.value.cos(), -(self.value.sin() * self.deriv))
+
+    def __lt__(self, other: Self) -> Bool where conforms_to(Self.Inner, NumericComparable):
+        """`self < other`, comparing `value` only - a branch decision must
+        not depend on `deriv`, or the chain rule stops applying to
+        whichever branch runs.
+
+        Args:
+            other: The value to compare against.
+
+        Returns:
+            Whether `self.value` is less than `other.value`.
+        """
+        return self.value < other.value
+
+    def __lt__(self, other: Float64) -> Bool where conforms_to(Self.Inner, NumericComparable):
+        """`self < other`, against a literal, comparing `value` only.
+
+        Args:
+            other: The literal to compare against.
+
+        Returns:
+            Whether `self.value` is less than `other`.
+        """
+        return self.value < other
+
+    def __le__(self, other: Float64) -> Bool where conforms_to(Self.Inner, NumericComparable):
+        """`self <= other`, against a literal, comparing `value` only.
+
+        Args:
+            other: The literal to compare against.
+
+        Returns:
+            Whether `self.value` is at most `other`.
+        """
+        return self.value <= other
+
+    def __gt__(self, other: Self) -> Bool where conforms_to(Self.Inner, NumericComparable):
+        """`self > other`, comparing `value` only.
+
+        Args:
+            other: The value to compare against.
+
+        Returns:
+            Whether `self.value` is greater than `other.value`.
+        """
+        return self.value > other.value
+
+    def __eq__(self, other: Self) -> Bool where conforms_to(Self.Inner, NumericComparable):
+        """`self == other`, comparing `value` only.
+
+        Args:
+            other: The value to compare against.
+
+        Returns:
+            Whether `self.value` equals `other.value`.
+        """
+        return self.value == other.value
+
+    def floor(self) -> Self where conforms_to(Self.Inner, NumericComparable):
+        """The largest integer value not greater than `self.value`, with a
+        zero derivative (only ever used to decide a branch, never to carry
+        a gradient).
+
+        Returns:
+            `floor(self.value)`, with derivative zero.
+        """
+        return Self(self.value.floor(), Self.Inner.constant(0.0))
 
 
 # ===----------------------------------------------------------------------=== #

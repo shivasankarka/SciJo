@@ -15,6 +15,11 @@ Available Types
   `cos`, and the `one()`/`constant()` factories every conformer needs. Every
   operator also accepts a bare `Float64` on either side, so a kernel can
   write `2.0 * x + 1.0` instead of `T.constant(2.0) * x + T.constant(1.0)`.
+- `NumericComparable` - `Numeric` plus `<`, `<=`, `>`, `==`, and `floor()`,
+  for algorithms that branch by magnitude (series vs. asymptotic, reflection
+  formulas, convergence cutoffs) - see `scijo.special`, which is written
+  generically over this trait so every function there gets an exact `Dual`
+  derivative for free, with no hand-written chain-rule formula.
 - `Primal`   - a thin, zero-cost wrapper over `SIMD[dtype, width]`.
 - `Complex`  - `re + im*i`, with the usual complex arithmetic and
   transcendentals (principal branch for `log`/`sqrt`).
@@ -40,7 +45,12 @@ Examples
 # ===----------------------------------------------------------------------=== #
 # SciJo
 # ===----------------------------------------------------------------------=== #
+from .comparable import NumericComparable
 from .complex import Complex
-from .dual import Dual, variable, variable2
+from .dual import (
+    Dual,
+    variable,
+    variable2,
+)
 from .numeric import Numeric
 from .primal import Primal

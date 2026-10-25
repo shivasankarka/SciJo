@@ -8,7 +8,7 @@
 component and conforms to `Numeric`, so any function written once against
 `Numeric` can be called with a complex argument with no change.
 
-Notes:
+NOTES:
 `log` and `sqrt` use the principal branch (the same convention as
 `numpy`/`std.math`): `log`'s imaginary part is `atan2(im, re)`, in
 `(-pi, pi]`.
@@ -17,18 +17,29 @@ Notes:
 # ===----------------------------------------------------------------------=== #
 # Stdlib
 # ===----------------------------------------------------------------------=== #
-from std.math import atan2, copysign, cos, cosh, exp, log, sin, sinh, sqrt
+from std.math import (
+    atan2,
+    copysign,
+    cos,
+    cosh,
+    exp,
+    log,
+    sin,
+    sinh,
+    sqrt,
+)
 
 # ===----------------------------------------------------------------------=== #
 # SciJo
 # ===----------------------------------------------------------------------=== #
-from .numeric import Numeric
+from scijo.types.numeric import Numeric
 
 
 @fieldwise_init
 struct Complex[dtype: DType, width: Int = 1](
     Copyable,
     Deinitable,
+    ImplicitlyCopyable,
     Movable,
     Numeric where dtype.is_floating_point(),
 ):
