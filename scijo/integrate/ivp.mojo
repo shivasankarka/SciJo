@@ -165,9 +165,7 @@ def solve_ivp[
             t_span, y0, args, t_eval, atol, rtol, max_step, first_step, maxiter
         )
     else:
-        raise Error(
-            "Scijo [solve_ivp]: Unsupported method: " + String(method)
-        )
+        raise Error("Scijo [solve_ivp]: Unsupported method: " + String(method))
 
 
 def solve_ivp[
@@ -222,7 +220,9 @@ def solve_ivp[
     def _with_args[
         dtype2: DType
     ](
-        t: Scalar[dtype2], y: NDArray[dtype2], args: Optional[List[Scalar[dtype2]]]
+        t: Scalar[dtype2],
+        y: NDArray[dtype2],
+        args: Optional[List[Scalar[dtype2]]],
     ) capturing raises -> NDArray[dtype2] where dtype2.is_floating_point():
         return rhs_func(t, y)
 
@@ -304,14 +304,23 @@ def _rk45_attempt_step[
     var y2 = y + (h * Scalar[dtype](RK45_A21)) * k1
     var k2 = rhs_func(t + Scalar[dtype](RK45_C2) * h, y2, args)
 
-    var y3 = y + h * (Scalar[dtype](RK45_A31) * k1 + Scalar[dtype](RK45_A32) * k2)
+    var y3 = y + h * (
+        Scalar[dtype](RK45_A31) * k1 + Scalar[dtype](RK45_A32) * k2
+    )
     var k3 = rhs_func(t + Scalar[dtype](RK45_C3) * h, y3, args)
 
-    var y4 = y + h * (Scalar[dtype](RK45_A41) * k1 + Scalar[dtype](RK45_A42) * k2 + Scalar[dtype](RK45_A43) * k3)
+    var y4 = y + h * (
+        Scalar[dtype](RK45_A41) * k1
+        + Scalar[dtype](RK45_A42) * k2
+        + Scalar[dtype](RK45_A43) * k3
+    )
     var k4 = rhs_func(t + Scalar[dtype](RK45_C4) * h, y4, args)
 
     var y5 = y + h * (
-        Scalar[dtype](RK45_A51) * k1 + Scalar[dtype](RK45_A52) * k2 + Scalar[dtype](RK45_A53) * k3 + Scalar[dtype](RK45_A54) * k4
+        Scalar[dtype](RK45_A51) * k1
+        + Scalar[dtype](RK45_A52) * k2
+        + Scalar[dtype](RK45_A53) * k3
+        + Scalar[dtype](RK45_A54) * k4
     )
     var k5 = rhs_func(t + Scalar[dtype](RK45_C5) * h, y5, args)
 
@@ -371,13 +380,11 @@ def _rk45_attempt_step[
         var raw = Scalar[dtype](RK45_SAFETY) * pow(
             err_norm, Scalar[dtype](RK45_ERROR_EXPONENT)
         )
-        factor = raw if raw > Scalar[dtype](RK45_MIN_FACTOR) else Scalar[
-            dtype
-        ](RK45_MIN_FACTOR)
+        factor = raw if raw > Scalar[dtype](RK45_MIN_FACTOR) else Scalar[dtype](
+            RK45_MIN_FACTOR
+        )
 
-    return _RK45StepResult[dtype](
-        accepted, y_new^, k7^, h, h * factor, 6
-    )
+    return _RK45StepResult[dtype](accepted, y_new^, k7^, h, h * factor, 6)
 
 
 def _rk45_step[
@@ -560,9 +567,7 @@ def _rk45_impl[
         if (t + h_try - tf) * direction > 0:
             h_try = tf - t
 
-        var step = _rk45_step[dtype, rhs_func](
-            t, y, f, h_try, args, atol, rtol
-        )
+        var step = _rk45_step[dtype, rhs_func](t, y, f, h_try, args, atol, rtol)
         var step_accepted = step.accepted
         var step_h_used = step.h_used
         var step_h_next = step.h_next
@@ -624,4 +629,3 @@ def _rk45_impl[
         return OdeResult[dtype](
             t_out^, y_out^, nfev, nsteps, success, status, message, "RK45"
         )
-

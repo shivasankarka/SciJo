@@ -23,7 +23,9 @@ def test_exponential_decay() raises:
     def decay[
         dtype: DType
     ](
-        t: Scalar[dtype], y: nm.NDArray[dtype], args: Optional[List[Scalar[dtype]]]
+        t: Scalar[dtype],
+        y: nm.NDArray[dtype],
+        args: Optional[List[Scalar[dtype]]],
     ) capturing raises -> nm.NDArray[dtype]:
         var k = args.value()[0]
         return y * (-k)
@@ -36,9 +38,7 @@ def test_exponential_decay() raises:
     assert_true(result.success)
     var n_last = result.t.shape[0] - 1
     assert_almost_equal(result.t.item(n_last), 1.0, atol=1e-10)
-    assert_almost_equal(
-        result.y.item(0, n_last), 2.0 * exp(-3.0), atol=1e-6
-    )
+    assert_almost_equal(result.y.item(0, n_last), 2.0 * exp(-3.0), atol=1e-6)
 
 
 def test_shm_energy_conserved() raises:
@@ -74,7 +74,8 @@ def test_shm_energy_conserved() raises:
 
 
 def test_linear_system() raises:
-    """`dy/dt = diag(-1, -2) @ y` decouples into two independent exponentials."""
+    """`dy/dt = diag(-1, -2) @ y` decouples into two independent exponentials.
+    """
 
     def linsys[
         dtype: DType
